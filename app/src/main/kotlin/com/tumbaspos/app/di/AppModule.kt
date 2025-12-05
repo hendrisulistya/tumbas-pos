@@ -17,7 +17,9 @@ val appModule = module {
             androidContext(),
             AppDatabase::class.java,
             "tumbas_pos.db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     // DAOs
@@ -58,6 +60,9 @@ val appModule = module {
         com.tumbaspos.app.domain.repository.CustomerRepositoryImpl(get())
     }
     single { get<AppDatabase>().customerDao() }
+    single<com.tumbaspos.app.domain.repository.ImageRepository> {
+        com.tumbaspos.app.data.repository.ImageRepositoryImpl()
+    }
     
     single {
         com.tumbaspos.app.domain.model.R2Config(
@@ -79,6 +84,9 @@ val appModule = module {
     factory { com.tumbaspos.app.domain.usecase.warehouse.ManageProductUseCase(get()) }
     factory { com.tumbaspos.app.domain.usecase.warehouse.AdjustStockUseCase(get(), get()) }
     factory { com.tumbaspos.app.domain.usecase.warehouse.GetStockHistoryUseCase(get()) }
+
+    // Product Use Cases
+    factory { com.tumbaspos.app.domain.usecase.product.ManageProductImageUseCase(get(), get()) }
 
     // Purchase Order Use Cases
     factory { com.tumbaspos.app.domain.usecase.purchase.GetPurchaseOrdersUseCase(get()) }
@@ -122,5 +130,5 @@ val appModule = module {
     viewModel { com.tumbaspos.app.presentation.scan.ScanViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.settings.printer.PrinterSettingsViewModel(get(), androidContext()) }
     viewModel { com.tumbaspos.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get()) }
-    viewModel { com.tumbaspos.app.presentation.product.ProductViewModel(get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.product.ProductViewModel(get(), get(), get()) }
 }

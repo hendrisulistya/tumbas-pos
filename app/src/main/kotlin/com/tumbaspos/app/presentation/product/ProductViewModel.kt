@@ -3,6 +3,7 @@ package com.tumbaspos.app.presentation.product
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tumbaspos.app.data.local.entity.ProductEntity
+import com.tumbaspos.app.domain.usecase.product.ManageProductImageUseCase
 import com.tumbaspos.app.domain.usecase.warehouse.GetInventoryUseCase
 import com.tumbaspos.app.domain.usecase.warehouse.ManageProductUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,12 +18,14 @@ data class ProductUiState(
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val selectedProduct: ProductEntity? = null,
-    val isProductDialogOpen: Boolean = false
+    val isProductDialogOpen: Boolean = false,
+    val isUploadingImage: Boolean = false
 )
 
 class ProductViewModel(
     private val getInventoryUseCase: GetInventoryUseCase,
-    private val manageProductUseCase: ManageProductUseCase
+    private val manageProductUseCase: ManageProductUseCase,
+    private val manageProductImageUseCase: ManageProductImageUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductUiState())
@@ -90,7 +93,23 @@ class ProductViewModel(
 
     fun onDeleteProduct(product: ProductEntity) {
         viewModelScope.launch {
+            // Delete image if exists
+            product.image?.let { image ->
+                manageProductImageUseCase.deleteImage(image)
+            }
             manageProductUseCase.deleteProduct(product)
+        }
+    }
+    
+    suspend fun uploadProductImage(imageData: ByteArray): Result<String> {
+        _uiState.update { it.copy(isUploadingImage = true) }
+        return try {
+            manageProductImageUseCase.uploadImage(imageData).also {
+                _uiState.update { state -> state.copy(isUploadingImage = false) }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isUploadingImage = false) }
+            Result.failure(e)
         }
     }
 }
