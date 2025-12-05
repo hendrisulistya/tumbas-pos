@@ -1,27 +1,51 @@
-This is a Kotlin Multiplatform project targeting Android.
+# TumbasPOS
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+TumbasPOS is a modern, offline-first Point of Sale (POS) application built natively for Android using Kotlin and Jetpack Compose. It is designed to help small businesses manage sales, inventory, and reporting efficiently.
 
-### Build and Run Android Application
+## Features
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+*   **Point of Sale (POS):**
+    *   Streamlined checkout process.
+    *   Support for discounts and tax calculations.
+    *   Guest checkout or Customer assignment.
+*   **Inventory Management:**
+    *   Manage products, categories, and stock levels.
+    *   **Barcode Scanning:** Integrated CameraX barcode scanner for quick product lookup.
+*   **Hardware Support:**
+    *   **Thermal Printing:** Support for Bluetooth ESC/POS thermal printers for printing receipts.
+*   **Data Management:**
+    *   **Offline-First:** Built on Room Database for reliable offline access.
+    *   **Backup & Restore:** Secure cloud backup and restore functionality using Cloudflare R2.
+*   **Security:**
+    *   **Activation System:** Secure device activation using App ID and License Keys.
+*   **Reporting:**
+    *   View sales history and basic analytics.
 
----
+## Tech Stack
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+*   **Language:** Kotlin
+*   **UI Framework:** Jetpack Compose (Material3)
+*   **Architecture:** MVVM (Model-View-ViewModel)
+*   **Dependency Injection:** Koin
+*   **Database:** Room
+*   **Async/Concurrency:** Coroutines & Flow
+*   **Networking:** Ktor (for Backup/Restore)
+*   **Camera:** CameraX & ML Kit (for Barcode Scanning)
+
+## Build & Run
+
+To build and run the application:
+
+1.  Open the project in Android Studio.
+2.  Sync Gradle project.
+3.  Run the `app` configuration.
+
+Or via command line:
+
+```bash
+./gradlew assembleDebug
+```
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 (GPLv3) - see the [LICENSE](LICENSE) file for details.
