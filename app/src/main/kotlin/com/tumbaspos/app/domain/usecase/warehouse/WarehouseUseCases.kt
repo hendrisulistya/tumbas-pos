@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 class GetInventoryUseCase(
     private val productRepository: ProductRepository
 ) {
-    operator fun invoke(): Flow<List<ProductEntity>> = productRepository.getAllProducts()
+    operator fun invoke(): Flow<List<com.tumbaspos.app.data.local.dao.ProductWithCategory>> = productRepository.getAllProducts()
 }
 
 class ManageProductUseCase(
@@ -27,7 +27,7 @@ class ManageProductUseCase(
         productRepository.deleteProduct(product)
     }
     
-    suspend fun getProductById(id: Long): ProductEntity? {
+    suspend fun getProductById(id: Long): com.tumbaspos.app.data.local.dao.ProductWithCategory? {
         return productRepository.getProductById(id)
     }
 }
@@ -61,4 +61,10 @@ class GetStockHistoryUseCase(
     private val stockRepository: StockRepository
 ) {
     operator fun invoke(productId: Long) = stockRepository.getStockMovementsForProduct(productId)
+}
+
+class GetCategoriesUseCase(
+    private val productRepository: ProductRepository
+) {
+    operator fun invoke() = productRepository.getAllCategories()
 }

@@ -82,7 +82,8 @@ fun ActivationScreen(
                         label = { Text("Activation Code") },
                         leadingIcon = { Icon(Icons.Default.Lock, null) },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        placeholder = { Text("XXXX-XXXX-XXXX-XXXX") }
                     )
 
                     if (uiState.error != null) {

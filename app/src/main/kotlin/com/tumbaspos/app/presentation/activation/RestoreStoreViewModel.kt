@@ -12,10 +12,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 
 data class RestoreStoreUiState(
     val appId: String = "",
-    val activationCode: String = "",
+    val activationCode: TextFieldValue = TextFieldValue(""),
     val isLoading: Boolean = false,
     val backups: List<String> = emptyList(),
     val showBackupList: Boolean = false,
@@ -38,9 +40,9 @@ class RestoreStoreViewModel(
         _uiState.update { it.copy(appId = appId.uppercase(), error = null) }
     }
 
-    fun onActivationCodeChange(code: String) {
+    fun onActivationCodeChange(newValue: TextFieldValue) {
         // Remove all hyphens and non-alphanumeric characters
-        val cleanCode = code.replace("-", "").filter { it.isLetterOrDigit() }.uppercase()
+        val cleanCode = newValue.text.replace("-", "").filter { it.isLetterOrDigit() }.uppercase()
         
         // Format with hyphens after every 4 characters
         val formatted = buildString {
@@ -52,12 +54,38 @@ class RestoreStoreViewModel(
             }
         }
         
-        _uiState.update { it.copy(activationCode = formatted, error = null) }
+        // Calculate new cursor position
+        val oldText = newValue.text
+        val oldCursor = newValue.selection.start
+        val charsBeforeCursor = oldText.take(oldCursor).count { it != '-' }
+        
+        var newCursor = 0
+        var charCount = 0
+        for (i in formatted.indices) {
+            if (formatted[i] != '-') {
+                charCount++
+            }
+            if (charCount >= charsBeforeCursor) {
+                newCursor = i + 1
+                break
+            }
+        }
+        
+        if (newCursor < formatted.length && formatted[newCursor] == '-') {
+            newCursor++
+        }
+        
+        val newTextFieldValue = TextFieldValue(
+            text = formatted,
+            selection = TextRange(newCursor.coerceIn(0, formatted.length))
+        )
+        
+        _uiState.update { it.copy(activationCode = newTextFieldValue, error = null) }
     }
 
     fun onCheckBackups() {
         val appId = _uiState.value.appId.trim()
-        val activationCode = _uiState.value.activationCode.trim()
+        val activationCode = _uiState.value.activationCode.text.trim()
         
         if (appId.isBlank()) {
             _uiState.update { it.copy(error = "Please enter an App ID") }

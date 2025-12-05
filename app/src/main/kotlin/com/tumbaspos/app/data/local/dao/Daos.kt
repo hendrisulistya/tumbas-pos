@@ -6,17 +6,21 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProductDao {
+    @Transaction
     @Query("SELECT * FROM products ORDER BY name ASC")
-    fun getAllProducts(): Flow<List<ProductEntity>>
+    fun getAllProducts(): Flow<List<ProductWithCategory>>
 
+    @Transaction
     @Query("SELECT * FROM products WHERE id = :id")
-    suspend fun getProductById(id: Long): ProductEntity?
+    suspend fun getProductById(id: Long): ProductWithCategory?
 
+    @Transaction
     @Query("SELECT * FROM products WHERE barcode = :barcode")
-    suspend fun getProductByBarcode(barcode: String): ProductEntity?
+    suspend fun getProductByBarcode(barcode: String): ProductWithCategory?
 
+    @Transaction
     @Query("SELECT * FROM products WHERE name LIKE '%' || :query || '%' OR barcode LIKE '%' || :query || '%'")
-    fun searchProducts(query: String): Flow<List<ProductEntity>>
+    fun searchProducts(query: String): Flow<List<ProductWithCategory>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProduct(product: ProductEntity): Long
@@ -33,6 +37,15 @@ interface ProductDao {
     @Query("UPDATE products SET stock = stock + :quantity WHERE id = :productId")
     suspend fun updateStock(productId: Long, quantity: Int)
 }
+
+data class ProductWithCategory(
+    @Embedded val product: ProductEntity,
+    @Relation(
+        parentColumn = "categoryId",
+        entityColumn = "id"
+    )
+    val category: CategoryEntity?
+)
 
 @Dao
 interface ContactDao {
@@ -119,6 +132,18 @@ interface StockDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStockMovement(movement: StockMovementEntity)
+}
+
+@Dao
+interface CategoryDao {
+    @Query("SELECT * FROM categories ORDER BY name ASC")
+    fun getAllCategories(): Flow<List<CategoryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCategory(category: CategoryEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(categories: List<CategoryEntity>)
 }
 
 @Dao

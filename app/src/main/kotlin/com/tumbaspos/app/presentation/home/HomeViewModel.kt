@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
-    val products: List<ProductEntity> = emptyList(),
+    val products: List<com.tumbaspos.app.data.local.dao.ProductWithCategory> = emptyList(),
     val categories: List<String> = emptyList(),
     val selectedCategory: String = "All",
     val searchQuery: String = "",
@@ -51,7 +51,7 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             searchProductsUseCase("").collect { products ->
-                val categories = listOf("All") + products.map { it.category }.distinct().sorted()
+                val categories = listOf("All") + products.mapNotNull { it.category?.name }.distinct().sorted()
                 _uiState.update {
                     it.copy(
                         products = products,
@@ -82,7 +82,7 @@ class HomeViewModel(
                 val filtered = if (state.selectedCategory == "All") {
                     allProducts
                 } else {
-                    allProducts.filter { it.category == state.selectedCategory }
+                    allProducts.filter { it.category?.name == state.selectedCategory }
                 }
                 
                 _uiState.update { it.copy(products = filtered) }
@@ -90,7 +90,7 @@ class HomeViewModel(
         }
     }
 
-    fun addToCart(product: ProductEntity) {
-        cartRepository.addToCart(product, 1)
+    fun addToCart(productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory) {
+        cartRepository.addToCart(productWithCategory.product, 1)
     }
 }

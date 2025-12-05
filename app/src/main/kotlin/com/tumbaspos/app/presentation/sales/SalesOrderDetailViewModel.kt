@@ -36,9 +36,9 @@ class SalesOrderDetailViewModel(
                 val orderWithItems = salesOrderRepository.getSalesOrderById(orderId)
                 if (orderWithItems != null) {
                     val cartItems = orderWithItems.items.mapNotNull { item ->
-                        val product = productRepository.getProductById(item.productId)
-                        if (product != null) {
-                            CartItem(product, item.quantity)
+                        val productWithCategory = productRepository.getProductById(item.productId)
+                        if (productWithCategory != null) {
+                            CartItem(productWithCategory.product, item.quantity)
                         } else {
                             null
                         }

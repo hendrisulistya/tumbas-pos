@@ -4,6 +4,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -83,12 +86,12 @@ fun ProductScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.filteredProducts) { product ->
+                    items(uiState.filteredProducts) { productWithCategory ->
                         ProductItem(
-                            product = product,
+                            productWithCategory = productWithCategory,
                             currencyFormatter = currencyFormatter,
-                            onEditClick = { viewModel.onEditProductClick(product) },
-                            onDeleteClick = { viewModel.onDeleteProduct(product) }
+                            onEditClick = { viewModel.onEditProductClick(productWithCategory) },
+                            onDeleteClick = { viewModel.onDeleteProduct(productWithCategory) }
                         )
                     }
                 }
@@ -98,7 +101,8 @@ fun ProductScreen(
 
     if (uiState.isProductDialogOpen) {
         ProductDialog(
-            product = uiState.selectedProduct,
+            productWithCategory = uiState.selectedProduct,
+            categories = uiState.categories,
             onDismiss = viewModel::onProductDialogDismiss,
             onSave = viewModel::onSaveProduct
         )
@@ -107,11 +111,14 @@ fun ProductScreen(
 
 @Composable
 fun ProductItem(
-    product: ProductEntity,
+    productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory,
     currencyFormatter: NumberFormat,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val product = productWithCategory.product
+    val categoryName = productWithCategory.category?.name ?: "Uncategorized"
+    
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -124,13 +131,11 @@ fun ProductItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(product.name, style = MaterialTheme.typography.titleMedium)
                     Text(product.barcode, style = MaterialTheme.typography.bodySmall)
-                    if (product.category.isNotBlank()) {
-                        Text(
-                            product.category,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Text(
+                        categoryName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
                 Text(
                     "Stock: ${product.stock}",
@@ -171,22 +176,35 @@ fun ProductItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDialog(
-    product: ProductEntity?,
+    productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory?,
+    categories: List<com.tumbaspos.app.data.local.entity.CategoryEntity>,
     onDismiss: () -> Unit,
     onSave: (ProductEntity) -> Unit,
     viewModel: ProductViewModel = koinViewModel()
 ) {
+    val product = productWithCategory?.product
     var name by remember { mutableStateOf(product?.name ?: "") }
     var barcode by remember { mutableStateOf(product?.barcode ?: "") }
     var description by remember { mutableStateOf(product?.description ?: "") }
     var price by remember { mutableStateOf(product?.price?.toString() ?: "") }
     var costPrice by remember { mutableStateOf(product?.costPrice?.toString() ?: "") }
-    var category by remember { mutableStateOf(product?.category ?: "") }
+    var selectedCategory by remember(productWithCategory) { 
+        mutableStateOf(productWithCategory?.category) 
+    }
+    
+    // Select first category if nothing is selected and categories are available
+    LaunchedEffect(categories) {
+        if (selectedCategory == null && categories.isNotEmpty()) {
+            selectedCategory = categories.firstOrNull()
+        }
+    }
+    
     var image by remember { mutableStateOf(product?.image) }
     var showBarcodeScanner by remember { mutableStateOf(false) }
-    var showImagePicker by remember { mutableStateOf(false) }
+    var categoryExpanded by remember { mutableStateOf(false) }
     
     val uiState by viewModel.uiState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -230,131 +248,144 @@ fun ProductDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (product == null) "Add Product" else "Edit Product") },
         text = {
-            LazyColumn(
+            Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
             ) {
                 // Image section
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (image != null) {
-                            ProductImageDisplay(
-                                image = image!!,
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = { imagePickerLauncher.launch("image/*") },
-                                    enabled = !uiState.isUploadingImage
-                                ) {
-                                    Icon(Icons.Default.Edit, "Change Image", modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Change")
-                                }
-                                OutlinedButton(
-                                    onClick = { image = null },
-                                    enabled = !uiState.isUploadingImage
-                                ) {
-                                    Icon(Icons.Default.Delete, "Remove Image", modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Remove")
-                                }
-                            }
-                        } else {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (image != null) {
+                        ProductImageDisplay(
+                            image = image!!,
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = { imagePickerLauncher.launch("image/*") },
-                                modifier = Modifier.fillMaxWidth(),
                                 enabled = !uiState.isUploadingImage
                             ) {
-                                if (uiState.isUploadingImage) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
-                                } else {
-                                    Icon(Icons.Default.AddPhotoAlternate, "Add Image")
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(if (uiState.isUploadingImage) "Uploading..." else "Add Product Image")
+                                Icon(Icons.Default.Edit, "Change Image", modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Change")
                             }
+                            OutlinedButton(
+                                onClick = { image = null },
+                                enabled = !uiState.isUploadingImage
+                            ) {
+                                Icon(Icons.Default.Delete, "Remove Image", modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Remove")
+                            }
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { imagePickerLauncher.launch("image/*") },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !uiState.isUploadingImage
+                        ) {
+                            if (uiState.isUploadingImage) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                            } else {
+                                Icon(Icons.Default.AddPhotoAlternate, "Add Image")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (uiState.isUploadingImage) "Uploading..." else "Add Product Image")
                         }
                     }
                 }
                 
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = barcode,
+                        onValueChange = { barcode = it },
+                        label = { Text("Barcode *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    IconButton(
+                        onClick = { showBarcodeScanner = true },
+                        modifier = Modifier.size(48.dp)
                     ) {
-                        OutlinedTextField(
-                            value = barcode,
-                            onValueChange = { barcode = it },
-                            label = { Text("Barcode *") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
+                        Icon(
+                            Icons.Default.QrCodeScanner,
+                            contentDescription = "Scan Barcode",
+                            tint = MaterialTheme.colorScheme.primary
                         )
-                        IconButton(
-                            onClick = { showBarcodeScanner = true },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.QrCodeScanner,
-                                contentDescription = "Scan Barcode",
-                                tint = MaterialTheme.colorScheme.primary
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Product Name *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+                
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Selling Price *") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                OutlinedTextField(
+                    value = costPrice,
+                    onValueChange = { costPrice = it },
+                    label = { Text("Cost Price *") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                ExposedDropdownMenuBox(
+                    expanded = categoryExpanded,
+                    onExpandedChange = { categoryExpanded = !categoryExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedCategory?.name ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Category") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryExpanded,
+                        onDismissRequest = { categoryExpanded = false }
+                    ) {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category.name) },
+                                onClick = {
+                                    selectedCategory = category
+                                    categoryExpanded = false
+                                }
                             )
                         }
                     }
-                }
-                item {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Product Name *") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
-                item {
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text("Description") },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 3
-                    )
-                }
-                item {
-                    OutlinedTextField(
-                        value = price,
-                        onValueChange = { price = it },
-                        label = { Text("Selling Price *") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
-                item {
-                    OutlinedTextField(
-                        value = costPrice,
-                        onValueChange = { costPrice = it },
-                        label = { Text("Cost Price *") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
-                item {
-                    OutlinedTextField(
-                        value = category,
-                        onValueChange = { category = it },
-                        label = { Text("Category") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
                 }
             }
         },
@@ -369,12 +400,12 @@ fun ProductDialog(
                         price = price.toDoubleOrNull() ?: 0.0,
                         costPrice = costPrice.toDoubleOrNull() ?: 0.0,
                         stock = product?.stock ?: 0,
-                        category = category,
+                        categoryId = selectedCategory?.id ?: 0L,
                         image = image
                     )
                     onSave(newProduct)
                 },
-                enabled = name.isNotBlank() && barcode.isNotBlank() && price.isNotBlank() && costPrice.isNotBlank() && !uiState.isUploadingImage
+                enabled = name.isNotBlank() && barcode.isNotBlank() && price.isNotBlank() && costPrice.isNotBlank() && selectedCategory != null && !uiState.isUploadingImage
             ) {
                 Text("Save")
             }
@@ -390,24 +421,35 @@ fun ProductDialog(
 @Composable
 fun ProductImageDisplay(image: String, modifier: Modifier = Modifier) {
     if (image.startsWith("data:image")) {
-        // Base64 image
-        val base64Data = image.substringAfter("base64,")
-        val imageBytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
-        val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-        
-        androidx.compose.foundation.Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = "Product Image",
-            modifier = modifier,
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-        )
+        val bitmap = remember(image) {
+            try {
+                val base64Data = image.substringAfter("base64,")
+                val imageBytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
+                android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Product Image",
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(modifier = modifier, contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.BrokenImage, "Invalid Image", tint = MaterialTheme.colorScheme.error)
+            }
+        }
     } else {
         // URL image
-        androidx.compose.foundation.layout.Box(
+        Box(
             modifier = modifier,
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.material3.Icon(
+            Icon(
                 Icons.Default.Image,
                 contentDescription = "Product Image",
                 modifier = Modifier.size(48.dp),

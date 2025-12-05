@@ -32,7 +32,7 @@ val appModule = module {
 
     // Repositories
     single<com.tumbaspos.app.domain.repository.ProductRepository> { 
-        com.tumbaspos.app.data.repository.ProductRepositoryImpl(get()) 
+        com.tumbaspos.app.data.repository.ProductRepositoryImpl(get(), get()) 
     }
     single<com.tumbaspos.app.domain.repository.SalesOrderRepository> { 
         com.tumbaspos.app.data.repository.SalesOrderRepositoryImpl(get()) 
@@ -60,6 +60,7 @@ val appModule = module {
         com.tumbaspos.app.domain.repository.CustomerRepositoryImpl(get())
     }
     single { get<AppDatabase>().customerDao() }
+    single { get<AppDatabase>().categoryDao() }
     single<com.tumbaspos.app.domain.repository.ImageRepository> {
         com.tumbaspos.app.data.repository.ImageRepositoryImpl()
     }
@@ -84,6 +85,7 @@ val appModule = module {
     factory { com.tumbaspos.app.domain.usecase.warehouse.ManageProductUseCase(get()) }
     factory { com.tumbaspos.app.domain.usecase.warehouse.AdjustStockUseCase(get(), get()) }
     factory { com.tumbaspos.app.domain.usecase.warehouse.GetStockHistoryUseCase(get()) }
+    factory { com.tumbaspos.app.domain.usecase.warehouse.GetCategoriesUseCase(get()) }
 
     // Product Use Cases
     factory { com.tumbaspos.app.domain.usecase.product.ManageProductImageUseCase(get(), get()) }
@@ -108,8 +110,10 @@ val appModule = module {
     // Database Initializer
     single<com.tumbaspos.app.data.local.DatabaseInitializer> { 
         com.tumbaspos.app.data.local.DatabaseInitializer(
+            androidContext(),
             get<ProductDao>(), 
-            get<CustomerDao>(), 
+            get<CustomerDao>(),
+            get<com.tumbaspos.app.data.local.dao.CategoryDao>(),
             get<SettingsRepository>()
         ) 
     }
@@ -130,5 +134,9 @@ val appModule = module {
     viewModel { com.tumbaspos.app.presentation.scan.ScanViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.settings.printer.PrinterSettingsViewModel(get(), androidContext()) }
     viewModel { com.tumbaspos.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get()) }
-    viewModel { com.tumbaspos.app.presentation.product.ProductViewModel(get(), get(), get()) }
+    viewModel { 
+        com.tumbaspos.app.presentation.product.ProductViewModel(
+            get(), get(), get(), get()
+        ) 
+    }
 }

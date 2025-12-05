@@ -14,7 +14,7 @@ data class ProductEntity(
     val price: Double,
     val costPrice: Double,
     val stock: Int,
-    val category: String,
+    val categoryId: Long,
     val image: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
@@ -103,5 +103,14 @@ data class StockMovementEntity(
     val quantity: Int,
     val referenceId: Long?, // PurchaseOrderID or SalesOrderID
     val notes: String,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "categories")
+@Serializable
+data class CategoryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val description: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )

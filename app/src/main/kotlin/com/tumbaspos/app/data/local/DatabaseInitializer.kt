@@ -6,11 +6,14 @@ import com.tumbaspos.app.data.local.entity.CustomerEntity
 import com.tumbaspos.app.data.local.entity.ProductEntity
 import com.tumbaspos.app.data.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
 class DatabaseInitializer(
+    private val context: android.content.Context,
     private val productDao: ProductDao,
     private val customerDao: CustomerDao,
+    private val categoryDao: com.tumbaspos.app.data.local.dao.CategoryDao,
     private val settingsRepository: SettingsRepository
 ) {
     suspend fun initializeIfNeeded() = withContext(Dispatchers.IO) {
@@ -18,16 +21,77 @@ class DatabaseInitializer(
             return@withContext
         }
 
-        // Insert sample products
-        insertSampleProducts()
+        // Insert categories from CSV
+        insertCategoriesFromCsv()
+
+        // Insert products from CSV
+        insertProductsFromCsv()
         
-        // Insert default guest customer
-        insertDefaultCustomer()
+        // Insert customers from CSV
+        insertCustomersFromCsv()
         
         // Mark as initialized
         settingsRepository.setDatabaseInitialized(true)
     }
     
+    private suspend fun insertCategoriesFromCsv() {
+        try {
+            val categories = mutableListOf<com.tumbaspos.app.data.local.entity.CategoryEntity>()
+            context.assets.open("categories.csv").bufferedReader().use { reader ->
+                reader.readLine() // Skip header
+                reader.forEachLine { line ->
+                    val tokens = parseCsvLine(line)
+                    if (tokens.size >= 1) {
+                        categories.add(
+                            com.tumbaspos.app.data.local.entity.CategoryEntity(
+                                id = tokens[0].toLongOrNull() ?: 0L,
+                                name = if (tokens.size > 1) tokens[1] else "Unknown",
+                                description = if (tokens.size > 2) tokens[2] else ""
+                            )
+                        )
+                    }
+                }
+            }
+            if (categories.isNotEmpty()) {
+                categoryDao.insertAll(categories)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    
+    private suspend fun insertCustomersFromCsv() {
+        try {
+            val customers = mutableListOf<CustomerEntity>()
+            context.assets.open("customers.csv").bufferedReader().use { reader ->
+                reader.readLine() // Skip header
+                reader.forEachLine { line ->
+                    val tokens = parseCsvLine(line)
+                    if (tokens.size >= 4) {
+                        customers.add(
+                            CustomerEntity(
+                                name = tokens[0],
+                                phone = tokens[1],
+                                email = tokens[2],
+                                address = tokens[3]
+                            )
+                        )
+                    }
+                }
+            }
+            if (customers.isNotEmpty()) {
+                customerDao.insertCustomer(customers.first()) // Insert first individually if needed or loop
+                // The Dao might not have insertAll for customers, let's check. 
+                // Creating a loop for safety as insertAll might not exist on CustomerDao
+                customers.forEach { customerDao.insertCustomer(it) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Fallback to default if CSV fails
+            insertDefaultCustomer()
+        }
+    }
+
     private suspend fun insertDefaultCustomer() {
         val guest = CustomerEntity(
             name = "Guest",
@@ -38,194 +102,51 @@ class DatabaseInitializer(
         customerDao.insertCustomer(guest)
     }
 
-    private suspend fun insertSampleProducts() {
-        val sampleProducts = listOf(
-            // Personal Care
-            ProductEntity(
-                barcode = "8991102100014",
-                name = "Shampoo Anti-Dandruff 200ml",
-                description = "Anti-dandruff shampoo for healthy hair",
-                price = 25000.0,
-                costPrice = 18000.0,
-                stock = 50,
-                category = "Personal Care"
-            ),
-            ProductEntity(
-                barcode = "8991102100021",
-                name = "Bath Soap 90g",
-                description = "Moisturizing bath soap",
-                price = 5000.0,
-                costPrice = 3500.0,
-                stock = 100,
-                category = "Personal Care"
-            ),
-            ProductEntity(
-                barcode = "8991102100038",
-                name = "Toothpaste Fresh Mint 150g",
-                description = "Fresh mint toothpaste with fluoride",
-                price = 12000.0,
-                costPrice = 8500.0,
-                stock = 75,
-                category = "Personal Care"
-            ),
+    private suspend fun insertProductsFromCsv() {
+        try {
+            val products = mutableListOf<ProductEntity>()
+            context.assets.open("products.csv").bufferedReader().use { reader ->
+                reader.readLine() // Skip header
+                reader.forEachLine { line ->
+                    val tokens = parseCsvLine(line)
+                    // tokens: barcode, name, description, price, costPrice, stock, categoryId, image
+                    if (tokens.size >= 7) {
+                        products.add(
+                            ProductEntity(
+                                barcode = tokens[0],
+                                name = tokens[1],
+                                description = tokens[2],
+                                price = tokens[3].toDoubleOrNull() ?: 0.0,
+                                costPrice = tokens[4].toDoubleOrNull() ?: 0.0,
+                                stock = tokens[5].toIntOrNull() ?: 0,
+                                categoryId = tokens[6].toLongOrNull() ?: 0L,
+                                image = if (tokens.size > 7 && tokens[7].isNotBlank()) tokens[7] else null
+                            )
+                        )
+                    }
+                }
+            }
+            if (products.isNotEmpty()) {
+                productDao.insertAll(products)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
-            // Food
-            ProductEntity(
-                barcode = "8992761111014",
-                name = "Premium Rice 5kg",
-                description = "Premium quality white rice",
-                price = 65000.0,
-                costPrice = 52000.0,
-                stock = 30,
-                category = "Food"
-            ),
-            ProductEntity(
-                barcode = "8992761111021",
-                name = "Instant Noodles Chicken Flavor",
-                description = "Delicious instant noodles",
-                price = 3000.0,
-                costPrice = 2200.0,
-                stock = 200,
-                category = "Food"
-            ),
-            ProductEntity(
-                barcode = "8992761111038",
-                name = "Cooking Oil 2L",
-                description = "Pure cooking oil",
-                price = 32000.0,
-                costPrice = 26000.0,
-                stock = 40,
-                category = "Food"
-            ),
-
-            // Drink
-            ProductEntity(
-                barcode = "8993675100014",
-                name = "Mineral Water 600ml",
-                description = "Pure mineral water",
-                price = 3500.0,
-                costPrice = 2500.0,
-                stock = 150,
-                category = "Drink"
-            ),
-            ProductEntity(
-                barcode = "8993675100021",
-                name = "Soft Drink Cola 330ml",
-                description = "Refreshing cola drink",
-                price = 6000.0,
-                costPrice = 4200.0,
-                stock = 100,
-                category = "Drink"
-            ),
-            ProductEntity(
-                barcode = "8993675100038",
-                name = "Instant Coffee 3-in-1",
-                description = "Coffee with sugar and creamer",
-                price = 2000.0,
-                costPrice = 1400.0,
-                stock = 180,
-                category = "Drink"
-            ),
-
-            // Home Care
-            ProductEntity(
-                barcode = "8994567100014",
-                name = "Laundry Detergent 1kg",
-                description = "Powerful cleaning detergent",
-                price = 18000.0,
-                costPrice = 13500.0,
-                stock = 60,
-                category = "Home Care"
-            ),
-            ProductEntity(
-                barcode = "8994567100021",
-                name = "Dishwashing Liquid 800ml",
-                description = "Effective dishwashing liquid",
-                price = 12000.0,
-                costPrice = 9000.0,
-                stock = 70,
-                category = "Home Care"
-            ),
-
-            // Snacks
-            ProductEntity(
-                barcode = "8995432100014",
-                name = "Potato Chips BBQ 60g",
-                description = "Crispy BBQ flavored chips",
-                price = 8000.0,
-                costPrice = 5600.0,
-                stock = 120,
-                category = "Snacks"
-            ),
-            ProductEntity(
-                barcode = "8995432100021",
-                name = "Chocolate Cookies 150g",
-                description = "Delicious chocolate cookies",
-                price = 15000.0,
-                costPrice = 11000.0,
-                stock = 80,
-                category = "Snacks"
-            ),
-            ProductEntity(
-                barcode = "8995432100038",
-                name = "Candy Mix 100g",
-                description = "Assorted fruit candies",
-                price = 5000.0,
-                costPrice = 3500.0,
-                stock = 150,
-                category = "Snacks"
-            ),
-
-            // Electronics
-            ProductEntity(
-                barcode = "8996321100014",
-                name = "AA Batteries 4-Pack",
-                description = "Alkaline AA batteries",
-                price = 20000.0,
-                costPrice = 15000.0,
-                stock = 50,
-                category = "Electronics"
-            ),
-            ProductEntity(
-                barcode = "8996321100021",
-                name = "USB Phone Charger Cable",
-                description = "Universal USB charging cable",
-                price = 35000.0,
-                costPrice = 25000.0,
-                stock = 40,
-                category = "Electronics"
-            ),
-
-            // Stationery
-            ProductEntity(
-                barcode = "8997654100014",
-                name = "Ballpoint Pen Blue",
-                description = "Smooth writing ballpoint pen",
-                price = 3000.0,
-                costPrice = 2000.0,
-                stock = 200,
-                category = "Stationery"
-            ),
-            ProductEntity(
-                barcode = "8997654100021",
-                name = "Notebook A5 80 Pages",
-                description = "Quality ruled notebook",
-                price = 12000.0,
-                costPrice = 8500.0,
-                stock = 100,
-                category = "Stationery"
-            ),
-            ProductEntity(
-                barcode = "8997654100038",
-                name = "Pencil HB 12-Pack",
-                description = "Standard HB pencils",
-                price = 15000.0,
-                costPrice = 11000.0,
-                stock = 60,
-                category = "Stationery"
-            )
-        )
-
-        productDao.insertAll(sampleProducts)
+    private fun parseCsvLine(line: String): List<String> {
+        val tokens = mutableListOf<String>()
+        var start = 0
+        var inQuotes = false
+        for (i in line.indices) {
+            if (line[i] == '\"') {
+                inQuotes = !inQuotes
+            } else if (line[i] == ',' && !inQuotes) {
+                tokens.add(line.substring(start, i).trim().removeSurrounding("\""))
+                start = i + 1
+            }
+        }
+        tokens.add(line.substring(start).trim().removeSurrounding("\""))
+        return tokens
     }
 }

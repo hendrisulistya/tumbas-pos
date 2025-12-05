@@ -173,7 +173,7 @@ fun RestoreStoreScreen(
                         Button(
                             onClick = viewModel::onCheckBackups,
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = uiState.appId.isNotBlank() && uiState.activationCode.isNotBlank()
+                            enabled = uiState.appId.isNotBlank() && uiState.activationCode.text.isNotBlank()
                         ) {
                             Icon(Icons.Default.Search, null)
                             Spacer(modifier = Modifier.width(8.dp))

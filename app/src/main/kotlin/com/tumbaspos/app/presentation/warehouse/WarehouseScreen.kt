@@ -62,11 +62,11 @@ fun WarehouseScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.filteredProducts) { product ->
+                    items(uiState.filteredProducts) { productWithCategory ->
                         ProductItem(
-                            product = product,
+                            productWithCategory = productWithCategory,
                             currencyFormatter = currencyFormatter,
-                            onStockClick = { viewModel.onStockAdjustmentClick(product) }
+                            onStockClick = { viewModel.onStockAdjustmentClick(productWithCategory) }
                         )
                     }
                 }
@@ -77,7 +77,7 @@ fun WarehouseScreen(
 
     if (uiState.isStockAdjustmentDialogOpen) {
         StockAdjustmentDialog(
-            product = uiState.selectedProduct!!,
+            product = uiState.selectedProduct!!.product,
             onDismiss = viewModel::onStockAdjustmentDialogDismiss,
             onConfirm = viewModel::onConfirmStockAdjustment
         )
@@ -86,10 +86,11 @@ fun WarehouseScreen(
 
 @Composable
 fun ProductItem(
-    product: ProductEntity,
+    productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory,
     currencyFormatter: NumberFormat,
     onStockClick: () -> Unit
 ) {
+    val product = productWithCategory.product
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {

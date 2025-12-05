@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class WarehouseUiState(
-    val products: List<ProductEntity> = emptyList(),
-    val filteredProducts: List<ProductEntity> = emptyList(),
+    val products: List<com.tumbaspos.app.data.local.dao.ProductWithCategory> = emptyList(),
+    val filteredProducts: List<com.tumbaspos.app.data.local.dao.ProductWithCategory> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = false,
-    val selectedProduct: ProductEntity? = null,
+    val selectedProduct: com.tumbaspos.app.data.local.dao.ProductWithCategory? = null,
     val isStockAdjustmentDialogOpen: Boolean = false
 )
 
@@ -57,17 +57,18 @@ class WarehouseViewModel(
         }
     }
 
-    private fun filterProducts(products: List<ProductEntity>, query: String): List<ProductEntity> {
+    private fun filterProducts(products: List<com.tumbaspos.app.data.local.dao.ProductWithCategory>, query: String): List<com.tumbaspos.app.data.local.dao.ProductWithCategory> {
         if (query.isBlank()) return products
         return products.filter {
-            it.name.contains(query, ignoreCase = true) ||
-            it.barcode.contains(query, ignoreCase = true)
+            it.product.name.contains(query, ignoreCase = true) ||
+            it.product.barcode.contains(query, ignoreCase = true) ||
+            (it.category?.name?.contains(query, ignoreCase = true) == true)
         }
     }
 
 
 
-    fun onStockAdjustmentClick(product: ProductEntity) {
+    fun onStockAdjustmentClick(product: com.tumbaspos.app.data.local.dao.ProductWithCategory) {
         _uiState.update { it.copy(selectedProduct = product, isStockAdjustmentDialogOpen = true) }
     }
 
@@ -76,10 +77,10 @@ class WarehouseViewModel(
     }
 
     fun onConfirmStockAdjustment(quantityChange: Int, reason: String) {
-        val product = _uiState.value.selectedProduct ?: return
+        val productWithCategory = _uiState.value.selectedProduct ?: return
         viewModelScope.launch {
             adjustStockUseCase(
-                productId = product.id,
+                productId = productWithCategory.product.id,
                 quantityChange = quantityChange,
                 reason = reason
             )

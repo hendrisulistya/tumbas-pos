@@ -157,11 +157,11 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(uiState.products) { product ->
+                    items(uiState.products) { productWithCategory ->
                         ProductCard(
-                            product = product,
+                            productWithCategory = productWithCategory,
                             currencyFormatter = currencyFormatter,
-                            onAddToCart = { viewModel.addToCart(product) }
+                            onAddToCart = { viewModel.addToCart(productWithCategory) }
                         )
                     }
                 }
@@ -172,10 +172,13 @@ fun HomeScreen(
 
 @Composable
 fun ProductCard(
-    product: com.tumbaspos.app.data.local.entity.ProductEntity,
+    productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory,
     currencyFormatter: NumberFormat,
     onAddToCart: () -> Unit
 ) {
+    val product = productWithCategory.product
+    val categoryName = productWithCategory.category?.name ?: "Uncategorized"
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -197,7 +200,7 @@ fun ProductCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    product.category,
+                    categoryName,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

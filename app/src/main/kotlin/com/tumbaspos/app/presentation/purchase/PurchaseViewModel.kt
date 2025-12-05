@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 data class PurchaseUiState(
     val orders: List<PurchaseOrderWithItems> = emptyList(),
     val suppliers: List<SupplierEntity> = emptyList(),
-    val searchResults: List<ProductEntity> = emptyList(),
+    val searchResults: List<com.tumbaspos.app.data.local.dao.ProductWithCategory> = emptyList(),
     val isLoading: Boolean = false,
     val isCreateOrderDialogOpen: Boolean = false,
     val isSupplierDialogOpen: Boolean = false,
@@ -95,7 +95,8 @@ class PurchaseViewModel(
         }
     }
 
-    fun onAddProductToOrder(product: ProductEntity) {
+    fun onAddProductToOrder(productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory) {
+        val product = productWithCategory.product
         _uiState.update { state ->
             val existingItem = state.newOrderItems.find { it.product.id == product.id }
             val newItems = if (existingItem != null) {

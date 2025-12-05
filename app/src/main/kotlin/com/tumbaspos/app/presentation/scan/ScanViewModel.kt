@@ -39,19 +39,19 @@ class ScanViewModel(
         isProcessing = true
         viewModelScope.launch {
             try {
-                val product = productRepository.getProductByBarcode(barcode)
-                if (product != null) {
+                val productWithCategory = productRepository.getProductByBarcode(barcode)
+                if (productWithCategory != null) {
                     // Beep sound
                     toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP)
                     
                     // Add to cart
-                    cartRepository.addToCart(product, 1)
+                    cartRepository.addToCart(productWithCategory.product, 1)
                     
                     _uiState.update { 
                         it.copy(
                             lastScannedBarcode = barcode,
-                            lastScannedProductName = product.name,
-                            successMessage = "Added ${product.name} to cart",
+                            lastScannedProductName = productWithCategory.product.name,
+                            successMessage = "Added ${productWithCategory.product.name} to cart",
                             error = null
                         ) 
                     }

@@ -14,7 +14,8 @@ import com.tumbaspos.app.data.local.entity.*
         SupplierEntity::class,
         PurchaseOrderEntity::class,
         PurchaseOrderItemEntity::class,
-        com.tumbaspos.app.data.local.entity.CustomerEntity::class
+        com.tumbaspos.app.data.local.entity.CustomerEntity::class,
+        CategoryEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -27,4 +28,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun stockDao(): StockDao
     abstract fun reportingDao(): ReportingDao
     abstract fun customerDao(): com.tumbaspos.app.data.local.dao.CustomerDao
+    abstract fun categoryDao(): CategoryDao
 }

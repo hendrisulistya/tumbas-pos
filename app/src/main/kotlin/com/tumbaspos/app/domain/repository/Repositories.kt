@@ -7,10 +7,11 @@ import com.tumbaspos.app.data.local.entity.SalesOrderItemEntity
 import kotlinx.coroutines.flow.Flow
 
 interface ProductRepository {
-    fun getAllProducts(): Flow<List<ProductEntity>>
-    suspend fun getProductById(id: Long): ProductEntity?
-    suspend fun getProductByBarcode(barcode: String): ProductEntity?
-    fun searchProducts(query: String): Flow<List<ProductEntity>>
+    fun getAllProducts(): Flow<List<com.tumbaspos.app.data.local.dao.ProductWithCategory>>
+    fun getAllCategories(): Flow<List<com.tumbaspos.app.data.local.entity.CategoryEntity>>
+    suspend fun getProductById(id: Long): com.tumbaspos.app.data.local.dao.ProductWithCategory?
+    suspend fun getProductByBarcode(barcode: String): com.tumbaspos.app.data.local.dao.ProductWithCategory?
+    fun searchProducts(query: String): Flow<List<com.tumbaspos.app.data.local.dao.ProductWithCategory>>
     suspend fun insertProduct(product: ProductEntity): Long
     suspend fun updateProduct(product: ProductEntity)
     suspend fun deleteProduct(product: ProductEntity)

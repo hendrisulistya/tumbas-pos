@@ -29,7 +29,7 @@ data class CartItem(
 data class SalesUiState(
     val cart: List<CartItem> = emptyList(),
     val searchQuery: String = "",
-    val searchResults: List<ProductEntity> = emptyList(),
+    val searchResults: List<com.tumbaspos.app.data.local.dao.ProductWithCategory> = emptyList(),
     val totalAmount: Double = 0.0,
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -88,16 +88,16 @@ class SalesViewModel(
         }
     }
 
-    fun onProductSelected(product: ProductEntity) {
-        addToCart(product)
+    fun onProductSelected(productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory) {
+        addToCart(productWithCategory.product)
         _uiState.update { it.copy(searchQuery = "", searchResults = emptyList()) }
     }
 
     fun onBarcodeScanned(barcode: String) {
         viewModelScope.launch {
-            val product = getProductByBarcodeUseCase(barcode)
-            if (product != null) {
-                addToCart(product)
+            val productWithCategory = getProductByBarcodeUseCase(barcode)
+            if (productWithCategory != null) {
+                addToCart(productWithCategory.product)
             } else {
                 _uiState.update { it.copy(error = "Product not found") }
             }

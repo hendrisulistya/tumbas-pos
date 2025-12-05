@@ -1,26 +1,32 @@
 package com.tumbaspos.app.data.repository
 
 import com.tumbaspos.app.data.local.dao.ProductDao
+import com.tumbaspos.app.data.local.dao.ProductWithCategory
 import com.tumbaspos.app.data.local.entity.ProductEntity
 import com.tumbaspos.app.domain.repository.ProductRepository
 import kotlinx.coroutines.flow.Flow
 
 class ProductRepositoryImpl(
-    private val productDao: ProductDao
+    private val productDao: ProductDao,
+    private val categoryDao: com.tumbaspos.app.data.local.dao.CategoryDao
 ) : ProductRepository {
-    override fun getAllProducts(): Flow<List<ProductEntity>> {
+    override fun getAllProducts(): Flow<List<ProductWithCategory>> {
         return productDao.getAllProducts()
     }
 
-    override suspend fun getProductById(id: Long): ProductEntity? {
+    override fun getAllCategories(): Flow<List<com.tumbaspos.app.data.local.entity.CategoryEntity>> {
+        return categoryDao.getAllCategories()
+    }
+
+    override suspend fun getProductById(id: Long): ProductWithCategory? {
         return productDao.getProductById(id)
     }
 
-    override suspend fun getProductByBarcode(barcode: String): ProductEntity? {
+    override suspend fun getProductByBarcode(barcode: String): ProductWithCategory? {
         return productDao.getProductByBarcode(barcode)
     }
 
-    override fun searchProducts(query: String): Flow<List<ProductEntity>> {
+    override fun searchProducts(query: String): Flow<List<ProductWithCategory>> {
         return productDao.searchProducts(query)
     }
 

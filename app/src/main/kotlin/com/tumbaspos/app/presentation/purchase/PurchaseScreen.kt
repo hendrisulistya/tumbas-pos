@@ -176,7 +176,7 @@ fun CreateOrderDialog(
     onDismiss: () -> Unit,
     onSelectSupplier: (SupplierEntity) -> Unit,
     onSearchProduct: (String) -> Unit,
-    onAddProduct: (com.tumbaspos.app.data.local.entity.ProductEntity) -> Unit,
+    onAddProduct: (com.tumbaspos.app.data.local.dao.ProductWithCategory) -> Unit,
     onUpdateQuantity: (com.tumbaspos.app.data.local.entity.ProductEntity, Int) -> Unit,
     onSubmit: () -> Unit,
     currencyFormatter: NumberFormat
@@ -214,12 +214,12 @@ fun CreateOrderDialog(
                     
                     if (uiState.searchResults.isNotEmpty()) {
                         LazyColumn(modifier = Modifier.height(100.dp)) {
-                            items(uiState.searchResults) { product ->
+                            items(uiState.searchResults) { productWithCategory ->
                                 TextButton(
-                                    onClick = { onAddProduct(product) },
+                                    onClick = { onAddProduct(productWithCategory) },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text(product.name)
+                                    Text(productWithCategory.product.name)
                                 }
                             }
                         }
