@@ -111,7 +111,7 @@ val appModule = module {
     // ViewModels
     viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.home.HomeViewModel(get(), get()) }
-    viewModel { com.tumbaspos.app.presentation.warehouse.WarehouseViewModel(get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.warehouse.WarehouseViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.purchase.PurchaseViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.reporting.ReportingViewModel(get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.backup.BackupViewModel(get(), get(), get(), get(), get()) }
@@ -122,4 +122,5 @@ val appModule = module {
     viewModel { com.tumbaspos.app.presentation.scan.ScanViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.settings.printer.PrinterSettingsViewModel(get(), androidContext()) }
     viewModel { com.tumbaspos.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.product.ProductViewModel(get(), get()) }
 }

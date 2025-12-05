@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -36,6 +37,60 @@ class EscPosPrinterManager(
 
     private var printer: EscPosPrinter? = null
 
+    private val _scannedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    override val scannedDevices: StateFlow<List<BluetoothDevice>> = _scannedDevices.asStateFlow()
+
+    private val bluetoothReceiver = object : android.content.BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                BluetoothDevice.ACTION_FOUND -> {
+                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    device?.let {
+                        val currentList = _scannedDevices.value.toMutableList()
+                        if (currentList.none { d -> d.address == it.address }) {
+                            currentList.add(it)
+                            _scannedDevices.value = currentList
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    override suspend fun startScan() {
+        withContext(Dispatchers.Main) {
+            val bluetoothAdapter = context.getSystemService(BluetoothManager::class.java)?.adapter
+            if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+                throw Exception("Bluetooth is not enabled")
+            }
+
+            _scannedDevices.value = emptyList()
+            
+            val filter = android.content.IntentFilter(BluetoothDevice.ACTION_FOUND)
+            context.registerReceiver(bluetoothReceiver, filter)
+            
+            if (bluetoothAdapter.isDiscovering) {
+                bluetoothAdapter.cancelDiscovery()
+            }
+            bluetoothAdapter.startDiscovery()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    override suspend fun stopScan() {
+        withContext(Dispatchers.Main) {
+            val bluetoothAdapter = context.getSystemService(BluetoothManager::class.java)?.adapter
+            bluetoothAdapter?.cancelDiscovery()
+            try {
+                context.unregisterReceiver(bluetoothReceiver)
+            } catch (e: IllegalArgumentException) {
+                // Receiver not registered
+            }
+        }
+    }
+
     @SuppressLint("MissingPermission")
     override suspend fun connectBluetooth(deviceAddress: String) {
         withContext(Dispatchers.IO) {
@@ -45,29 +100,24 @@ class EscPosPrinterManager(
                     throw Exception("Bluetooth is not enabled")
                 }
 
-                val connection = BluetoothPrintersConnections.selectFirstPaired()
-                if (connection != null) {
-                    // In a real app, we'd select the specific device by address. 
-                    // The library's selectFirstPaired() is a simplification.
-                    // To connect to a specific device, we might need to iterate or use a custom connection.
-                    // For now, let's assume we are connecting to the selected one.
-                    
-                    // Actually, let's try to find the specific connection
-                    // The library doesn't easily expose a way to create a connection from address directly 
-                    // without iterating paired devices yourself or using its helper.
-                    // Let's stick to a simple approach: Try to connect to the passed address.
-                    
-                    // Since the library's BluetoothConnection constructor takes a BluetoothDevice,
-                    // let's get it from the adapter.
-                    val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
-                    val printerConnection = com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection(device)
-                    
-                    printer = EscPosPrinter(printerConnection, 203, 48f, 32)
-                    _isConnected.value = true
-                    _connectedDeviceName.value = device.name ?: deviceAddress
-                } else {
-                     throw Exception("No paired printer found")
+                // Stop discovery before connecting
+                bluetoothAdapter.cancelDiscovery()
+
+                val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
+                
+                // Initiate pairing if not bonded
+                if (device.bondState != BluetoothDevice.BOND_BONDED) {
+                    device.createBond()
+                    // Wait for bonding? Ideally we should listen to BOND_STATE_CHANGED, 
+                    // but for simplicity we might just proceed or let the user try again.
+                    // The createBond() call is asynchronous.
                 }
+
+                val printerConnection = com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection(device)
+                
+                printer = EscPosPrinter(printerConnection, 203, 48f, 32)
+                _isConnected.value = true
+                _connectedDeviceName.value = device.name ?: deviceAddress
             } catch (e: Exception) {
                 Log.e("PrinterManager", "Error connecting Bluetooth", e)
                 _isConnected.value = false

@@ -56,6 +56,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     data object RestoreStore : Screen("restore_store", "Restore Store")
     data object PrinterSettings : Screen("printer_settings", "Printer")
     data object SalesOrderDetail : Screen("sales_order_detail", "Order Details")
+    data object Product : Screen("products", "Products")
 }
 
 @Composable
@@ -149,7 +150,8 @@ fun App() {
                             onNavigateToSalesOrder = { navController.navigate(Screen.SalesOrder.route) },
                             onNavigateToWarehouse = { navController.navigate(Screen.Warehouse.route) },
                             onNavigateToPurchase = { navController.navigate(Screen.Purchase.route) },
-                            onNavigateToReporting = { navController.navigate(Screen.Reporting.route) }
+                            onNavigateToReporting = { navController.navigate(Screen.Reporting.route) },
+                            onNavigateToProduct = { navController.navigate(Screen.Product.route) }
                         )
                     }
                     
@@ -244,6 +246,12 @@ fun App() {
                                     popUpTo(Screen.PostActivation.route) { inclusive = true }
                                 }
                             }
+                        )
+                    }
+
+                    composable(Screen.Product.route) {
+                        com.tumbaspos.app.presentation.product.ProductScreen(
+                            onNavigateBack = { navController.popBackStack() }
                         )
                     }
                 }

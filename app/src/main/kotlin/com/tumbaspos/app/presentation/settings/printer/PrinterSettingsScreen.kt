@@ -149,35 +149,81 @@ fun PrinterSettingsScreen(
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            Text(
-                text = "Paired Bluetooth Devices",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
             if (!bluetoothPermissionsState.allPermissionsGranted) {
                 Button(onClick = { bluetoothPermissionsState.launchMultiplePermissionRequest() }) {
                     Text("Grant Bluetooth Permissions")
                 }
-            } else if (uiState.pairedDevices.isEmpty()) {
+            } else if (uiState.pairedDevices.isEmpty() && uiState.scannedDevices.isEmpty()) {
                 Text(
-                    text = "No paired devices found. Please pair a printer in Android Settings first.",
+                    text = "No paired devices found.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
                 Button(
-                    onClick = { viewModel.loadPairedDevices() },
+                    onClick = { viewModel.startScan() },
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
-                    Text("Refresh")
+                    Text(if (uiState.isScanning) "Scanning..." else "Scan for Devices")
                 }
             } else {
-                LazyColumn {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    item {
+                        Text(
+                            text = "Paired Devices",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
                     items(uiState.pairedDevices) { device: android.bluetooth.BluetoothDevice ->
                         BluetoothDeviceItem(
                             device = device,
                             isConnected = uiState.isConnected && uiState.connectedDeviceName == (device.name ?: device.address),
                             onClick = { viewModel.connectBluetooth(device.address) }
+                        )
+                    }
+                    
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Available Devices",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (uiState.isScanning) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                TextButton(onClick = { viewModel.startScan() }) {
+                                    Text("Scan")
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (uiState.scannedDevices.isEmpty() && !uiState.isScanning) {
+                        item {
+                            Text(
+                                text = "No devices found. Tap Scan to search.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    }
+                    
+                    items(uiState.scannedDevices) { device: android.bluetooth.BluetoothDevice ->
+                        BluetoothDeviceItem(
+                            device = device,
+                            isConnected = false,
+                            onClick = { viewModel.connectBluetooth(device.address) } // This will trigger pairing if needed
                         )
                     }
                 }

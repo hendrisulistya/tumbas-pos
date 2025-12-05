@@ -8,6 +8,10 @@ interface PrinterManager {
     val isConnected: StateFlow<Boolean>
     val connectedDeviceName: StateFlow<String?>
     
+    val scannedDevices: StateFlow<List<android.bluetooth.BluetoothDevice>>
+    
+    suspend fun startScan()
+    suspend fun stopScan()
     suspend fun connectBluetooth(deviceAddress: String)
     suspend fun connectUsb(usbDeviceName: String) // Simplified for now
     suspend fun disconnect()

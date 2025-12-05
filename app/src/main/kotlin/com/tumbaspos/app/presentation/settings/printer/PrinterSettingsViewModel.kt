@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 
 data class PrinterSettingsUiState(
     val pairedDevices: List<BluetoothDevice> = emptyList(),
+    val scannedDevices: List<BluetoothDevice> = emptyList(),
+    val isScanning: Boolean = false,
     val isConnected: Boolean = false,
     val connectedDeviceName: String? = null,
     val error: String? = null,
@@ -42,6 +44,11 @@ class PrinterSettingsViewModel(
                 _uiState.update { it.copy(connectedDeviceName = name) }
             }
         }
+        viewModelScope.launch {
+            printerManager.scannedDevices.collect { devices ->
+                _uiState.update { it.copy(scannedDevices = devices) }
+            }
+        }
         loadPairedDevices()
     }
 
@@ -58,11 +65,34 @@ class PrinterSettingsViewModel(
         }
     }
 
+    fun startScan() {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isScanning = true) }
+                printerManager.startScan()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Scan failed: ${e.message}", isScanning = false) }
+            }
+        }
+    }
+
+    fun stopScan() {
+        viewModelScope.launch {
+            try {
+                printerManager.stopScan()
+                _uiState.update { it.copy(isScanning = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Stop scan failed: ${e.message}") }
+            }
+        }
+    }
+
     fun connectBluetooth(deviceAddress: String) {
         viewModelScope.launch {
             try {
                 printerManager.connectBluetooth(deviceAddress)
                 _uiState.update { it.copy(successMessage = "Connected successfully", error = null) }
+                loadPairedDevices() // Refresh paired list after potential pairing
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Connection failed: ${e.message}") }
             }

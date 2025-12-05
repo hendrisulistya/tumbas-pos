@@ -36,11 +36,6 @@ fun WarehouseScreen(
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = viewModel::onAddProductClick) {
-                Icon(Icons.Default.Add, "Add Product")
-            }
         }
     ) { padding ->
         Column(
@@ -71,9 +66,7 @@ fun WarehouseScreen(
                         ProductItem(
                             product = product,
                             currencyFormatter = currencyFormatter,
-                            onEditClick = { viewModel.onEditProductClick(product) },
-                            onStockClick = { viewModel.onStockAdjustmentClick(product) },
-                            onDeleteClick = { viewModel.onDeleteProduct(product) }
+                            onStockClick = { viewModel.onStockAdjustmentClick(product) }
                         )
                     }
                 }
@@ -81,13 +74,6 @@ fun WarehouseScreen(
         }
     }
 
-    if (uiState.isProductDialogOpen) {
-        ProductDialog(
-            product = uiState.selectedProduct,
-            onDismiss = viewModel::onProductDialogDismiss,
-            onSave = viewModel::onSaveProduct
-        )
-    }
 
     if (uiState.isStockAdjustmentDialogOpen) {
         StockAdjustmentDialog(
@@ -102,9 +88,7 @@ fun WarehouseScreen(
 fun ProductItem(
     product: ProductEntity,
     currencyFormatter: NumberFormat,
-    onEditClick: () -> Unit,
-    onStockClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onStockClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -139,96 +123,12 @@ fun ProductItem(
                     IconButton(onClick = onStockClick) {
                         Icon(Icons.Default.Inventory, "Adjust Stock")
                     }
-                    IconButton(onClick = onEditClick) {
-                        Icon(Icons.Default.Edit, "Edit")
-                    }
-                    IconButton(onClick = onDeleteClick) {
-                        Icon(Icons.Default.Delete, "Delete")
-                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun ProductDialog(
-    product: ProductEntity?,
-    onDismiss: () -> Unit,
-    onSave: (ProductEntity) -> Unit
-) {
-    var name by remember { mutableStateOf(product?.name ?: "") }
-    var barcode by remember { mutableStateOf(product?.barcode ?: "") }
-    var price by remember { mutableStateOf(product?.price?.toString() ?: "") }
-    var costPrice by remember { mutableStateOf(product?.costPrice?.toString() ?: "") }
-    var category by remember { mutableStateOf(product?.category ?: "") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (product == null) "Add Product" else "Edit Product") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = barcode,
-                    onValueChange = { barcode = it },
-                    label = { Text("Barcode") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Product Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Selling Price") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = costPrice,
-                    onValueChange = { costPrice = it },
-                    label = { Text("Cost Price") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = category,
-                    onValueChange = { category = it },
-                    label = { Text("Category") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val newProduct = ProductEntity(
-                        id = product?.id ?: 0,
-                        barcode = barcode,
-                        name = name,
-                        description = "",
-                        price = price.toDoubleOrNull() ?: 0.0,
-                        costPrice = costPrice.toDoubleOrNull() ?: 0.0,
-                        stock = product?.stock ?: 0,
-                        category = category
-                    )
-                    onSave(newProduct)
-                },
-                enabled = name.isNotBlank() && barcode.isNotBlank() && price.isNotBlank()
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
 
 @Composable
 fun StockAdjustmentDialog(

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Warehouse
@@ -72,7 +73,8 @@ fun SettingsScreen(
     onNavigateToSalesOrder: () -> Unit,
     onNavigateToWarehouse: () -> Unit,
     onNavigateToPurchase: () -> Unit,
-    onNavigateToReporting: () -> Unit
+    onNavigateToReporting: () -> Unit,
+    onNavigateToProduct: () -> Unit
 ) {
     val settingsRepository: SettingsRepository = koinInject()
     val appId = remember { settingsRepository.getAppId() }
@@ -150,6 +152,15 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+
+            item {
+                SettingsItem(
+                    icon = Icons.Default.List,
+                    title = "Products",
+                    subtitle = "Manage products",
+                    onClick = onNavigateToProduct
                 )
             }
 
