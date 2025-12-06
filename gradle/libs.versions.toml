@@ -1,7 +1,7 @@
 [versions]
 agp = "8.11.2"
 android-compileSdk = "36"
-android-minSdk = "24"
+android-minSdk = "26"
 android-targetSdk = "36"
 androidx-activity = "1.11.0"
 androidx-appcompat = "1.7.1"
@@ -67,11 +67,8 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin-compose" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 
-# AWS SDK for R2
-aws-s3 = { module = "aws.sdk.kotlin:s3", version = "1.2.0" }
-
-# ML Kit Barcode Scanning
-mlkit-barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }
+# ML Kit Barcode Scanning (Unbundled - uses Play Services)
+mlkit-barcode-scanning = { module = "com.google.android.gms:play-services-mlkit-barcode-scanning", version = "18.3.1" }
 
 # CameraX
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }

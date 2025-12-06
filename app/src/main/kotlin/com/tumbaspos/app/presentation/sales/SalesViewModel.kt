@@ -8,6 +8,7 @@ import com.tumbaspos.app.data.local.entity.SalesOrderItemEntity
 import com.tumbaspos.app.domain.usecase.sales.CreateSalesOrderUseCase
 import com.tumbaspos.app.domain.usecase.sales.GetProductByBarcodeUseCase
 import com.tumbaspos.app.domain.usecase.sales.SearchProductsUseCase
+import com.tumbaspos.app.domain.usecase.settings.GetStoreSettingsUseCase
 import com.tumbaspos.app.data.local.entity.CustomerEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,6 +43,7 @@ class SalesViewModel(
     private val createSalesOrderUseCase: CreateSalesOrderUseCase,
     private val getProductByBarcodeUseCase: GetProductByBarcodeUseCase,
     private val searchProductsUseCase: SearchProductsUseCase,
+    private val getStoreSettingsUseCase: GetStoreSettingsUseCase,
     private val cartRepository: com.tumbaspos.app.domain.repository.CartRepository,
     private val customerRepository: com.tumbaspos.app.domain.repository.CustomerRepository
 ) : ViewModel() {
@@ -148,22 +150,85 @@ class SalesViewModel(
                 createSalesOrderUseCase(order, items)
                 cartRepository.clearCart()
                 
-                // Generate Invoice Text
+                // Generate Invoice Text with Professional Header
+                // Optimized for 58mm thermal printer (32 char width)
                 val customerName = state.customers.find { it.id == customerId }?.name ?: "Unknown"
+                
+                // Get store settings
+                val storeSettings = getStoreSettingsUseCase().stateIn(
+                    viewModelScope,
+                    SharingStarted.WhileSubscribed(5000),
+                    null
+                ).value
+                
+                // Indonesian number format (dot as thousand separator, comma as decimal)
+                val indonesianFormat = java.text.DecimalFormat("#,###", 
+                    java.text.DecimalFormatSymbols(java.util.Locale("id", "ID")).apply {
+                        groupingSeparator = '.'
+                        decimalSeparator = ','
+                    }
+                )
+                
                 val invoiceText = buildString {
-                    appendLine("TUMBAS POS")
-                    appendLine("Order: $orderNumber")
-                    appendLine("Date: ${java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(java.util.Date())}")
-                    appendLine("Customer: $customerName")
-                    appendLine("-".repeat(30))
+                    // Header with Logo Placeholder
+                    appendLine("================================")
+                    appendLine("          [LOGO]")
+                    appendLine()
+                    appendLine("    ${storeSettings?.storeName ?: "YOUR STORE NAME HERE"}")
+                    appendLine("  ${storeSettings?.storeAddress ?: "Your Street Address"}")
+                    if (storeSettings?.storeAddress?.isNotEmpty() == true) {
+                        // Address might be multiline, just show first line in header
+                    } else {
+                        appendLine("     City, Postal Code")
+                    }
+                    appendLine("   Phone: ${storeSettings?.storePhone ?: "Your Phone No"}")
+                    appendLine("     Tax ID: ${storeSettings?.storeTaxId ?: "Your Tax ID"}")
+                    appendLine("================================")
+                    appendLine()
+                    
+                    // Transaction Details
+                    appendLine("       SALES RECEIPT")
+                    appendLine()
+                    appendLine("Order No : $orderNumber")
+                    val dateStr = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(java.util.Date())
+                    appendLine("Date     : $dateStr")
+                    appendLine("Customer : ${customerName.take(18)}")
+                    appendLine()
+                    appendLine("--------------------------------")
+                    
+                    // Items List
                     items.forEach { item ->
                         val product = state.cart.find { it.product.id == item.productId }?.product
-                        appendLine("${product?.name} x${item.quantity}")
-                        appendLine("  @${item.unitPrice} = ${item.subtotal}")
+                        val productName = product?.name ?: "Unknown"
+                        
+                        // Product name (full text, wrapping allowed)
+                        appendLine(productName)
+                        
+                        // Unit price x quantity = subtotal on one line
+                        appendLine(String.format("  @ %s x %d = %s",
+                            indonesianFormat.format(item.unitPrice.toLong()),
+                            item.quantity,
+                            indonesianFormat.format(item.subtotal.toLong())
+                        ))
+                        
+                        appendLine() // Blank line between items
                     }
-                    appendLine("-".repeat(30))
-                    appendLine("Total: ${state.totalAmount}")
-                    appendLine("Thank you for your purchase!")
+                    
+                    appendLine("--------------------------------")
+                    
+                    // Total
+                    appendLine(String.format("%-21s %9s", 
+                        "TOTAL", 
+                        indonesianFormat.format(state.totalAmount.toLong())
+                    ))
+                    appendLine("================================")
+                    appendLine()
+                    
+                    // Footer
+                    appendLine("   Thank you for shopping!")
+                    appendLine("      Please come again!")
+                    appendLine()
+                    appendLine("================================")
                 }
 
                 _uiState.update { 

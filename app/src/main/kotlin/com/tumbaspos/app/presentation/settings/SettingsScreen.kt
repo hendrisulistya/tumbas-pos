@@ -70,6 +70,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToBackup: () -> Unit,
     onNavigateToPrinter: () -> Unit,
+    onNavigateToStore: () -> Unit,
     onNavigateToSalesOrder: () -> Unit,
     onNavigateToWarehouse: () -> Unit,
     onNavigateToPurchase: () -> Unit,
@@ -206,6 +207,15 @@ fun SettingsScreen(
                     title = "Printer",
                     subtitle = "Manage Bluetooth/USB printers",
                     onClick = onNavigateToPrinter
+                )
+            }
+            
+            item {
+                SettingsItem(
+                    icon = Icons.Default.ShoppingBag,
+                    title = "Store Settings",
+                    subtitle = "Configure store information",
+                    onClick = onNavigateToStore
                 )
             }
             

@@ -59,3 +59,8 @@ interface BackupRepository {
     suspend fun restoreDatabase(r2Config: com.tumbaspos.app.domain.model.R2Config, backupFileName: String, namespace: String? = null): Result<Unit>
     suspend fun getBackups(r2Config: com.tumbaspos.app.domain.model.R2Config, namespace: String? = null): Result<List<String>>
 }
+
+interface StoreSettingsRepository {
+    fun getStoreSettings(): Flow<com.tumbaspos.app.data.local.entity.StoreSettingsEntity?>
+    suspend fun saveStoreSettings(settings: com.tumbaspos.app.data.local.entity.StoreSettingsEntity)
+}

@@ -61,8 +61,12 @@ val appModule = module {
     }
     single { get<AppDatabase>().customerDao() }
     single { get<AppDatabase>().categoryDao() }
+    single { get<AppDatabase>().storeSettingsDao() }
     single<com.tumbaspos.app.domain.repository.ImageRepository> {
         com.tumbaspos.app.data.repository.ImageRepositoryImpl()
+    }
+    single<com.tumbaspos.app.domain.repository.StoreSettingsRepository> {
+        com.tumbaspos.app.data.repository.StoreSettingsRepositoryImpl(get())
     }
     
     single {
@@ -107,6 +111,10 @@ val appModule = module {
     factory { com.tumbaspos.app.domain.usecase.backup.RestoreDatabaseUseCase(get()) }
     factory { com.tumbaspos.app.domain.usecase.backup.GetBackupsUseCase(get()) }
 
+    // Store Settings Use Cases
+    factory { com.tumbaspos.app.domain.usecase.settings.GetStoreSettingsUseCase(get()) }
+    factory { com.tumbaspos.app.domain.usecase.settings.SaveStoreSettingsUseCase(get()) }
+
     // Database Initializer
     single<com.tumbaspos.app.data.local.DatabaseInitializer> { 
         com.tumbaspos.app.data.local.DatabaseInitializer(
@@ -121,7 +129,7 @@ val appModule = module {
     single<com.tumbaspos.app.domain.manager.PrinterManager> { com.tumbaspos.app.data.manager.EscPosPrinterManager(androidContext()) }
     
     // ViewModels
-    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.home.HomeViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.warehouse.WarehouseViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.purchase.PurchaseViewModel(get(), get(), get(), get(), get(), get()) }
@@ -137,6 +145,11 @@ val appModule = module {
     viewModel { 
         com.tumbaspos.app.presentation.product.ProductViewModel(
             get(), get(), get(), get()
+        ) 
+    }
+    viewModel { 
+        com.tumbaspos.app.presentation.settings.store.StoreSettingsViewModel(
+            get(), get(), get()
         ) 
     }
 }

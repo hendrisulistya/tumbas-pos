@@ -25,12 +25,46 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Exclude unused resources
+            excludes += "/META-INF/*.kotlin_module"
+            excludes += "DebugProbesKt.bin"
+        }
+    }
+    
+    signingConfigs {
+        create("release") {
+            // Read from environment variables
+            val keystoreFile = System.getenv("KEYSTORE_FILE")
+            val keystorePass = System.getenv("KEYSTORE_PASSWORD")
+            val keyAliasName = System.getenv("KEY_ALIAS")
+            val keyPass = System.getenv("KEY_PASSWORD")
+            
+            // Only set signing config if all environment variables are present
+            if (!keystoreFile.isNullOrBlank() && 
+                !keystorePass.isNullOrBlank() && 
+                !keyAliasName.isNullOrBlank() && 
+                !keyPass.isNullOrBlank()) {
+                storeFile = file(keystoreFile)
+                storePassword = keystorePass
+                keyAlias = keyAliasName
+                keyPassword = keyPass
+            }
         }
     }
     
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // Only apply signing if keystore is configured
+            val releaseSigningConfig = signingConfigs.getByName("release")
+            if (releaseSigningConfig.storeFile != null) {
+                signingConfig = releaseSigningConfig
+            }
         }
     }
     
@@ -44,6 +78,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    
+    bundle {
+        abi {
+            enableSplit = true
+        }
     }
 }
 
@@ -108,10 +148,10 @@ dependencies {
     implementation(libs.koin.androidx.compose)
     implementation(libs.koin.core)
     
-    // AWS SDK for R2
-    implementation(libs.aws.s3)
+    // OkHttp for S3 client
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
-    // ML Kit Barcode Scanning
+    // ML Kit Barcode Scanning (Unbundled)
     implementation(libs.mlkit.barcode.scanning)
     
     // CameraX

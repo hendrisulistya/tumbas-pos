@@ -210,3 +210,12 @@ data class SalesOrderWithItems(
     )
     val items: List<SalesOrderItemEntity>
 )
+
+@Dao
+interface StoreSettingsDao {
+    @Query("SELECT * FROM store_settings WHERE id = 1")
+    fun getStoreSettings(): Flow<StoreSettingsEntity?>
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdate(settings: StoreSettingsEntity)
+}

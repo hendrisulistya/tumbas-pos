@@ -1,12 +1,14 @@
 package com.tumbaspos.app.data.repository
 
 import android.util.Base64
-import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
-import aws.sdk.kotlin.services.s3.S3Client
-import aws.sdk.kotlin.services.s3.model.DeleteObjectRequest
-import aws.sdk.kotlin.services.s3.model.PutObjectRequest
-import aws.smithy.kotlin.runtime.content.ByteStream
-import aws.smithy.kotlin.runtime.net.url.Url
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
+import java.io.ByteArrayOutputStream
+import com.tumbaspos.app.data.s3.S3Client
 import com.tumbaspos.app.domain.model.R2Config
 import com.tumbaspos.app.domain.repository.ImageRepository
 import kotlinx.coroutines.Dispatchers
@@ -21,32 +23,46 @@ class ImageRepositoryImpl : ImageRepository {
         namespace: String
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
+            // Convert to grayscale and compress
+            val processedImageData = processImageToGrayscale(imageData)
+            
             // If R2 config is available, upload to cloud
             if (r2Config != null) {
-                val s3Client = getS3Client(r2Config)
+                val s3Client = S3Client(
+                    endpoint = r2Config.endpointUrl,
+                    accessKeyId = r2Config.accessKeyId,
+                    secretAccessKey = r2Config.secretAccessKey,
+                    region = "auto"
+                )
                 val key = "$namespace/product/$fileName"
                 
-                val request = PutObjectRequest {
-                    bucket = r2Config.bucketName
-                    this.key = key
-                    body = ByteStream.fromBytes(imageData)
+                val result = s3Client.putObject(
+                    bucket = r2Config.bucketName,
+                    key = key,
+                    data = processedImageData,
                     contentType = "image/jpeg"
-                }
+                )
                 
-                s3Client.putObject(request)
-                
-                // Return the R2 URL
-                val url = "${r2Config.endpointUrl}/${r2Config.bucketName}/$key"
-                Result.success(url)
+                result.fold(
+                    onSuccess = {
+                        // Return the R2 URL
+                        val url = "${r2Config.endpointUrl}/${r2Config.bucketName}/$key"
+                        Result.success(url)
+                    },
+                    onFailure = { e ->
+                        Result.failure(e)
+                    }
+                )
             } else {
                 // Store as base64 if no R2 config
-                val base64 = "data:image/jpeg;base64," + Base64.encodeToString(imageData, Base64.NO_WRAP)
+                val base64 = "data:image/jpeg;base64," + Base64.encodeToString(processedImageData, Base64.NO_WRAP)
                 Result.success(base64)
             }
         } catch (e: Exception) {
             // Fallback to base64 on error
             try {
-                val base64 = "data:image/jpeg;base64," + Base64.encodeToString(imageData, Base64.NO_WRAP)
+                val processedImageData = processImageToGrayscale(imageData)
+                val base64 = "data:image/jpeg;base64," + Base64.encodeToString(processedImageData, Base64.NO_WRAP)
                 Result.success(base64)
             } catch (e2: Exception) {
                 Result.failure(e)
@@ -62,17 +78,20 @@ class ImageRepositoryImpl : ImageRepository {
         try {
             // Only delete from R2 if it's a URL (not base64)
             if (r2Config != null && !image.startsWith("data:")) {
-                val s3Client = getS3Client(r2Config)
+                val s3Client = S3Client(
+                    endpoint = r2Config.endpointUrl,
+                    accessKeyId = r2Config.accessKeyId,
+                    secretAccessKey = r2Config.secretAccessKey,
+                    region = "auto"
+                )
                 
                 // Extract key from URL
                 val key = image.substringAfter("${r2Config.bucketName}/")
                 
-                val request = DeleteObjectRequest {
-                    bucket = r2Config.bucketName
-                    this.key = key
-                }
-                
-                s3Client.deleteObject(request)
+                s3Client.deleteObject(
+                    bucket = r2Config.bucketName,
+                    key = key
+                )
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -81,14 +100,46 @@ class ImageRepositoryImpl : ImageRepository {
         }
     }
     
-    private fun getS3Client(r2Config: R2Config): S3Client {
-        return S3Client {
-            region = "auto"
-            endpointUrl = Url.parse(r2Config.endpointUrl)
-            credentialsProvider = StaticCredentialsProvider {
-                accessKeyId = r2Config.accessKeyId
-                secretAccessKey = r2Config.secretAccessKey
-            }
+    private fun processImageToGrayscale(imageData: ByteArray): ByteArray {
+        // Decode the image
+        val originalBitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
+            ?: throw Exception("Failed to decode image")
+
+        // Convert to grayscale (black and white)
+        val grayscaleBitmap = toGrayscale(originalBitmap)
+        
+        // Compress if needed (target ~500KB)
+        val targetSizeKB = 500
+        var quality = 90
+        var compressedData: ByteArray
+        
+        do {
+            val outputStream = ByteArrayOutputStream()
+            grayscaleBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            compressedData = outputStream.toByteArray()
+            quality -= 10
+        } while (compressedData.size > targetSizeKB * 1024 && quality > 10)
+        
+        // Clean up
+        if (grayscaleBitmap != originalBitmap) {
+            grayscaleBitmap.recycle()
         }
+        originalBitmap.recycle()
+        
+        return compressedData
+    }
+    
+    private fun toGrayscale(bitmap: Bitmap): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        val grayscaleBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(grayscaleBitmap)
+        val paint = Paint()
+        val colorMatrix = ColorMatrix()
+        colorMatrix.setSaturation(0f) // 0 = grayscale, 1 = original colors
+        val colorFilter = ColorMatrixColorFilter(colorMatrix)
+        paint.colorFilter = colorFilter
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        return grayscaleBitmap
     }
 }

@@ -114,3 +114,15 @@ data class CategoryEntity(
     val description: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "store_settings")
+@Serializable
+data class StoreSettingsEntity(
+    @PrimaryKey
+    val id: Long = 1L, // Singleton - always 1
+    val storeName: String = "",
+    val storeAddress: String = "",
+    val storePhone: String = "",
+    val storeTaxId: String = "",
+    val logoImage: String? = null // Base64 encoded image
+)

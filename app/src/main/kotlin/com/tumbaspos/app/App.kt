@@ -55,6 +55,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     data object PostActivation : Screen("post_activation", "Setup")
     data object RestoreStore : Screen("restore_store", "Restore Store")
     data object PrinterSettings : Screen("printer_settings", "Printer")
+    data object StoreSettings : Screen("store_settings", "Store")
     data object SalesOrderDetail : Screen("sales_order_detail", "Order Details")
     data object Product : Screen("products", "Products")
 }
@@ -147,6 +148,7 @@ fun App() {
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToBackup = { navController.navigate(Screen.Backup.route) },
                             onNavigateToPrinter = { navController.navigate(Screen.PrinterSettings.route) },
+                            onNavigateToStore = { navController.navigate(Screen.StoreSettings.route) },
                             onNavigateToSalesOrder = { navController.navigate(Screen.SalesOrder.route) },
                             onNavigateToWarehouse = { navController.navigate(Screen.Warehouse.route) },
                             onNavigateToPurchase = { navController.navigate(Screen.Purchase.route) },
@@ -157,6 +159,12 @@ fun App() {
                     
                     composable(Screen.PrinterSettings.route) {
                         PrinterSettingsScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    
+                    composable(Screen.StoreSettings.route) {
+                        com.tumbaspos.app.presentation.settings.store.StoreSettingsScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
