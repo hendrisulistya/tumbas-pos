@@ -32,7 +32,7 @@ fun BackupScreen(
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 },
-                windowInsets = WindowInsets(0, 0, 0, 0)
+                windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         }
     ) { padding ->

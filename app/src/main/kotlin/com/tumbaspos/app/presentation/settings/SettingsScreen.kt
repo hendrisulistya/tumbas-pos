@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Receipt
@@ -75,10 +76,9 @@ fun SettingsScreen(
     onNavigateToWarehouse: () -> Unit,
     onNavigateToPurchase: () -> Unit,
     onNavigateToReporting: () -> Unit,
-    onNavigateToProduct: () -> Unit
+    onNavigateToProduct: () -> Unit,
+    onNavigateToAbout: () -> Unit
 ) {
-    val settingsRepository: SettingsRepository = koinInject()
-    val appId = remember { settingsRepository.getAppId() }
 
     Scaffold(
         topBar = {
@@ -93,7 +93,7 @@ fun SettingsScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                windowInsets = WindowInsets(0, 0, 0, 0)
+                windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         }
     ) { padding ->
@@ -101,53 +101,10 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // App Info Section
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            "App Information",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        HorizontalDivider()
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("App ID", style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                appId,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Version", style = MaterialTheme.typography.bodyMedium)
-                            Text("1.0.0", style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Management",
                     style = MaterialTheme.typography.titleSmall,
@@ -225,6 +182,25 @@ fun SettingsScreen(
                     title = "Backup & Restore",
                     subtitle = "Manage data backups",
                     onClick = onNavigateToBackup
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Information",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+
+            item {
+                SettingsItem(
+                    icon = Icons.Default.Info,
+                    title = "About",
+                    subtitle = "App information",
+                    onClick = onNavigateToAbout
                 )
             }
         }

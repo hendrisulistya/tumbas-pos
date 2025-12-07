@@ -3,14 +3,6 @@ package com.tumbaspos.app
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -58,6 +50,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     data object StoreSettings : Screen("store_settings", "Store")
     data object SalesOrderDetail : Screen("sales_order_detail", "Order Details")
     data object Product : Screen("products", "Products")
+    data object About : Screen("about", "About")
 }
 
 @Composable
@@ -71,6 +64,7 @@ fun App() {
             val bottomNavItems = listOf(Screen.Home, Screen.Scan, Screen.Settings)
 
             Scaffold(
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 bottomBar = {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
@@ -82,41 +76,27 @@ fun App() {
                                        currentDestination?.route != Screen.Backup.route
                     
                     if (showBottomBar) {
-                        Surface(
-                            color = NavigationBarDefaults.containerColor,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(64.dp),
-                                    horizontalArrangement = Arrangement.SpaceAround,
-                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                                ) {
-                                    bottomNavItems.forEach { screen ->
-                                        NavigationBarItem(
-                                            icon = { Icon(screen.icon!!, contentDescription = null) },
-                                            label = { Text(screen.title) },
-                                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                                            onClick = {
-                                                navController.navigate(screen.route) {
-                                                    popUpTo(navController.graph.findStartDestination().id) {
-                                                        saveState = true
-                                                    }
-                                                    launchSingleTop = true
-                                                    restoreState = true
-                                                }
-                                            },
-                                            colors = NavigationBarItemDefaults.colors(
-                                                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        )
-                                    }
-                                }
-                                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+                        NavigationBar {
+                            bottomNavItems.forEach { screen ->
+                                NavigationBarItem(
+                                    icon = { Icon(screen.icon!!, contentDescription = null) },
+                                    label = { Text(screen.title) },
+                                    selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                                    onClick = {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                )
                             }
                         }
                     }
@@ -125,7 +105,16 @@ fun App() {
                 NavHost(
                     navController = navController,
                     startDestination = startDestination,
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            androidx.compose.foundation.layout.PaddingValues(
+                                start = innerPadding.calculateLeftPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                                top = innerPadding.calculateTopPadding(),
+                                end = innerPadding.calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                                bottom = 0.dp
+                            )
+                        )
                 ) {
                     composable(Screen.Home.route) {
                         HomeScreen(
@@ -153,7 +142,8 @@ fun App() {
                             onNavigateToWarehouse = { navController.navigate(Screen.Warehouse.route) },
                             onNavigateToPurchase = { navController.navigate(Screen.Purchase.route) },
                             onNavigateToReporting = { navController.navigate(Screen.Reporting.route) },
-                            onNavigateToProduct = { navController.navigate(Screen.Product.route) }
+                            onNavigateToProduct = { navController.navigate(Screen.Product.route) },
+                            onNavigateToAbout = { navController.navigate(Screen.About.route) }
                         )
                     }
                     
@@ -259,6 +249,12 @@ fun App() {
 
                     composable(Screen.Product.route) {
                         com.tumbaspos.app.presentation.product.ProductScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable(Screen.About.route) {
+                        com.tumbaspos.app.presentation.settings.AboutScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
