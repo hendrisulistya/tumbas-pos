@@ -129,7 +129,7 @@ val appModule = module {
     single<com.tumbaspos.app.domain.manager.PrinterManager> { com.tumbaspos.app.data.manager.EscPosPrinterManager(androidContext()) }
     
     // ViewModels
-    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.home.HomeViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.warehouse.WarehouseViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.purchase.PurchaseViewModel(get(), get(), get(), get(), get(), get()) }

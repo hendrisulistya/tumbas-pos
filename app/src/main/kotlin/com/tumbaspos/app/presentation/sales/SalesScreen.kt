@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tumbaspos.app.data.local.entity.CustomerEntity
@@ -32,24 +34,8 @@ fun SalesScreen(
     if (uiState.orderCompleted && uiState.lastInvoice != null) {
         InvoiceDialog(
             invoiceText = uiState.lastInvoice!!,
-            onDismiss = viewModel::resetOrder
-        )
-    }
-
-    var showCheckoutDialog by remember { mutableStateOf(false) }
-
-    if (showCheckoutDialog) {
-        CheckoutDialog(
-            customers = uiState.customers,
-            totalAmount = uiState.totalAmount,
-            onDismiss = { showCheckoutDialog = false },
-            onConfirm = { customerId ->
-                if (customerId != null) {
-                    viewModel.checkout(customerId)
-                    showCheckoutDialog = false
-                }
-            },
-            currencyFormatter = currencyFormatter
+            onDismiss = viewModel::resetOrder,
+            onPrint = viewModel::printReceipt
         )
     }
 
@@ -126,6 +112,21 @@ fun SalesScreen(
 
             // Bottom Summary Section
             if (uiState.cart.isNotEmpty()) {
+                var showCustomerDialog by remember { mutableStateOf(false) }
+                
+                // Customer Selection Dialog
+                if (showCustomerDialog) {
+                    CustomerSelectionDialog(
+                        customers = uiState.customers,
+                        selectedCustomer = uiState.selectedCustomer,
+                        onDismiss = { showCustomerDialog = false },
+                        onCustomerSelected = { customer ->
+                            viewModel.selectCustomer(customer)
+                            showCustomerDialog = false
+                        }
+                    )
+                }
+                
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
@@ -135,6 +136,51 @@ fun SalesScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Customer Selection Field (Clickable)
+                        OutlinedCard(
+                            onClick = { showCustomerDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Column {
+                                        Text(
+                                            "Customer",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            uiState.selectedCustomer?.name ?: "Select Customer",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = "Change Customer",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider()
+                        
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -153,11 +199,11 @@ fun SalesScreen(
                         }
 
                         Button(
-                            onClick = { showCheckoutDialog = true },
+                            onClick = { viewModel.checkout() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            enabled = uiState.cart.isNotEmpty() && !uiState.isLoading
+                            enabled = uiState.cart.isNotEmpty() && !uiState.isLoading && uiState.selectedCustomer != null
                         ) {
                             if (uiState.isLoading) {
                                 CircularProgressIndicator(
@@ -175,65 +221,169 @@ fun SalesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CheckoutDialog(
+fun CustomerSelectionDialog(
     customers: List<CustomerEntity>,
-    totalAmount: Double,
+    selectedCustomer: CustomerEntity?,
     onDismiss: () -> Unit,
-    onConfirm: (Long?) -> Unit,
-    currencyFormatter: NumberFormat
+    onCustomerSelected: (CustomerEntity) -> Unit
 ) {
-    var selectedCustomer by remember(customers) { 
-        mutableStateOf(customers.find { it.name == "Guest" }) 
+    var searchQuery by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+    
+    // Filter customers based on search query
+    val filteredCustomers = remember(customers, searchQuery) {
+        if (searchQuery.isBlank()) {
+            customers
+        } else {
+            customers.filter { customer ->
+                customer.name.contains(searchQuery, ignoreCase = true) ||
+                customer.phone.contains(searchQuery, ignoreCase = true) ||
+                customer.email.contains(searchQuery, ignoreCase = true)
+            }
+        }
     }
-    var expanded by remember { mutableStateOf(false) }
-
+    
+    // Auto-focus search field when dialog opens
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(100)
+        try {
+            focusRequester.requestFocus()
+        } catch (e: Exception) {
+            // Ignore focus errors
+        }
+    }
+    
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Checkout") },
+        title = { Text("Select Customer") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Total Amount: ${currencyFormatter.format(totalAmount)}")
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Search field
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search customers...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                    ),
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Clear",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                )
                 
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
+                HorizontalDivider()
+                
+                // Customer list
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    OutlinedTextField(
-                        value = selectedCustomer?.name ?: "Select Customer",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Customer") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        customers.forEach { customer ->
-                            DropdownMenuItem(
-                                text = { Text(customer.name) },
-                                onClick = {
-                                    selectedCustomer = customer
-                                    expanded = false
-                                }
+                    items(filteredCustomers.size) { index ->
+                        val customer = filteredCustomers[index]
+                        Card(
+                            onClick = { onCustomerSelected(customer) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (customer.id == selectedCustomer?.id) 
+                                    MaterialTheme.colorScheme.primaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.surface
                             )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = if (customer.id == selectedCustomer?.id)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Column {
+                                        Text(
+                                            text = customer.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = if (customer.id == selectedCustomer?.id) 
+                                                FontWeight.Bold 
+                                            else 
+                                                FontWeight.Normal
+                                        )
+                                        if (customer.phone != "-") {
+                                            Text(
+                                                text = customer.phone,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                                if (customer.id == selectedCustomer?.id) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (filteredCustomers.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "No customers found",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                 }
             }
         },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(selectedCustomer?.id) },
-                enabled = selectedCustomer != null
-            ) {
-                Text("Confirm Payment")
-            }
-        },
+        confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
@@ -242,10 +392,12 @@ fun CheckoutDialog(
     )
 }
 
+
 @Composable
 fun InvoiceDialog(
     invoiceText: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onPrint: () -> Unit = {}
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -264,8 +416,15 @@ fun InvoiceDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onDismiss) { // In a real app, this would trigger print
-                Text("Print / Close")
+            Button(onClick = onPrint) {
+                Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Print")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
             }
         }
     )

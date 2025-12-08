@@ -62,6 +62,10 @@ class DatabaseInitializer(
     
     private suspend fun insertCustomersFromCsv() {
         try {
+            // Always insert Guest customer first
+            insertDefaultCustomer()
+            
+            // Then insert customers from CSV
             val customers = mutableListOf<CustomerEntity>()
             context.assets.open("customers.csv").bufferedReader().use { reader ->
                 reader.readLine() // Skip header
@@ -80,15 +84,11 @@ class DatabaseInitializer(
                 }
             }
             if (customers.isNotEmpty()) {
-                customerDao.insertCustomer(customers.first()) // Insert first individually if needed or loop
-                // The Dao might not have insertAll for customers, let's check. 
-                // Creating a loop for safety as insertAll might not exist on CustomerDao
                 customers.forEach { customerDao.insertCustomer(it) }
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            // Fallback to default if CSV fails
-            insertDefaultCustomer()
+            // Guest already inserted above, so no fallback needed
         }
     }
 

@@ -10,6 +10,7 @@ import com.tumbaspos.app.domain.usecase.sales.GetProductByBarcodeUseCase
 import com.tumbaspos.app.domain.usecase.sales.SearchProductsUseCase
 import com.tumbaspos.app.domain.usecase.settings.GetStoreSettingsUseCase
 import com.tumbaspos.app.data.local.entity.CustomerEntity
+import com.tumbaspos.app.domain.manager.PrinterManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +37,10 @@ data class SalesUiState(
     val error: String? = null,
     val orderCompleted: Boolean = false,
     val customers: List<CustomerEntity> = emptyList(),
-    val lastInvoice: String? = null
+    val selectedCustomer: CustomerEntity? = null,
+    val lastInvoice: String? = null,
+    val lastOrder: SalesOrderEntity? = null,
+    val lastOrderItems: List<CartItem> = emptyList()
 )
 
 class SalesViewModel(
@@ -45,7 +49,8 @@ class SalesViewModel(
     private val searchProductsUseCase: SearchProductsUseCase,
     private val getStoreSettingsUseCase: GetStoreSettingsUseCase,
     private val cartRepository: com.tumbaspos.app.domain.repository.CartRepository,
-    private val customerRepository: com.tumbaspos.app.domain.repository.CustomerRepository
+    private val customerRepository: com.tumbaspos.app.domain.repository.CustomerRepository,
+    private val printerManager: PrinterManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SalesUiState())
@@ -72,9 +77,19 @@ class SalesViewModel(
     private fun loadCustomers() {
         viewModelScope.launch {
             customerRepository.getAllCustomers().collect { customers ->
-                _uiState.update { it.copy(customers = customers) }
+                val guestCustomer = customers.find { it.id == 1L } ?: customers.firstOrNull()
+                _uiState.update { 
+                    it.copy(
+                        customers = customers,
+                        selectedCustomer = it.selectedCustomer ?: guestCustomer
+                    ) 
+                }
             }
         }
+    }
+    
+    fun selectCustomer(customer: CustomerEntity) {
+        _uiState.update { it.copy(selectedCustomer = customer) }
     }
 
     fun onSearchQueryChanged(query: String) {
@@ -118,8 +133,9 @@ class SalesViewModel(
         cartRepository.removeFromCart(productId)
     }
 
-    fun checkout(customerId: Long) {
+    fun checkout() {
         val state = _uiState.value
+        val customerId = state.selectedCustomer?.id ?: return
         if (state.cart.isEmpty()) return
 
         viewModelScope.launch {
@@ -235,6 +251,8 @@ class SalesViewModel(
                     SalesUiState(
                         orderCompleted = true, 
                         lastInvoice = invoiceText,
+                        lastOrder = order,
+                        lastOrderItems = state.cart,
                         customers = state.customers // Preserve customers
                     ) 
                 }
@@ -244,9 +262,28 @@ class SalesViewModel(
         }
     }
     
+    fun printReceipt() {
+        val state = _uiState.value
+        val order = state.lastOrder ?: return
+        val items = state.lastOrderItems
+        
+        viewModelScope.launch {
+            try {
+                printerManager.printReceipt(order, items)
+                _uiState.update { it.copy(error = null) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Print failed: ${e.message}") }
+            }
+        }
+    }
+    
     fun resetOrder() {
         val customers = _uiState.value.customers
-        _uiState.value = SalesUiState(customers = customers)
+        val selectedCustomer = _uiState.value.selectedCustomer
+        _uiState.value = SalesUiState(
+            customers = customers,
+            selectedCustomer = selectedCustomer
+        )
     }
     
     fun clearError() {

@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.tumbaspos.app.domain.manager.PairingState
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import org.koin.androidx.compose.koinViewModel
@@ -60,6 +62,14 @@ fun PrinterSettingsScreen(
             viewModel.loadPairedDevices()
         }
     }
+    
+    // Pairing Dialog
+    if (uiState.pairingState !is PairingState.Idle) {
+        PairingDialog(
+            pairingState = uiState.pairingState,
+            onDismiss = { viewModel.cancelPairing() }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -83,8 +93,37 @@ fun PrinterSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
         ) {
+            // Status Bar at the top
+            if (uiState.isConnecting) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Connecting to printer...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+            
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
             // Status Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -161,12 +200,16 @@ fun PrinterSettingsScreen(
                 )
                 Button(
                     onClick = { viewModel.startScan() },
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
+                    enabled = !uiState.isConnecting && !uiState.isScanning
                 ) {
                     Text(if (uiState.isScanning) "Scanning..." else "Scan for Devices")
                 }
             } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
                     item {
                         Text(
                             text = "Paired Devices",
@@ -179,7 +222,12 @@ fun PrinterSettingsScreen(
                         BluetoothDeviceItem(
                             device = device,
                             isConnected = uiState.isConnected && uiState.connectedDeviceName == (device.name ?: device.address),
-                            onClick = { viewModel.connectBluetooth(device.address) }
+                            isLoading = uiState.isConnecting,
+                            onClick = { 
+                                if (!uiState.isConnecting) {
+                                    viewModel.connectBluetooth(device.address)
+                                }
+                            }
                         )
                     }
                     
@@ -201,7 +249,10 @@ fun PrinterSettingsScreen(
                                     strokeWidth = 2.dp
                                 )
                             } else {
-                                TextButton(onClick = { viewModel.startScan() }) {
+                                TextButton(
+                                    onClick = { viewModel.startScan() },
+                                    enabled = !uiState.isConnecting
+                                ) {
                                     Text("Scan")
                                 }
                             }
@@ -223,8 +274,14 @@ fun PrinterSettingsScreen(
                         BluetoothDeviceItem(
                             device = device,
                             isConnected = false,
-                            onClick = { viewModel.connectBluetooth(device.address) } // This will trigger pairing if needed
+                            isLoading = uiState.isConnecting,
+                            onClick = { 
+                                if (!uiState.isConnecting) {
+                                    viewModel.connectBluetooth(device.address)
+                                }
+                            }
                         )
+                    }
                     }
                 }
             }
@@ -237,13 +294,14 @@ fun PrinterSettingsScreen(
 fun BluetoothDeviceItem(
     device: android.bluetooth.BluetoothDevice,
     isConnected: Boolean,
+    isLoading: Boolean = false,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable(enabled = !isConnected, onClick = onClick),
+            .clickable(enabled = !isConnected && !isLoading, onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = if (isConnected) 
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) 
@@ -258,9 +316,16 @@ fun BluetoothDeviceItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Print, contentDescription = null)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Icon(Icons.Default.Print, contentDescription = null)
+            }
             Spacer(modifier = Modifier.width(16.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = device.name ?: "Unknown Device",
                     style = MaterialTheme.typography.bodyLarge
@@ -270,6 +335,107 @@ fun BluetoothDeviceItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun PairingDialog(
+    pairingState: PairingState,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = { 
+        if (pairingState !is PairingState.Pairing) {
+            onDismiss()
+        }
+    }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                when (pairingState) {
+                    is PairingState.Pairing -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Pairing with ${pairingState.deviceName}",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Please confirm the pairing request on your device",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        TextButton(onClick = onDismiss) {
+                            Text("Cancel")
+                        }
+                    }
+                    is PairingState.Success -> {
+                        Icon(
+                            Icons.Default.BluetoothConnected,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Paired Successfully!",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = pairingState.deviceName,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onDismiss) {
+                            Text("OK")
+                        }
+                    }
+                    is PairingState.Failed -> {
+                        Icon(
+                            Icons.Default.Bluetooth,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Pairing Failed",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = pairingState.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onDismiss) {
+                            Text("Close")
+                        }
+                    }
+                    is PairingState.Idle -> {
+                        // Should not happen, but handle gracefully
+                    }
+                }
             }
         }
     }

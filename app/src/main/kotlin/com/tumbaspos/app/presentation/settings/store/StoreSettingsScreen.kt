@@ -66,7 +66,8 @@ fun StoreSettingsScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .padding(bottom = 80.dp), // Extra padding for bottom navigation
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Logo Section

@@ -9,6 +9,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tumbaspos.app.domain.manager.PrinterManager
+import com.tumbaspos.app.domain.manager.PairingState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,8 +20,10 @@ data class PrinterSettingsUiState(
     val pairedDevices: List<BluetoothDevice> = emptyList(),
     val scannedDevices: List<BluetoothDevice> = emptyList(),
     val isScanning: Boolean = false,
+    val isConnecting: Boolean = false,
     val isConnected: Boolean = false,
     val connectedDeviceName: String? = null,
+    val pairingState: PairingState = PairingState.Idle,
     val error: String? = null,
     val successMessage: String? = null
 )
@@ -47,6 +50,11 @@ class PrinterSettingsViewModel(
         viewModelScope.launch {
             printerManager.scannedDevices.collect { devices ->
                 _uiState.update { it.copy(scannedDevices = devices) }
+            }
+        }
+        viewModelScope.launch {
+            printerManager.pairingState.collect { pairingState ->
+                _uiState.update { it.copy(pairingState = pairingState) }
             }
         }
         loadPairedDevices()
@@ -90,11 +98,12 @@ class PrinterSettingsViewModel(
     fun connectBluetooth(deviceAddress: String) {
         viewModelScope.launch {
             try {
+                _uiState.update { it.copy(isConnecting = true, error = null, successMessage = null) }
                 printerManager.connectBluetooth(deviceAddress)
-                _uiState.update { it.copy(successMessage = "Connected successfully", error = null) }
+                _uiState.update { it.copy(isConnecting = false, successMessage = "Connected successfully", error = null) }
                 loadPairedDevices() // Refresh paired list after potential pairing
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = "Connection failed: ${e.message}") }
+                _uiState.update { it.copy(isConnecting = false, error = "Connection failed: ${e.message}") }
             }
         }
     }
@@ -114,6 +123,23 @@ class PrinterSettingsViewModel(
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Test print failed: ${e.message}") }
             }
+        }
+    }
+    
+    fun pairDevice(deviceAddress: String) {
+        viewModelScope.launch {
+            try {
+                printerManager.pairDevice(deviceAddress)
+                loadPairedDevices() // Refresh paired list after pairing
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Pairing failed: ${e.message}") }
+            }
+        }
+    }
+    
+    fun cancelPairing() {
+        viewModelScope.launch {
+            printerManager.cancelPairing()
         }
     }
     

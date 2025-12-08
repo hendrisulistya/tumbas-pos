@@ -14,6 +14,7 @@ import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
 import com.dantsu.escposprinter.connection.usb.UsbPrintersConnections
 import com.tumbaspos.app.domain.manager.PrinterManager
+import com.tumbaspos.app.domain.manager.PairingState
 import com.tumbaspos.app.data.local.entity.SalesOrderEntity
 import com.tumbaspos.app.presentation.sales.CartItem
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -35,7 +37,11 @@ class EscPosPrinterManager(
     private val _connectedDeviceName = MutableStateFlow<String?>(null)
     override val connectedDeviceName: StateFlow<String?> = _connectedDeviceName.asStateFlow()
 
+    private val _pairingState = MutableStateFlow<PairingState>(PairingState.Idle)
+    override val pairingState: StateFlow<PairingState> = _pairingState.asStateFlow()
+
     private var printer: EscPosPrinter? = null
+    private var isPairingReceiverRegistered = false
 
     private val _scannedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     override val scannedDevices: StateFlow<List<BluetoothDevice>> = _scannedDevices.asStateFlow()
@@ -51,6 +57,36 @@ class EscPosPrinterManager(
                         if (currentList.none { d -> d.address == it.address }) {
                             currentList.add(it)
                             _scannedDevices.value = currentList
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private val pairingReceiver = object : android.content.BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    val bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
+                    val previousBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.BOND_NONE)
+                    
+                    device?.let {
+                        val deviceName = it.name ?: it.address
+                        when (bondState) {
+                            BluetoothDevice.BOND_BONDING -> {
+                                _pairingState.value = PairingState.Pairing(deviceName)
+                            }
+                            BluetoothDevice.BOND_BONDED -> {
+                                _pairingState.value = PairingState.Success(deviceName)
+                            }
+                            BluetoothDevice.BOND_NONE -> {
+                                if (previousBondState == BluetoothDevice.BOND_BONDING) {
+                                    _pairingState.value = PairingState.Failed(deviceName, "Pairing cancelled or failed")
+                                }
+                            }
                         }
                     }
                 }
@@ -104,25 +140,141 @@ class EscPosPrinterManager(
                 bluetoothAdapter.cancelDiscovery()
 
                 val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
+                val deviceName = device.name ?: deviceAddress
                 
-                // Initiate pairing if not bonded
+                // Check if device is already paired
                 if (device.bondState != BluetoothDevice.BOND_BONDED) {
+                    // Register pairing receiver
+                    registerPairingReceiver()
+                    
+                    // Initiate pairing
+                    _pairingState.value = PairingState.Pairing(deviceName)
                     device.createBond()
-                    // Wait for bonding? Ideally we should listen to BOND_STATE_CHANGED, 
-                    // but for simplicity we might just proceed or let the user try again.
-                    // The createBond() call is asynchronous.
+                    
+                    // Wait for pairing to complete (with timeout)
+                    var attempts = 0
+                    val maxAttempts = 60 // 30 seconds timeout (500ms * 60)
+                    while (device.bondState == BluetoothDevice.BOND_BONDING && attempts < maxAttempts) {
+                        delay(500)
+                        attempts++
+                    }
+                    
+                    // Check final bond state
+                    when (device.bondState) {
+                        BluetoothDevice.BOND_BONDED -> {
+                            _pairingState.value = PairingState.Success(deviceName)
+                            delay(1000) // Brief delay to show success message
+                        }
+                        BluetoothDevice.BOND_NONE -> {
+                            _pairingState.value = PairingState.Failed(deviceName, "Pairing was cancelled")
+                            unregisterPairingReceiver()
+                            throw Exception("Device pairing failed or was cancelled")
+                        }
+                        else -> {
+                            _pairingState.value = PairingState.Failed(deviceName, "Pairing timeout")
+                            unregisterPairingReceiver()
+                            throw Exception("Pairing timeout")
+                        }
+                    }
+                    
+                    unregisterPairingReceiver()
                 }
 
+                // Now connect to the paired device
                 val printerConnection = com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection(device)
                 
                 printer = EscPosPrinter(printerConnection, 203, 48f, 32)
                 _isConnected.value = true
-                _connectedDeviceName.value = device.name ?: deviceAddress
+                _connectedDeviceName.value = deviceName
+                
+                // Reset pairing state after successful connection
+                _pairingState.value = PairingState.Idle
             } catch (e: Exception) {
                 Log.e("PrinterManager", "Error connecting Bluetooth", e)
                 _isConnected.value = false
                 _connectedDeviceName.value = null
+                _pairingState.value = PairingState.Idle
                 throw e
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    override suspend fun pairDevice(deviceAddress: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val bluetoothAdapter = context.getSystemService(BluetoothManager::class.java)?.adapter
+                if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+                    throw Exception("Bluetooth is not enabled")
+                }
+
+                val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
+                val deviceName = device.name ?: deviceAddress
+                
+                // Check if already paired
+                if (device.bondState == BluetoothDevice.BOND_BONDED) {
+                    _pairingState.value = PairingState.Success(deviceName)
+                    return@withContext
+                }
+                
+                // Register pairing receiver
+                registerPairingReceiver()
+                
+                // Initiate pairing
+                _pairingState.value = PairingState.Pairing(deviceName)
+                device.createBond()
+                
+                // Wait for pairing to complete (with timeout)
+                var attempts = 0
+                val maxAttempts = 60 // 30 seconds timeout
+                while (device.bondState == BluetoothDevice.BOND_BONDING && attempts < maxAttempts) {
+                    delay(500)
+                    attempts++
+                }
+                
+                // Check final bond state
+                when (device.bondState) {
+                    BluetoothDevice.BOND_BONDED -> {
+                        _pairingState.value = PairingState.Success(deviceName)
+                    }
+                    BluetoothDevice.BOND_NONE -> {
+                        _pairingState.value = PairingState.Failed(deviceName, "Pairing was cancelled")
+                    }
+                    else -> {
+                        _pairingState.value = PairingState.Failed(deviceName, "Pairing timeout")
+                    }
+                }
+                
+                unregisterPairingReceiver()
+            } catch (e: Exception) {
+                Log.e("PrinterManager", "Error pairing device", e)
+                _pairingState.value = PairingState.Failed("Unknown", e.message ?: "Unknown error")
+                unregisterPairingReceiver()
+                throw e
+            }
+        }
+    }
+
+    override suspend fun cancelPairing() {
+        _pairingState.value = PairingState.Idle
+        unregisterPairingReceiver()
+    }
+
+    private fun registerPairingReceiver() {
+        if (!isPairingReceiverRegistered) {
+            val filter = android.content.IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+            context.registerReceiver(pairingReceiver, filter)
+            isPairingReceiverRegistered = true
+        }
+    }
+
+    private fun unregisterPairingReceiver() {
+        if (isPairingReceiverRegistered) {
+            try {
+                context.unregisterReceiver(pairingReceiver)
+                isPairingReceiverRegistered = false
+            } catch (e: IllegalArgumentException) {
+                // Receiver not registered
             }
         }
     }
@@ -174,7 +326,7 @@ class EscPosPrinterManager(
         withContext(Dispatchers.IO) {
             val p = printer ?: throw Exception("Printer not connected")
             p.printFormattedText(
-                "[C]<b><font size='big'>TumbasPOS</font></b>\n" +
+                "[C]<b><font size='big'>TestStorePOS</font></b>\n" +
                 "[C]Printer Test Successful!\n" +
                 "[C]================================\n"
             )
