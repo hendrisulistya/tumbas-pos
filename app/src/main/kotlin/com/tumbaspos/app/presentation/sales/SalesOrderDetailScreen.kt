@@ -50,6 +50,15 @@ fun SalesOrderDetailScreen(
             viewModel.clearMessages()
         }
     }
+    
+    // Show preview dialog
+    if (uiState.showPreviewDialog && uiState.previewPdfPath != null) {
+        ReceiptPreviewDialog(
+            pdfPath = uiState.previewPdfPath!!,
+            onDismiss = viewModel::closePreview,
+            onPrint = viewModel::printReceipt
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -61,7 +70,7 @@ fun SalesOrderDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.printReceipt() }) {
+                    IconButton(onClick = { viewModel.showPreview() }) {
                         Icon(Icons.Default.Print, "Print Receipt")
                     }
                 },
@@ -72,7 +81,14 @@ fun SalesOrderDetailScreen(
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { 
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(Alignment.Top)
+            )
+        }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             if (uiState.isLoading) {
@@ -103,7 +119,7 @@ fun SalesOrderDetailScreen(
                                     Text(
                                         text = order.status,
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = if (order.status == "COMPLETED") Color.Green else Color.Gray
+                                        color = if (order.status == "COMPLETED") Color.Black else Color.Gray
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -221,4 +237,36 @@ fun OrderDetailItemRow(item: CartItem) {
 
 private fun formatCurrency(amount: Double): String {
     return NumberFormat.getCurrencyInstance(Locale("id", "ID")).format(amount)
+}
+
+@Composable
+fun ReceiptPreviewDialog(
+    pdfPath: String,
+    onDismiss: () -> Unit,
+    onPrint: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Receipt Preview")
+        },
+        text = {
+            // Render PDF preview
+            com.tumbaspos.app.presentation.sales.PdfPreview(pdfPath = pdfPath)
+        },
+        confirmButton = {
+            Button(onClick = onPrint) {
+                Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Print")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }

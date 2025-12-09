@@ -188,20 +188,25 @@ class SalesViewModel(
                 )
                 
                 val invoiceText = buildString {
+                    // Helper function to center text for 32-char thermal receipt
+                    fun centerText(text: String, width: Int = 32): String {
+                        if (text.length >= width) return text.take(width)
+                        val padding = (width - text.length) / 2
+                        return " ".repeat(padding) + text
+                    }
+                    
                     // Header
                     appendLine("================================")
                     
                     // Logo will be rendered as actual image in PDF, not ASCII art
                     
-                    appendLine("    ${storeSettings?.storeName ?: "YOUR STORE NAME HERE"}")
-                    appendLine("  ${storeSettings?.storeAddress ?: "Your Street Address"}")
-                    if (storeSettings?.storeAddress?.isNotEmpty() == true) {
-                        // Address might be multiline, just show first line in header
-                    } else {
-                        appendLine("     City, Postal Code")
+                    appendLine(centerText(storeSettings?.storeName ?: "YOUR STORE NAME HERE"))
+                    appendLine(centerText(storeSettings?.storeAddress ?: "Your Street Address"))
+                    if (storeSettings?.storeAddress?.isEmpty() != false) {
+                        appendLine(centerText("City, Postal Code"))
                     }
-                    appendLine("   Phone: ${storeSettings?.storePhone ?: "Your Phone No"}")
-                    appendLine("     Tax ID: ${storeSettings?.storeTaxId ?: "Your Tax ID"}")
+                    appendLine(centerText("Phone: ${storeSettings?.storePhone ?: "Your Phone No"}"))
+                    appendLine(centerText("Tax ID: ${storeSettings?.storeTaxId ?: "Your Tax ID"}"))
                     appendLine("================================")
                     appendLine()
                     
