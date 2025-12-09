@@ -15,8 +15,9 @@ interface PrinterManager {
     val isConnected: StateFlow<Boolean>
     val connectedDeviceName: StateFlow<String?>
     val pairingState: StateFlow<PairingState>
-    
     val scannedDevices: StateFlow<List<android.bluetooth.BluetoothDevice>>
+    
+    fun isConnected(): Boolean
     
     suspend fun startScan()
     suspend fun stopScan()
@@ -26,5 +27,6 @@ interface PrinterManager {
     suspend fun connectUsb(usbDeviceName: String) // Simplified for now
     suspend fun disconnect()
     suspend fun printReceipt(order: SalesOrderEntity, items: List<CartItem>)
+    suspend fun printToPdf(receiptText: String, orderNumber: String): String? // Returns file path
     suspend fun testPrint()
 }

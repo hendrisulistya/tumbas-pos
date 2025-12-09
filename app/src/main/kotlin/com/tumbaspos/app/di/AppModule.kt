@@ -122,14 +122,15 @@ val appModule = module {
             get<ProductDao>(), 
             get<CustomerDao>(),
             get<com.tumbaspos.app.data.local.dao.CategoryDao>(),
-            get<SettingsRepository>()
+            get<SettingsRepository>(),
+            get<com.tumbaspos.app.data.local.dao.StoreSettingsDao>()
         ) 
     }
 
     single<com.tumbaspos.app.domain.manager.PrinterManager> { com.tumbaspos.app.data.manager.EscPosPrinterManager(androidContext()) }
     
     // ViewModels
-    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application) }
     viewModel { com.tumbaspos.app.presentation.home.HomeViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.warehouse.WarehouseViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.purchase.PurchaseViewModel(get(), get(), get(), get(), get(), get()) }

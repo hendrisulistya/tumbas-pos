@@ -11,14 +11,17 @@ import com.tumbaspos.app.domain.usecase.sales.SearchProductsUseCase
 import com.tumbaspos.app.domain.usecase.settings.GetStoreSettingsUseCase
 import com.tumbaspos.app.data.local.entity.CustomerEntity
 import com.tumbaspos.app.domain.manager.PrinterManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 data class CartItem(
@@ -35,12 +38,14 @@ data class SalesUiState(
     val totalAmount: Double = 0.0,
     val isLoading: Boolean = false,
     val error: String? = null,
+    val successMessage: String? = null,
     val orderCompleted: Boolean = false,
     val customers: List<CustomerEntity> = emptyList(),
     val selectedCustomer: CustomerEntity? = null,
     val lastInvoice: String? = null,
     val lastOrder: SalesOrderEntity? = null,
-    val lastOrderItems: List<CartItem> = emptyList()
+    val lastOrderItems: List<CartItem> = emptyList(),
+    val lastPdfPath: String? = null
 )
 
 class SalesViewModel(
@@ -50,7 +55,8 @@ class SalesViewModel(
     private val getStoreSettingsUseCase: GetStoreSettingsUseCase,
     private val cartRepository: com.tumbaspos.app.domain.repository.CartRepository,
     private val customerRepository: com.tumbaspos.app.domain.repository.CustomerRepository,
-    private val printerManager: PrinterManager
+    private val printerManager: PrinterManager,
+    private val application: android.app.Application
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SalesUiState())
@@ -170,12 +176,8 @@ class SalesViewModel(
                 // Optimized for 58mm thermal printer (32 char width)
                 val customerName = state.customers.find { it.id == customerId }?.name ?: "Unknown"
                 
-                // Get store settings
-                val storeSettings = getStoreSettingsUseCase().stateIn(
-                    viewModelScope,
-                    SharingStarted.WhileSubscribed(5000),
-                    null
-                ).value
+                // Get store settings - properly collect from Flow
+                val storeSettings = getStoreSettingsUseCase().firstOrNull()
                 
                 // Indonesian number format (dot as thousand separator, comma as decimal)
                 val indonesianFormat = java.text.DecimalFormat("#,###", 
@@ -186,10 +188,11 @@ class SalesViewModel(
                 )
                 
                 val invoiceText = buildString {
-                    // Header with Logo Placeholder
+                    // Header
                     appendLine("================================")
-                    appendLine("          [LOGO]")
-                    appendLine()
+                    
+                    // Logo will be rendered as actual image in PDF, not ASCII art
+                    
                     appendLine("    ${storeSettings?.storeName ?: "YOUR STORE NAME HERE"}")
                     appendLine("  ${storeSettings?.storeAddress ?: "Your Street Address"}")
                     if (storeSettings?.storeAddress?.isNotEmpty() == true) {
@@ -247,14 +250,38 @@ class SalesViewModel(
                     appendLine("================================")
                 }
 
-                _uiState.update { 
-                    SalesUiState(
-                        orderCompleted = true, 
+                // Update UI state with completed order
+                _uiState.update {
+                    it.copy(
+                        cart = emptyList(),
+                        totalAmount = 0.0,
+                        orderCompleted = true,
                         lastInvoice = invoiceText,
                         lastOrder = order,
                         lastOrderItems = state.cart,
                         customers = state.customers // Preserve customers
-                    ) 
+                    )
+                }
+                
+                // Generate TEMPORARY PDF for preview (saved to cache)
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val tempPdfPath = com.tumbaspos.app.util.ThermalReceiptPdfGenerator.generateTempPdf(
+                            application,
+                            invoiceText,
+                            order.orderNumber,
+                            storeSettings?.logoImage // Pass actual logo for PDF rendering
+                        )
+                        
+                        if (tempPdfPath != null) {
+                            _uiState.update { it.copy(lastPdfPath = tempPdfPath) }
+                            android.util.Log.d("SalesViewModel", "Temp PDF generated: $tempPdfPath")
+                        } else {
+                            android.util.Log.e("SalesViewModel", "Failed to generate temp PDF")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("SalesViewModel", "Error generating temp PDF", e)
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }
@@ -263,18 +290,98 @@ class SalesViewModel(
     }
     
     fun printReceipt() {
-        val state = _uiState.value
-        val order = state.lastOrder ?: return
-        val items = state.lastOrderItems
-        
         viewModelScope.launch {
             try {
-                printerManager.printReceipt(order, items)
-                _uiState.update { it.copy(error = null) }
+                val order = _uiState.value.lastOrder ?: return@launch
+                val invoiceText = _uiState.value.lastInvoice ?: return@launch
+                
+                _uiState.update { it.copy(isLoading = true, error = null, successMessage = null) }
+                
+                // Get store settings for logo
+                val storeSettings = getStoreSettingsUseCase().firstOrNull()
+                
+                // STEP 1: Generate PERMANENT PDF (save to Downloads)
+                val pdfPath = withContext(Dispatchers.IO) {
+                    com.tumbaspos.app.util.ThermalReceiptPdfGenerator.generatePdf(
+                        application,
+                        invoiceText,
+                        order.orderNumber,
+                        storeSettings?.logoImage // Pass actual logo for PDF rendering
+                    )
+                }
+                
+                if (pdfPath == null) {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            error = "Failed to save PDF receipt",
+                            successMessage = null,
+                            lastPdfPath = null
+                        ) 
+                    }
+                    android.util.Log.e("SalesViewModel", "Failed to save permanent PDF")
+                    return@launch
+                }
+                
+                // Update state with permanent PDF path
+                _uiState.update { it.copy(lastPdfPath = pdfPath) }
+                
+                android.util.Log.d("SalesViewModel", "Permanent PDF saved to: $pdfPath")
+                
+                // STEP 2: Check if Bluetooth printer is connected
+                val isBluetoothConnected = printerManager.isConnected()
+                
+                if (isBluetoothConnected) {
+                    // STEP 3a: Print to Bluetooth printer
+                    try {
+                        val cartItems = _uiState.value.lastOrderItems
+                        printerManager.printReceipt(order, cartItems)
+                        
+                        _uiState.update { 
+                            it.copy(
+                                isLoading = false,
+                                error = null,
+                                successMessage = "Printed successfully and saved to Downloads"
+                            ) 
+                        }
+                        android.util.Log.d("SalesViewModel", "Printed to Bluetooth printer and saved PDF")
+                    } catch (e: Exception) {
+                        // Bluetooth print failed, but PDF is still saved
+                        _uiState.update { 
+                            it.copy(
+                                isLoading = false,
+                                error = "Print failed, but receipt saved to Downloads",
+                                successMessage = null
+                            ) 
+                        }
+                        android.util.Log.e("SalesViewModel", "Bluetooth print failed", e)
+                    }
+                } else {
+                    // STEP 3b: Virtual printer - PDF saved to Downloads
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            error = null,
+                            successMessage = "Receipt saved to Downloads folder"
+                        ) 
+                    }
+                    android.util.Log.d("SalesViewModel", "Virtual printer - PDF saved to Downloads")
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = "Print failed: ${e.message}") }
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        error = "Error saving receipt: ${e.message}",
+                        successMessage = null
+                    ) 
+                }
+                android.util.Log.e("SalesViewModel", "Error in printReceipt", e)
             }
         }
+    }
+    
+    fun clearMessages() {
+        _uiState.update { it.copy(error = null, successMessage = null) }
     }
     
     fun resetOrder() {

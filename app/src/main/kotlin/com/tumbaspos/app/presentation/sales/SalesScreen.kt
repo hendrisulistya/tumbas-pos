@@ -1,5 +1,6 @@
 package com.tumbaspos.app.presentation.sales
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,11 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tumbaspos.app.data.local.entity.CustomerEntity
 import com.tumbaspos.app.data.local.entity.ProductEntity
 import com.tumbaspos.app.presentation.sales.CartItem
+import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.util.Locale
@@ -30,10 +33,28 @@ fun SalesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show success message
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessages()
+        }
+    }
+
+    // Show error message
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessages()
+        }
+    }
 
     if (uiState.orderCompleted && uiState.lastInvoice != null) {
         InvoiceDialog(
             invoiceText = uiState.lastInvoice!!,
+            pdfPath = uiState.lastPdfPath,
             onDismiss = viewModel::resetOrder,
             onPrint = viewModel::printReceipt
         )
@@ -50,8 +71,10 @@ fun SalesScreen(
                 },
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -396,38 +419,123 @@ fun CustomerSelectionDialog(
 @Composable
 fun InvoiceDialog(
     invoiceText: String,
+    pdfPath: String? = null,
     onDismiss: () -> Unit,
-    onPrint: () -> Unit = {}
+    onPrint: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Payment Successful") },
+        title = {
+            Text("Payment Successful!")
+        },
         text = {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(vertical = 8.dp)
-            ) {
-                Text(
-                    text = invoiceText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                )
+            if (pdfPath != null) {
+                // Render PDF
+                PdfPreview(pdfPath = pdfPath)
+            } else {
+                // Fallback to text if PDF not available
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = invoiceText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                }
             }
         },
         confirmButton = {
-            Button(onClick = onPrint) {
+            Button(
+                onClick = {
+                    onPrint()
+                    onDismiss()
+                }
+            ) {
                 Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Print")
+                Text("Print & Close")
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
+        dismissButton = {}
+    )
+}
+
+@Composable
+fun PdfPreview(pdfPath: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    
+    LaunchedEffect(pdfPath) {
+        withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                // Get the PDF file from MediaStore URI or file path
+                val file = if (pdfPath.startsWith("content://")) {
+                    // MediaStore URI - need to copy to temp file
+                    val tempFile = java.io.File(context.cacheDir, "temp_receipt.pdf")
+                    context.contentResolver.openInputStream(android.net.Uri.parse(pdfPath))?.use { input ->
+                        tempFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    tempFile
+                } else {
+                    // Direct file path
+                    java.io.File(pdfPath)
+                }
+                
+                if (file.exists()) {
+                    val fileDescriptor = android.os.ParcelFileDescriptor.open(
+                        file,
+                        android.os.ParcelFileDescriptor.MODE_READ_ONLY
+                    )
+                    
+                    val pdfRenderer = android.graphics.pdf.PdfRenderer(fileDescriptor)
+                    val page = pdfRenderer.openPage(0)
+                    
+                    // Create bitmap with page dimensions
+                    val bmp = android.graphics.Bitmap.createBitmap(
+                        page.width * 2, // Scale up for better quality
+                        page.height * 2,
+                        android.graphics.Bitmap.Config.ARGB_8888
+                    )
+                    
+                    // Render page to bitmap
+                    page.render(bmp, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    
+                    bitmap = bmp
+                    
+                    page.close()
+                    pdfRenderer.close()
+                    fileDescriptor.close()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
-    )
+    }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp)
+            .verticalScroll(rememberScrollState()),
+        contentAlignment = Alignment.Center
+    ) {
+        bitmap?.let { bmp ->
+            Image(
+                bitmap = bmp.asImageBitmap(),
+                contentDescription = "Receipt PDF",
+                modifier = Modifier.fillMaxWidth()
+            )
+        } ?: run {
+            CircularProgressIndicator()
+        }
+    }
 }
 
 @Composable

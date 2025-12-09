@@ -87,8 +87,19 @@ fun PrinterSettingsScreen(
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { 
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.padding(top = 80.dp)
+                )
+            }
+        }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -124,7 +135,7 @@ fun PrinterSettingsScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-            // Status Card
+            // Selected Printer Card (Always visible)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -135,6 +146,13 @@ fun PrinterSettingsScreen(
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Selected Printer",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -142,23 +160,26 @@ fun PrinterSettingsScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                if (uiState.isConnected) Icons.Default.BluetoothConnected else Icons.Default.Bluetooth,
+                                if (uiState.isConnected) Icons.Default.BluetoothConnected else Icons.Default.Print,
                                 contentDescription = null,
-                                tint = if (uiState.isConnected) MaterialTheme.colorScheme.primary else Color.Gray
+                                tint = if (uiState.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(32.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = if (uiState.isConnected) "Connected" else "Disconnected",
+                                    text = if (uiState.isConnected) 
+                                        uiState.connectedDeviceName ?: "Unknown Device"
+                                    else 
+                                        "Virtual PDF Printer",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = if (uiState.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (uiState.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
-                                if (uiState.isConnected) {
-                                    Text(
-                                        text = uiState.connectedDeviceName ?: "Unknown Device",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
+                                Text(
+                                    text = if (uiState.isConnected) "Bluetooth Printer" else "Default (Saves to PDF)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                         
@@ -222,7 +243,7 @@ fun PrinterSettingsScreen(
                         BluetoothDeviceItem(
                             device = device,
                             isConnected = uiState.isConnected && uiState.connectedDeviceName == (device.name ?: device.address),
-                            isLoading = uiState.isConnecting,
+                            isLoading = uiState.connectingDeviceAddress == device.address,
                             onClick = { 
                                 if (!uiState.isConnecting) {
                                     viewModel.connectBluetooth(device.address)
@@ -274,7 +295,7 @@ fun PrinterSettingsScreen(
                         BluetoothDeviceItem(
                             device = device,
                             isConnected = false,
-                            isLoading = uiState.isConnecting,
+                            isLoading = uiState.connectingDeviceAddress == device.address,
                             onClick = { 
                                 if (!uiState.isConnecting) {
                                     viewModel.connectBluetooth(device.address)

@@ -53,10 +53,13 @@ class EscPosPrinterManager(
                 BluetoothDevice.ACTION_FOUND -> {
                     val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                     device?.let {
-                        val currentList = _scannedDevices.value.toMutableList()
-                        if (currentList.none { d -> d.address == it.address }) {
-                            currentList.add(it)
-                            _scannedDevices.value = currentList
+                        // Only add printer devices
+                        if (isPrinterDevice(it)) {
+                            val currentList = _scannedDevices.value.toMutableList()
+                            if (currentList.none { d -> d.address == it.address }) {
+                                currentList.add(it)
+                                _scannedDevices.value = currentList
+                            }
                         }
                     }
                 }
@@ -291,6 +294,10 @@ class EscPosPrinterManager(
         _isConnected.value = false
         _connectedDeviceName.value = null
     }
+    
+    override fun isConnected(): Boolean {
+        return _isConnected.value
+    }
 
     override suspend fun printReceipt(order: SalesOrderEntity, items: List<CartItem>) {
         withContext(Dispatchers.IO) {
@@ -333,7 +340,128 @@ class EscPosPrinterManager(
         }
     }
     
+    override suspend fun printToPdf(receiptText: String, orderNumber: String): String? {
+        return withContext(Dispatchers.IO) {
+            com.tumbaspos.app.util.ThermalReceiptPdfGenerator.generatePdf(
+                context,
+                receiptText,
+                orderNumber
+            )
+        }
+    }
+    
     private fun formatCurrency(amount: Double): String {
         return java.text.NumberFormat.getCurrencyInstance(Locale("id", "ID")).format(amount)
+    }
+    
+    /**
+     * Check if a Bluetooth device is likely a printer
+     */
+    private fun isPrinterDevice(device: BluetoothDevice): Boolean {
+        // Check device class
+        device.bluetoothClass?.let { btClass ->
+            val majorDeviceClass = btClass.majorDeviceClass
+            
+            // 0x0600 = Imaging (printer, scanner, camera, display)
+            if (majorDeviceClass == 0x0600) {
+                return true
+            }
+            
+            // Some printers identify as "Peripheral" (0x0500)
+            if (majorDeviceClass == 0x0500) {
+                return isLikelyPrinterByName(device)
+            }
+        }
+        
+        // Fallback: check device name
+        return isLikelyPrinterByName(device)
+    }
+    
+    @SuppressLint("MissingPermission")
+    private fun isLikelyPrinterByName(device: BluetoothDevice): Boolean {
+        val name = device.name?.lowercase() ?: return false
+        val printerKeywords = listOf(
+            "printer", "print", "pos", "receipt", 
+            "thermal", "epson", "star", "bixolon",
+            "citizen", "zebra", "tsc", "xprinter"
+        )
+        return printerKeywords.any { keyword -> name.contains(keyword) }
+    }
+    
+    
+    /**
+     * Convert Base64 image to black and white bitmap for thermal printing
+     */
+    private fun base64ToBitmap(base64String: String?): android.graphics.Bitmap? {
+        if (base64String.isNullOrBlank()) return null
+        
+        return try {
+            val imageBytes = android.util.Base64.decode(base64String, android.util.Base64.DEFAULT)
+            val originalBitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            
+            // Convert to black and white for thermal printer
+            val bwBitmap = android.graphics.Bitmap.createBitmap(
+                originalBitmap.width,
+                originalBitmap.height,
+                android.graphics.Bitmap.Config.ARGB_8888
+            )
+            
+            val canvas = android.graphics.Canvas(bwBitmap)
+            val paint = android.graphics.Paint()
+            val colorMatrix = android.graphics.ColorMatrix()
+            colorMatrix.setSaturation(0f) // Convert to grayscale
+            
+            val filter = android.graphics.ColorMatrixColorFilter(colorMatrix)
+            paint.colorFilter = filter
+            canvas.drawBitmap(originalBitmap, 0f, 0f, paint)
+            
+            originalBitmap.recycle()
+            bwBitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
+    /**
+     * Print logo image on thermal printer
+     */
+    private suspend fun printLogoImage(printer: EscPosPrinter, logoBase64: String?) {
+        val logoBitmap = base64ToBitmap(logoBase64)
+        if (logoBitmap != null) {
+            try {
+                // Resize logo to fit printer width (max 384 pixels for 58mm printer)
+                val maxWidth = 384
+                val scaleFactor = if (logoBitmap.width > maxWidth) {
+                    maxWidth.toFloat() / logoBitmap.width
+                } else {
+                    1f
+                }
+                
+                val scaledWidth = (logoBitmap.width * scaleFactor).toInt()
+                val scaledHeight = (logoBitmap.height * scaleFactor).toInt()
+                
+                val scaledBitmap = android.graphics.Bitmap.createScaledBitmap(
+                    logoBitmap,
+                    scaledWidth,
+                    scaledHeight,
+                    true
+                )
+                
+                // Convert bitmap to hexadecimal string for ESC/POS
+                val hexString = com.dantsu.escposprinter.textparser.PrinterTextParserImg.bitmapToHexadecimalString(
+                    printer,
+                    scaledBitmap
+                )
+                
+                // Print the image centered
+                printer.printFormattedText("[C]<img>$hexString</img>\n")
+                
+                scaledBitmap.recycle()
+                logoBitmap.recycle()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }

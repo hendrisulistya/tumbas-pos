@@ -14,7 +14,8 @@ class DatabaseInitializer(
     private val productDao: ProductDao,
     private val customerDao: CustomerDao,
     private val categoryDao: com.tumbaspos.app.data.local.dao.CategoryDao,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val storeSettingsDao: com.tumbaspos.app.data.local.dao.StoreSettingsDao
 ) {
     suspend fun initializeIfNeeded() = withContext(Dispatchers.IO) {
         if (settingsRepository.isDatabaseInitialized()) {
@@ -30,8 +31,38 @@ class DatabaseInitializer(
         // Insert customers from CSV
         insertCustomersFromCsv()
         
+        // Initialize default store settings
+        insertDefaultStoreSettings()
+        
         // Mark as initialized
         settingsRepository.setDatabaseInitialized(true)
+    }
+    
+    private suspend fun insertDefaultStoreSettings() {
+        try {
+            // Load default logo from assets
+            val logoBase64 = try {
+                context.assets.open("logo.png").use { inputStream ->
+                    val bytes = inputStream.readBytes()
+                    android.util.Base64.encodeToString(bytes, android.util.Base64.DEFAULT)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null // If logo.png doesn't exist, use null
+            }
+            
+            val defaultSettings = com.tumbaspos.app.data.local.entity.StoreSettingsEntity(
+                id = 1L,
+                storeName = "Tumbas POS",
+                storeAddress = "Jl. Contoh No. 123, Jakarta",
+                storePhone = "+62 812 3456 7890",
+                storeTaxId = "01.234.567.8-901.000",
+                logoImage = logoBase64
+            )
+            storeSettingsDao.insertOrUpdate(defaultSettings)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
     
     private suspend fun insertCategoriesFromCsv() {
