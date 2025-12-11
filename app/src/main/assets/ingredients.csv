@@ -1,0 +1,36 @@
+id,name,categoryId,unit,stock,minimumStock,costPerUnit
+1,Daging Sapi,1,kg,0.0,5.0,120000
+2,Ayam Kampung,1,kg,0.0,3.0,45000
+3,Ikan Tongkol,1,kg,0.0,2.0,35000
+4,Telur Ayam,1,butir,0.0,50.0,2500
+5,Cabai Merah,2,kg,0.0,2.0,35000
+6,Cabai Hijau,2,kg,0.0,1.0,25000
+7,Tomat,2,kg,0.0,2.0,8000
+8,Kentang,2,kg,0.0,5.0,12000
+9,Kacang Panjang,2,kg,0.0,1.0,8000
+10,Daun Singkong,2,ikat,0.0,5.0,3000
+11,Nangka Muda,2,kg,0.0,2.0,15000
+12,Bawang Merah,3,kg,0.0,3.0,35000
+13,Bawang Putih,3,kg,0.0,2.0,45000
+14,Jahe,3,kg,0.0,1.0,25000
+15,Lengkuas,3,kg,0.0,1.0,20000
+16,Kunyit,3,kg,0.0,0.5,18000
+17,Kemiri,4,kg,0.0,0.5,80000
+18,Ketumbar,4,kg,0.0,0.3,60000
+19,Jintan,4,kg,0.0,0.2,70000
+20,Merica Hitam,4,kg,0.0,0.3,150000
+21,Kayu Manis,4,kg,0.0,0.2,100000
+22,Cengkeh,4,kg,0.0,0.1,200000
+23,Pala,4,kg,0.0,0.1,180000
+24,Serai,3,ikat,0.0,5.0,2000
+25,Daun Salam,3,ikat,0.0,3.0,2500
+26,Daun Jeruk,3,ikat,0.0,3.0,3000
+27,Santan Kelapa,5,liter,0.0,10.0,15000
+28,Minyak Goreng,5,liter,0.0,20.0,18000
+29,Beras,6,kg,0.0,50.0,12000
+30,Tepung Beras,6,kg,0.0,5.0,10000
+31,Garam,7,kg,0.0,2.0,5000
+32,Gula Pasir,7,kg,0.0,3.0,14000
+33,Asam Jawa,7,kg,0.0,1.0,25000
+34,Kecap Manis,7,liter,0.0,2.0,12000
+35,Air Jeruk Nipis,7,liter,0.0,1.0,8000

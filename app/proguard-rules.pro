@@ -3,7 +3,7 @@
 # proguardFiles setting in build.gradle.
 
 # Keep all classes in your app package
--keep class com.tumbaspos.app.** { *; }
+-keep class com.argminres.app.** { *; }
 
 # Keep Kotlin metadata
 -keep class kotlin.Metadata { *; }
@@ -55,11 +55,11 @@
 -keepclasseswithmembers class kotlinx.serialization.json.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
--keep,includedescriptorclasses class com.tumbaspos.app.**$$serializer { *; }
--keepclassmembers class com.tumbaspos.app.** {
+-keep,includedescriptorclasses class com.argminres.app.**$$serializer { *; }
+-keepclassmembers class com.argminres.app.** {
     *** Companion;
 }
--keepclasseswithmembers class com.tumbaspos.app.** {
+-keepclasseswithmembers class com.argminres.app.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
