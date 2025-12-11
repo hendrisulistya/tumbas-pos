@@ -44,29 +44,97 @@ class DatabaseInitializer(
     
     private suspend fun insertDefaultStoreSettings() {
         try {
-            // Load default logo from assets
-            val logoBase64 = try {
-                context.assets.open("logo.png").use { inputStream ->
-                    val bytes = inputStream.readBytes()
-                    android.util.Base64.encodeToString(bytes, android.util.Base64.DEFAULT)
+            // Read store settings from CSV
+            var storeName = "Tumbas POS"
+            var storeAddress = "Jl. Example No. 123"
+            var storePhone = "+62 812-3456-7890"
+            var storeTaxId = "01.234.567.8-901.000"
+            
+            try {
+                context.assets.open("store.csv").bufferedReader().use { reader ->
+                    reader.readLine() // Skip header
+                    reader.readLine()?.let { line ->
+                        val tokens = parseCsvLine(line)
+                        if (tokens.size >= 4) {
+                            storeName = tokens[0]
+                            storeAddress = tokens[1]
+                            storePhone = tokens[2]
+                            storeTaxId = tokens[3]
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                null // If logo.png doesn't exist, use null
+                // Use default values if CSV reading fails
+            }
+            
+            // Load and convert logo to BW bitmap for thermal printer
+            val logoBase64 = try {
+                context.assets.open("logo.png").use { inputStream ->
+                    val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                    val bwBitmap = convertToBWBitmap(bitmap)
+                    val outputStream = java.io.ByteArrayOutputStream()
+                    bwBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream)
+                    android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.DEFAULT)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null // If logo.png doesn't exist or conversion fails, use null
             }
             
             val defaultSettings = com.tumbaspos.app.data.local.entity.StoreSettingsEntity(
                 id = 1L,
-                storeName = "Tumbas POS",
-                storeAddress = "Jl. Contoh No. 123, Jakarta",
-                storePhone = "+62 812 3456 7890",
-                storeTaxId = "01.234.567.8-901.000",
+                storeName = storeName,
+                storeAddress = storeAddress,
+                storePhone = storePhone,
+                storeTaxId = storeTaxId,
                 logoImage = logoBase64
             )
             storeSettingsDao.insertOrUpdate(defaultSettings)
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+    
+    /**
+     * Convert bitmap to Black & White for thermal printer compatibility
+     */
+    private fun convertToBWBitmap(original: android.graphics.Bitmap): android.graphics.Bitmap {
+        val width = original.width
+        val height = original.height
+        val bwBitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        
+        val canvas = android.graphics.Canvas(bwBitmap)
+        val paint = android.graphics.Paint()
+        val colorMatrix = android.graphics.ColorMatrix()
+        
+        // Convert to grayscale
+        colorMatrix.setSaturation(0f)
+        
+        val filter = android.graphics.ColorMatrixColorFilter(colorMatrix)
+        paint.colorFilter = filter
+        canvas.drawBitmap(original, 0f, 0f, paint)
+        
+        // Apply threshold to make it pure black and white
+        val pixels = IntArray(width * height)
+        bwBitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        
+        for (i in pixels.indices) {
+            val pixel = pixels[i]
+            val gray = (android.graphics.Color.red(pixel) + 
+                       android.graphics.Color.green(pixel) + 
+                       android.graphics.Color.blue(pixel)) / 3
+            
+            // Threshold at 128 - lighter becomes white, darker becomes black
+            pixels[i] = if (gray > 128) {
+                android.graphics.Color.WHITE
+            } else {
+                android.graphics.Color.BLACK
+            }
+        }
+        
+        bwBitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+        return bwBitmap
     }
     
     private suspend fun insertCategoriesFromCsv() {
