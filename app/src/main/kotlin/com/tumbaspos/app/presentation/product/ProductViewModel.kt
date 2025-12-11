@@ -27,7 +27,8 @@ class ProductViewModel(
     private val getInventoryUseCase: GetInventoryUseCase,
     private val manageProductUseCase: ManageProductUseCase,
     private val manageProductImageUseCase: ManageProductImageUseCase,
-    private val getCategoriesUseCase: com.tumbaspos.app.domain.usecase.warehouse.GetCategoriesUseCase
+    private val getCategoriesUseCase: com.tumbaspos.app.domain.usecase.warehouse.GetCategoriesUseCase,
+    private val auditLogger: com.tumbaspos.app.domain.manager.AuditLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductUiState())
@@ -94,11 +95,25 @@ class ProductViewModel(
     fun onSaveProduct(product: ProductEntity) {
         viewModelScope.launch {
             try {
-                if (product.id == 0L) {
-                    manageProductUseCase.createProduct(product)
+                val isNewProduct = product.id == 0L
+                val savedProductId: Long
+
+                if (isNewProduct) {
+                    savedProductId = manageProductUseCase.createProduct(product)
                 } else {
                     manageProductUseCase.updateProduct(product)
+                    savedProductId = product.id
                 }
+                
+                // Log audit trail
+                auditLogger.logAsync {
+                    if (isNewProduct) {
+                        auditLogger.logCreate("PRODUCT", savedProductId, "Name: ${product.name}")
+                    } else {
+                        auditLogger.logUpdate("PRODUCT", savedProductId, "Name: ${product.name}")
+                    }
+                }
+                
                 _uiState.update { it.copy(isProductDialogOpen = false) }
             } catch (e: Exception) {
                 // Log error or show snackbar? For now just log

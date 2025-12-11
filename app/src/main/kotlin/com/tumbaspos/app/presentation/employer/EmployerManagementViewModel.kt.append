@@ -1,0 +1,56 @@
+    // PIN Change functionality
+    fun onChangePinClick() {
+        _uiState.update { it.copy(isChangePinDialogOpen = true, pinChangeError = null, pinChangeSuccess = false) }
+    }
+
+    fun onDismissChangePinDialog() {
+        _uiState.update { it.copy(isChangePinDialogOpen = false, pinChangeError = null, pinChangeSuccess = false) }
+    }
+
+    fun changePin(oldPin: String, newPin: String) {
+        viewModelScope.launch {
+            try {
+                val currentEmployer = authManager.getCurrentEmployer()
+                if (currentEmployer == null) {
+                    _uiState.update { it.copy(pinChangeError = "No user logged in") }
+                    return@launch
+                }
+
+                // Verify old PIN
+                if (!com.tumbaspos.app.util.PinHasher.verifyPin(oldPin, currentEmployer.pin)) {
+                    _uiState.update { it.copy(pinChangeError = "Current PIN is incorrect") }
+                    return@launch
+                }
+
+                // Hash new PIN
+                val hashedNewPin = com.tumbaspos.app.util.PinHasher.hashPin(newPin)
+
+                // Update employer with new PIN
+                val updatedEmployer = currentEmployer.copy(pin = hashedNewPin)
+                employerRepository.update(updatedEmployer)
+
+                // Update session
+                authManager.login(updatedEmployer)
+
+                // Log audit trail
+                auditLogger.logAsync {
+                    auditLogger.logUpdate(
+                        "EMPLOYEE",
+                        currentEmployer.id,
+                        "PIN changed for: ${currentEmployer.fullName}"
+                    )
+                }
+
+                _uiState.update { 
+                    it.copy(
+                        pinChangeSuccess = true,
+                        pinChangeError = null,
+                        isChangePinDialogOpen = false
+                    ) 
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(pinChangeError = e.message ?: "Failed to change PIN") }
+            }
+        }
+    }
+}

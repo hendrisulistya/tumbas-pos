@@ -30,7 +30,8 @@ class SalesOrderDetailViewModel(
     private val productRepository: ProductRepository,
     private val printerManager: PrinterManager,
     private val application: android.app.Application,
-    private val getStoreSettingsUseCase: com.tumbaspos.app.domain.usecase.settings.GetStoreSettingsUseCase
+    private val getStoreSettingsUseCase: com.tumbaspos.app.domain.usecase.settings.GetStoreSettingsUseCase,
+    private val employerRepository: com.tumbaspos.app.domain.repository.EmployerRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SalesOrderDetailUiState())
@@ -117,6 +118,12 @@ class SalesOrderDetailViewModel(
                             .format(java.util.Date(state.order.orderDate))
                         appendLine("Date     : $dateStr")
                         appendLine("Customer : Guest") // TODO: Get actual customer name
+                        
+                        // Get cashier name
+                        val cashierName = state.order.cashierId?.let { cashierId ->
+                            employerRepository.getById(cashierId)?.fullName
+                        } ?: "Unknown"
+                        appendLine("Cashier  : $cashierName")
                         appendLine()
                         appendLine("--------------------------------")
                         

@@ -125,6 +125,24 @@ fun OrderHistoryList(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(dateFormatter.format(Date(orderWithItems.order.orderDate)), style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Show cashier name
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = "Cashier",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "Cashier: ${orderWithItems.cashierName ?: "Unknown"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         "Total: ${currencyFormatter.format(orderWithItems.order.totalAmount)}",
                         style = MaterialTheme.typography.titleSmall,

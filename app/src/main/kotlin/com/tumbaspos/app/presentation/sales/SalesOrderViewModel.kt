@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 import com.tumbaspos.app.data.local.dao.SalesOrderWithItems
+import com.tumbaspos.app.data.local.entity.EmployerEntity
+import kotlinx.coroutines.flow.first
 
 data class SalesOrderUiState(
     val orders: List<SalesOrderWithItems> = emptyList(),
@@ -25,7 +27,9 @@ data class SalesOrderUiState(
 
 class SalesOrderViewModel(
     private val getSalesOrdersUseCase: GetSalesOrdersUseCase,
-    private val customerRepository: CustomerRepository
+    private val customerRepository: CustomerRepository,
+    private val authManager: com.tumbaspos.app.domain.manager.AuthenticationManager,
+    private val employerRepository: com.tumbaspos.app.domain.repository.EmployerRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SalesOrderUiState())
@@ -40,8 +44,36 @@ class SalesOrderViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                getSalesOrdersUseCase().collect { orders ->
-                    _uiState.update { it.copy(orders = orders, isLoading = false) }
+                getSalesOrdersUseCase().collect { allOrders ->
+                    // Get all employers for cashier name lookup
+                    val employers: List<EmployerEntity> = employerRepository.getAll().first()
+                    val employerMap: Map<Long, EmployerEntity> = employers.associateBy { it.id }
+                    
+                    // Filter orders based on role
+                    val currentEmployer = authManager.getCurrentEmployer()
+                    val filteredOrders = if (currentEmployer?.role == "CASHIER") {
+                        // Cashiers only see their own orders
+                        allOrders.filter { it.order.cashierId == currentEmployer.id }
+                    } else {
+                        // Managers see all orders
+                        allOrders
+                    }
+                    
+                    // Populate cashier names
+                    val ordersWithCashierNames = filteredOrders.map { orderWithItems ->
+                        val cashierName = orderWithItems.order.cashierId?.let { cashierId ->
+                            employerMap[cashierId]?.fullName ?: "Unknown"
+                        } ?: "Unknown"
+                        
+                        orderWithItems.copy(cashierName = cashierName)
+                    }
+                    
+                    _uiState.update { 
+                        it.copy(
+                            orders = ordersWithCashierNames,
+                            isLoading = false
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = e.message) }

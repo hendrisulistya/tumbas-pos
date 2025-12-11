@@ -2,7 +2,19 @@ package com.tumbaspos.app.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.ForeignKey
+import androidx.room.Index
 import kotlinx.serialization.Serializable
+
+@Entity(tableName = "employers")
+data class EmployerEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val fullName: String,
+    val phoneNumber: String,
+    val role: String, // "MANAGER" or "CASHIER"
+    val pin: String // 4-digit PIN
+)
 
 @Entity(tableName = "products")
 @Serializable
@@ -50,6 +62,7 @@ data class PurchaseOrderEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val supplierId: Long,
     val orderDate: Long,
+    val cashierId: Long?, // ID of the employer/cashier who created this order
     val status: String, // DRAFT, SUBMITTED, RECEIVED, CANCELLED
     val totalAmount: Double,
     val notes: String,
@@ -75,12 +88,15 @@ data class SalesOrderEntity(
     val orderNumber: String,
     val orderDate: Long,
     val customerId: Long?, // Nullable for guest checkout
-    val paymentMethod: String, // CASH, CARD, QRIS
+    val cashierId: Long?, // ID of the employer/cashier who created this order
     val totalAmount: Double,
-    val discount: Double,
-    val tax: Double,
-    val status: String, // COMPLETED, REFUNDED, VOID
-    val createdAt: Long = System.currentTimeMillis()
+    val discount: Double = 0.0,
+    val tax: Double = 0.0,
+    val paymentMethod: String, // CASH, CARD, TRANSFER
+    val status: String, // DRAFT, COMPLETED, CANCELLED
+    val notes: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "sales_order_items")

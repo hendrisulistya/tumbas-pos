@@ -56,7 +56,9 @@ class SalesViewModel(
     private val cartRepository: com.tumbaspos.app.domain.repository.CartRepository,
     private val customerRepository: com.tumbaspos.app.domain.repository.CustomerRepository,
     private val printerManager: PrinterManager,
-    private val application: android.app.Application
+    private val application: android.app.Application,
+    private val authManager: com.tumbaspos.app.domain.manager.AuthenticationManager,
+    private val auditLogger: com.tumbaspos.app.domain.manager.AuditLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SalesUiState())
@@ -152,6 +154,7 @@ class SalesViewModel(
                     orderNumber = orderNumber,
                     orderDate = System.currentTimeMillis(),
                     customerId = customerId,
+                    cashierId = authManager.getCurrentEmployer()?.id,
                     paymentMethod = "CASH",
                     totalAmount = state.totalAmount,
                     discount = 0.0,
@@ -169,7 +172,17 @@ class SalesViewModel(
                     )
                 }
 
-                createSalesOrderUseCase(order, items)
+                val orderId = createSalesOrderUseCase(order, items)
+                
+                // Log audit trail
+                auditLogger.logAsync {
+                    auditLogger.logCreate(
+                        "SALES_ORDER",
+                        orderId,
+                        "Total: Rp ${String.format("%,.0f", state.totalAmount)}, Items: ${state.cart.size}"
+                    )
+                }
+                
                 cartRepository.clearCart()
                 
                 // Generate Invoice Text with Professional Header

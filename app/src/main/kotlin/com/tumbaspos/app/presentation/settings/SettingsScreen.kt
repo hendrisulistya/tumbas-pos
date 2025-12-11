@@ -5,13 +5,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Warehouse
@@ -24,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.tumbaspos.app.data.repository.SettingsRepository
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsItem(
@@ -71,14 +79,49 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToBackup: () -> Unit,
     onNavigateToPrinter: () -> Unit,
-    onNavigateToStore: () -> Unit,
+    onNavigateToStoreSettings: () -> Unit,
     onNavigateToSalesOrder: () -> Unit,
     onNavigateToWarehouse: () -> Unit,
-    onNavigateToPurchase: () -> Unit,
+    onNavigateToPurchaseOrder: () -> Unit,
     onNavigateToReporting: () -> Unit,
     onNavigateToProduct: () -> Unit,
-    onNavigateToAbout: () -> Unit
+    onNavigateToAbout: () -> Unit,
+    onNavigateToEmployers: () -> Unit = {},
+    onNavigateToAuditLog: () -> Unit,
+    onChangePinClick: () -> Unit,
+    onLogout: () -> Unit = {}
 ) {
+    val authManager: com.tumbaspos.app.domain.manager.AuthenticationManager = koinInject()
+    val currentEmployer by authManager.currentEmployer.collectAsState()
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val isManager = currentEmployer?.role == "MANAGER"
+    
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        coroutineScope.launch {
+                            authManager.logout()
+                            onLogout()
+                        }
+                    }
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -86,7 +129,7 @@ fun SettingsScreen(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -104,18 +147,100 @@ fun SettingsScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Current User Card
             item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    ListItem(
+                        headlineContent = { 
+                            Text(
+                                currentEmployer?.fullName ?: "Not Logged In",
+                                style = MaterialTheme.typography.titleMedium
+                            ) 
+                        },
+                        supportingContent = { 
+                            Text(
+                                currentEmployer?.role ?: "",
+                                style = MaterialTheme.typography.bodyMedium
+                            ) 
+                        },
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        },
+                        trailingContent = {
+                            IconButton(onClick = { showLogoutDialog = true }) {
+                                Icon(
+                                    Icons.Default.Logout,
+                                    contentDescription = "Logout",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    )
+                }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Management",
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+            
+            // Only show for managers
+            if (isManager) {
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Person,
+                        title = "Employees",
+                        subtitle = "Manage employees",
+                        onClick = onNavigateToEmployers
+                    )
+                }
+                
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.History,
+                        title = "Audit Log",
+                        subtitle = "View activity history",
+                        onClick = onNavigateToAuditLog
+                    )
+                }
+            }
+            
+            // Account Section
+            item {
+                Text(
+                    "Account",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                )
+            }
+            
+            item {
+                SettingsItem(
+                    icon = Icons.Default.Lock,
+                    title = "Change PIN",
+                    subtitle = "Update your security PIN",
+                    onClick = onChangePinClick
                 )
             }
 
             item {
                 SettingsItem(
-                    icon = Icons.Default.List,
+                    icon = Icons.Default.ShoppingBag,
                     title = "Products",
                     subtitle = "Manage products",
                     onClick = onNavigateToProduct
@@ -145,7 +270,7 @@ fun SettingsScreen(
                     icon = Icons.Default.ShoppingBag,
                     title = "Purchase Orders",
                     subtitle = "Manage purchases",
-                    onClick = onNavigateToPurchase
+                    onClick = onNavigateToPurchaseOrder
                 )
             }
 
@@ -172,7 +297,7 @@ fun SettingsScreen(
                     icon = Icons.Default.ShoppingBag,
                     title = "Store Settings",
                     subtitle = "Configure store information",
-                    onClick = onNavigateToStore
+                    onClick = onNavigateToStoreSettings
                 )
             }
             

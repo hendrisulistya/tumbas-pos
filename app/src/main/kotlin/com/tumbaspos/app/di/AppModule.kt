@@ -62,11 +62,15 @@ val appModule = module {
     single { get<AppDatabase>().customerDao() }
     single { get<AppDatabase>().categoryDao() }
     single { get<AppDatabase>().storeSettingsDao() }
+    single { get<AppDatabase>().employerDao() }
     single<com.tumbaspos.app.domain.repository.ImageRepository> {
         com.tumbaspos.app.data.repository.ImageRepositoryImpl()
     }
     single<com.tumbaspos.app.domain.repository.StoreSettingsRepository> {
         com.tumbaspos.app.data.repository.StoreSettingsRepositoryImpl(get())
+    }
+    single<com.tumbaspos.app.domain.repository.EmployerRepository> {
+        com.tumbaspos.app.data.repository.EmployerRepositoryImpl(get(), androidContext())
     }
     
     single {
@@ -123,29 +127,44 @@ val appModule = module {
             get<CustomerDao>(),
             get<com.tumbaspos.app.data.local.dao.CategoryDao>(),
             get<SettingsRepository>(),
-            get<com.tumbaspos.app.data.local.dao.StoreSettingsDao>()
+            get<com.tumbaspos.app.data.local.dao.StoreSettingsDao>(),
+            get<com.tumbaspos.app.domain.repository.EmployerRepository>()
         ) 
     }
-
+    
+    // Session & Authentication
+    single { com.tumbaspos.app.data.local.SessionManager(androidContext()) }
+    single { com.tumbaspos.app.domain.manager.AuthenticationManager(get(), get(), get()) }
+    
+    // Audit Trail
+    single { get<AppDatabase>().auditLogDao() }
+    single<com.tumbaspos.app.domain.repository.AuditLogRepository> { 
+        com.tumbaspos.app.data.repository.AuditLogRepositoryImpl(get()) 
+    }
+    single { com.tumbaspos.app.domain.manager.AuditLogger(get(), inject(), kotlinx.coroutines.GlobalScope) }
+    
     single<com.tumbaspos.app.domain.manager.PrinterManager> { com.tumbaspos.app.data.manager.EscPosPrinterManager(androidContext()) }
     
     // ViewModels
-    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application) }
+    viewModel { com.tumbaspos.app.presentation.auth.LoginViewModel(get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
     viewModel { com.tumbaspos.app.presentation.home.HomeViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.warehouse.WarehouseViewModel(get(), get()) }
-    viewModel { com.tumbaspos.app.presentation.purchase.PurchaseViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { com.tumbaspos.app.presentation.reporting.ReportingViewModel(get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.purchase.PurchaseViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.backup.BackupViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.activation.ActivationViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.activation.PostActivationViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get(), get()) }
-    viewModel { com.tumbaspos.app.presentation.sales.SalesOrderViewModel(get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.sales.SalesOrderViewModel(get(), get(), get(), get()) }
     viewModel { com.tumbaspos.app.presentation.scan.ScanViewModel(get(), get()) }
     viewModel { com.tumbaspos.app.presentation.settings.printer.PrinterSettingsViewModel(get(), androidContext()) }
-    viewModel { com.tumbaspos.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get(), androidContext() as android.app.Application, get()) }
+    viewModel { com.tumbaspos.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.employer.EmployerManagementViewModel(get(), get(), get()) }
+    viewModel { com.tumbaspos.app.presentation.audit.AuditLogViewModel(get()) }
     viewModel { 
         com.tumbaspos.app.presentation.product.ProductViewModel(
-            get(), get(), get(), get()
+            get(), get(), get(), get(), get()
         ) 
     }
     viewModel { 

@@ -13,11 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
@@ -38,6 +40,7 @@ import com.tumbaspos.app.presentation.settings.printer.PrinterSettingsScreen
 import com.tumbaspos.app.presentation.sales.SalesOrderDetailScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
+    data object Login : Screen("login", "Login")
     data object Home : Screen("home", "Home", Icons.Default.Home)
     data object Scan : Screen("scan", "Scan", Icons.Default.QrCodeScanner)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
@@ -55,6 +58,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     data object SalesOrderDetail : Screen("sales_order_detail", "Order Details")
     data object Product : Screen("products", "Products")
     data object About : Screen("about", "About")
+    data object EmployerManagement : Screen("employer_management", "Manage Employees")
+    data object AuditLog : Screen("audit_log", "Audit Log")
 }
 
 @Composable
@@ -63,7 +68,29 @@ fun App() {
         MaterialTheme {
             val navController = rememberNavController()
             val settingsRepository: SettingsRepository = koinInject()
-            val startDestination = if (settingsRepository.isActivated()) Screen.Home.route else Screen.Activation.route
+            val authManager: com.tumbaspos.app.domain.manager.AuthenticationManager = koinInject()
+            val isAuthenticated by authManager.currentEmployer.collectAsState()
+            
+            // Restore session on app start
+            LaunchedEffect(Unit) {
+                authManager.restoreSession()
+            }
+            
+            // Determine start destination - always require login after activation
+            val startDestination = if (!settingsRepository.isActivated()) {
+                Screen.Activation.route
+            } else {
+                Screen.Login.route
+            }
+            
+            // Redirect to login if user becomes unauthenticated
+            LaunchedEffect(isAuthenticated) {
+                if (settingsRepository.isActivated() && isAuthenticated == null) {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
             
             val bottomNavItems = listOf(Screen.Home, Screen.Scan, Screen.Settings)
 
@@ -72,7 +99,8 @@ fun App() {
                 bottomBar = {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
-                    val showBottomBar = currentDestination?.route != Screen.Activation.route &&
+                    val showBottomBar = currentDestination?.route != Screen.Login.route &&
+                                       currentDestination?.route != Screen.Activation.route &&
                                        currentDestination?.route != Screen.Cart.route &&
                                        currentDestination?.route != Screen.Warehouse.route &&
                                        currentDestination?.route != Screen.Purchase.route &&
@@ -127,6 +155,16 @@ fun App() {
                             )
                         )
                 ) {
+                    composable(Screen.Login.route) {
+                        com.tumbaspos.app.presentation.auth.LoginScreen(
+                            onLoginSuccess = {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                }
+                            }
+                        )
+                    }
+                    
                     composable(Screen.Home.route) {
                         HomeScreen(
                             onNavigateToCart = {
@@ -144,19 +182,61 @@ fun App() {
                     }
                     
                     composable(Screen.Settings.route) {
-                        SettingsScreen(
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToBackup = { navController.navigate(Screen.Backup.route) },
-                            onNavigateToPrinter = { navController.navigate(Screen.PrinterSettings.route) },
-                            onNavigateToStore = { navController.navigate(Screen.StoreSettings.route) },
-                            onNavigateToSalesOrder = { navController.navigate(Screen.SalesOrder.route) },
-                            onNavigateToWarehouse = { navController.navigate(Screen.Warehouse.route) },
-                            onNavigateToPurchase = { navController.navigate(Screen.Purchase.route) },
-                            onNavigateToReporting = { navController.navigate(Screen.Reporting.route) },
-                            onNavigateToProduct = { navController.navigate(Screen.Product.route) },
-                            onNavigateToAbout = { navController.navigate(Screen.About.route) }
+                    val employerViewModel: com.tumbaspos.app.presentation.employer.EmployerManagementViewModel = koinViewModel()
+                    val employerUiState by employerViewModel.uiState.collectAsState()
+                    val context = LocalContext.current
+                    
+                    SettingsScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToBackup = { navController.navigate(Screen.Backup.route) },
+                        onNavigateToPrinter = { navController.navigate(Screen.PrinterSettings.route) },
+                        onNavigateToStoreSettings = { navController.navigate(Screen.StoreSettings.route) },
+                        onNavigateToSalesOrder = { navController.navigate(Screen.SalesOrder.route) },
+                        onNavigateToWarehouse = { navController.navigate(Screen.Warehouse.route) },
+                        onNavigateToPurchaseOrder = { navController.navigate(Screen.Purchase.route) },
+                        onNavigateToReporting = { navController.navigate(Screen.Reporting.route) },
+                        onNavigateToProduct = { navController.navigate(Screen.Product.route) },
+                        onNavigateToAbout = { navController.navigate(Screen.About.route) },
+                        onNavigateToEmployers = { navController.navigate(Screen.EmployerManagement.route) },
+                        onNavigateToAuditLog = { navController.navigate(Screen.AuditLog.route) },
+                        onChangePinClick = { employerViewModel.onChangePinClick() },
+                        onLogout = {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                    
+                    // Change PIN Dialog
+                    if (employerUiState.isChangePinDialogOpen) {
+                        com.tumbaspos.app.presentation.settings.ChangePinDialog(
+                            onDismiss = { employerViewModel.onDismissChangePinDialog() },
+                            onConfirm = { oldPin, newPin ->
+                                employerViewModel.changePin(oldPin, newPin)
+                            }
                         )
                     }
+                    
+                    // Show success/error messages
+                    LaunchedEffect(employerUiState.pinChangeSuccess, employerUiState.pinChangeError) {
+                        if (employerUiState.pinChangeSuccess) {
+                            // Show success message
+                            android.widget.Toast.makeText(
+                                context,
+                                "PIN changed successfully",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        if (employerUiState.pinChangeError != null) {
+                            // Show error message
+                            android.widget.Toast.makeText(
+                                context,
+                                employerUiState.pinChangeError,
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
                     
                     composable(Screen.PrinterSettings.route) {
                         PrinterSettingsScreen(
@@ -251,7 +331,7 @@ fun App() {
                     composable(Screen.PostActivation.route) {
                         com.tumbaspos.app.presentation.activation.PostActivationScreen(
                             onComplete = {
-                                navController.navigate(Screen.Home.route) {
+                                navController.navigate(Screen.Login.route) {
                                     popUpTo(Screen.PostActivation.route) { inclusive = true }
                                 }
                             }
@@ -266,6 +346,18 @@ fun App() {
 
                     composable(Screen.About.route) {
                         com.tumbaspos.app.presentation.settings.AboutScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    
+                    composable(Screen.EmployerManagement.route) {
+                        com.tumbaspos.app.presentation.employer.EmployerManagementScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                
+                    composable(Screen.AuditLog.route) {
+                        com.tumbaspos.app.presentation.audit.AuditLogScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

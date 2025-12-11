@@ -8,17 +8,19 @@ import com.tumbaspos.app.data.local.entity.*
 @Database(
     entities = [
         ProductEntity::class,
+        com.tumbaspos.app.data.local.entity.CategoryEntity::class,
+        com.tumbaspos.app.data.local.entity.CustomerEntity::class,
         SalesOrderEntity::class,
         SalesOrderItemEntity::class,
-        StockMovementEntity::class,
-        SupplierEntity::class,
-        PurchaseOrderEntity::class,
-        PurchaseOrderItemEntity::class,
-        com.tumbaspos.app.data.local.entity.CustomerEntity::class,
-        CategoryEntity::class,
-        StoreSettingsEntity::class
+        com.tumbaspos.app.data.local.entity.SupplierEntity::class,
+        com.tumbaspos.app.data.local.entity.PurchaseOrderEntity::class,
+        com.tumbaspos.app.data.local.entity.PurchaseOrderItemEntity::class,
+        com.tumbaspos.app.data.local.entity.StockMovementEntity::class,
+        com.tumbaspos.app.data.local.entity.StoreSettingsEntity::class,
+        EmployerEntity::class,
+        com.tumbaspos.app.data.local.entity.AuditLogEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,5 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun reportingDao(): ReportingDao
     abstract fun customerDao(): com.tumbaspos.app.data.local.dao.CustomerDao
     abstract fun categoryDao(): CategoryDao
-    abstract fun storeSettingsDao(): StoreSettingsDao
+    abstract fun storeSettingsDao(): com.tumbaspos.app.data.local.dao.StoreSettingsDao
+    abstract fun employerDao(): EmployerDao
+    abstract fun auditLogDao(): com.tumbaspos.app.data.local.dao.AuditLogDao
 }

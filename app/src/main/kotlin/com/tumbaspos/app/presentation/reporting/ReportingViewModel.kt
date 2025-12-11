@@ -27,7 +27,8 @@ data class ReportingUiState(
 class ReportingViewModel(
     private val getDashboardDataUseCase: GetDashboardDataUseCase,
     private val getSalesReportUseCase: GetSalesReportUseCase,
-    private val getLowStockReportUseCase: GetLowStockReportUseCase
+    private val getLowStockReportUseCase: GetLowStockReportUseCase,
+    private val authManager: com.tumbaspos.app.domain.manager.AuthenticationManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportingUiState())
@@ -49,7 +50,15 @@ class ReportingViewModel(
     private fun loadDashboardData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val data = getDashboardDataUseCase()
+            
+            // Get cashier ID for filtering (null for managers = see all)
+            val cashierId = if (authManager.getCurrentEmployer()?.role == "CASHIER") {
+                authManager.getCurrentEmployer()?.id
+            } else {
+                null // Managers see all
+            }
+            
+            val data = getDashboardDataUseCase(cashierId)
             
             // Collect flows concurrently
             launch {
@@ -83,8 +92,15 @@ class ReportingViewModel(
             val endDate = calendar.timeInMillis
             calendar.add(Calendar.DAY_OF_YEAR, -30) // Last 30 days
             val startDate = calendar.timeInMillis
+            
+            // Get cashier ID for filtering
+            val cashierId = if (authManager.getCurrentEmployer()?.role == "CASHIER") {
+                authManager.getCurrentEmployer()?.id
+            } else {
+                null // Managers see all
+            }
 
-            getSalesReportUseCase(startDate, endDate).collect { summary ->
+            getSalesReportUseCase(startDate, endDate, cashierId).collect { summary ->
                 _uiState.update { it.copy(salesSummary = summary, isLoading = false) }
             }
         }

@@ -149,32 +149,33 @@ interface CategoryDao {
 @Dao
 interface ReportingDao {
     @Query("""
-        SELECT 
-            date(orderDate / 1000, 'unixepoch', 'localtime') as date, 
-            SUM(totalAmount) as totalSales, 
-            COUNT(*) as totalTransactions 
-        FROM sales_orders 
-        WHERE orderDate BETWEEN :startDate AND :endDate 
-        GROUP BY date 
+        SELECT DATE(orderDate / 1000, 'unixepoch') as date,
+               SUM(totalAmount) as totalSales,
+               COUNT(*) as totalTransactions
+        FROM sales_orders
+        WHERE orderDate >= :startDate AND orderDate <= :endDate
+          AND (:cashierId IS NULL OR cashierId = :cashierId)
+        GROUP BY DATE(orderDate / 1000, 'unixepoch')
         ORDER BY date DESC
     """)
-    fun getDailySalesSummary(startDate: Long, endDate: Long): Flow<List<com.tumbaspos.app.domain.model.SalesSummary>>
+    fun getDailySalesSummary(startDate: Long, endDate: Long, cashierId: Long?): Flow<List<com.tumbaspos.app.domain.model.SalesSummary>>
 
     @Query("""
         SELECT 
-            p.id as productId, 
-            p.name as productName, 
-            SUM(i.quantity) as quantitySold, 
-            SUM(i.subtotal) as totalRevenue 
-        FROM sales_order_items i 
-        JOIN products p ON i.productId = p.id 
-        JOIN sales_orders o ON i.salesOrderId = o.id 
-        WHERE o.orderDate BETWEEN :startDate AND :endDate 
-        GROUP BY p.id 
-        ORDER BY quantitySold DESC 
+            p.id as productId,
+            p.name as productName,
+            SUM(soi.quantity) as quantitySold,
+            SUM(soi.subtotal) as totalRevenue
+        FROM sales_order_items soi
+        INNER JOIN products p ON soi.productId = p.id
+        INNER JOIN sales_orders so ON soi.salesOrderId = so.id
+        WHERE so.orderDate >= :startDate AND so.orderDate <= :endDate
+          AND (:cashierId IS NULL OR so.cashierId = :cashierId)
+        GROUP BY p.id
+        ORDER BY quantitySold DESC
         LIMIT :limit
     """)
-    fun getTopSellingProducts(startDate: Long, endDate: Long, limit: Int): Flow<List<com.tumbaspos.app.domain.model.TopProduct>>
+    fun getTopSellingProducts(startDate: Long, endDate: Long, limit: Int, cashierId: Long?): Flow<List<com.tumbaspos.app.domain.model.TopProduct>>
 
     @Query("""
         SELECT 
@@ -188,8 +189,13 @@ interface ReportingDao {
     """)
     fun getLowStockProducts(threshold: Int): Flow<List<com.tumbaspos.app.domain.model.LowStockProduct>>
 
-    @Query("SELECT SUM(totalAmount) FROM sales_orders WHERE orderDate BETWEEN :startDate AND :endDate")
-    fun getTotalRevenue(startDate: Long, endDate: Long): Flow<Double?>
+    @Query("""
+        SELECT SUM(totalAmount)
+        FROM sales_orders
+        WHERE orderDate >= :startDate AND orderDate <= :endDate
+          AND (:cashierId IS NULL OR cashierId = :cashierId)
+    """)
+    fun getTotalRevenue(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double?>
 }
 
 // Relations
@@ -199,7 +205,8 @@ data class PurchaseOrderWithItems(
         parentColumn = "id",
         entityColumn = "purchaseOrderId"
     )
-    val items: List<PurchaseOrderItemEntity>
+    val items: List<PurchaseOrderItemEntity>,
+    val cashierName: String? = null // Will be populated manually
 )
 
 data class SalesOrderWithItems(
@@ -208,7 +215,8 @@ data class SalesOrderWithItems(
         parentColumn = "id",
         entityColumn = "salesOrderId"
     )
-    val items: List<SalesOrderItemEntity>
+    val items: List<SalesOrderItemEntity>,
+    val cashierName: String? = null // Will be populated manually
 )
 
 @Dao

@@ -15,7 +15,8 @@ class DatabaseInitializer(
     private val customerDao: CustomerDao,
     private val categoryDao: com.tumbaspos.app.data.local.dao.CategoryDao,
     private val settingsRepository: SettingsRepository,
-    private val storeSettingsDao: com.tumbaspos.app.data.local.dao.StoreSettingsDao
+    private val storeSettingsDao: com.tumbaspos.app.data.local.dao.StoreSettingsDao,
+    private val employerRepository: com.tumbaspos.app.domain.repository.EmployerRepository
 ) {
     suspend fun initializeIfNeeded() = withContext(Dispatchers.IO) {
         if (settingsRepository.isDatabaseInitialized()) {
@@ -30,6 +31,9 @@ class DatabaseInitializer(
         
         // Insert customers from CSV
         insertCustomersFromCsv()
+        
+        // Initialize employers from CSV
+        employerRepository.initializeFromCsv()
         
         // Initialize default store settings
         insertDefaultStoreSettings()

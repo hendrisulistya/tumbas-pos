@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.tumbaspos.app.data.local.entity.EmployerEntity
 
 data class PurchaseUiState(
     val orders: List<PurchaseOrderWithItems> = emptyList(),
@@ -38,35 +40,70 @@ data class PurchaseOrderItem(
 }
 
 class PurchaseViewModel(
-    private val getPurchaseOrdersUseCase: GetPurchaseOrdersUseCase,
-    private val createPurchaseOrderUseCase: CreatePurchaseOrderUseCase,
-    private val receivePurchaseOrderUseCase: ReceivePurchaseOrderUseCase,
-    private val getSuppliersUseCase: GetSuppliersUseCase,
-    private val manageSupplierUseCase: ManageSupplierUseCase,
-    private val searchProductsUseCase: SearchProductsUseCase
+    private val getPurchaseOrdersUseCase: com.tumbaspos.app.domain.usecase.purchase.GetPurchaseOrdersUseCase,
+    private val createPurchaseOrderUseCase: com.tumbaspos.app.domain.usecase.purchase.CreatePurchaseOrderUseCase,
+    private val receivePurchaseOrderUseCase: com.tumbaspos.app.domain.usecase.purchase.ReceivePurchaseOrderUseCase,
+    private val getSuppliersUseCase: com.tumbaspos.app.domain.usecase.purchase.GetSuppliersUseCase,
+    private val manageSupplierUseCase: com.tumbaspos.app.domain.usecase.purchase.ManageSupplierUseCase,
+    private val searchProductsUseCase: com.tumbaspos.app.domain.usecase.sales.SearchProductsUseCase,
+    private val authManager: com.tumbaspos.app.domain.manager.AuthenticationManager,
+    private val auditLogger: com.tumbaspos.app.domain.manager.AuditLogger,
+    private val employerRepository: com.tumbaspos.app.domain.repository.EmployerRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PurchaseUiState())
     val uiState: StateFlow<PurchaseUiState> = _uiState.asStateFlow()
 
     init {
-        loadData()
+        loadOrders()
+        loadSuppliers()
     }
 
-    private fun loadData() {
+    private fun loadOrders() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            launch {
-                getPurchaseOrdersUseCase().collect { orders ->
-                    _uiState.update { it.copy(orders = orders) }
+            try {
+                getPurchaseOrdersUseCase().collect { allOrders ->
+                    // Get all employers for cashier name lookup
+                    val employers = employerRepository.getAll().first()
+                    val employerMap = employers.associateBy { it.id }
+                    
+                    // Filter orders based on role
+                    val currentEmployer = authManager.getCurrentEmployer()
+                    val filteredOrders = if (currentEmployer?.role == "CASHIER") {
+                        allOrders.filter { it.order.cashierId == currentEmployer.id }
+                    } else {
+                        allOrders
+                    }
+                    
+                    // Populate cashier names
+                    val ordersWithCashierNames = filteredOrders.map { orderWithItems ->
+                        val cashierName = orderWithItems.order.cashierId?.let { cashierId ->
+                            employerMap[cashierId]?.fullName ?: "Unknown"
+                        } ?: "Unknown"
+                        
+                        orderWithItems.copy(cashierName = cashierName)
+                    }
+                    
+                    _uiState.update { 
+                        it.copy(
+                            orders = ordersWithCashierNames,
+                            isLoading = false
+                        )
+                    }
                 }
+            } catch (e: Exception) {
+                // Handle error if necessary
+                _uiState.update { it.copy(isLoading = false) }
             }
-            launch {
-                getSuppliersUseCase().collect { suppliers ->
-                    _uiState.update { it.copy(suppliers = suppliers) }
-                }
+        }
+    }
+
+    private fun loadSuppliers() {
+        viewModelScope.launch {
+            getSuppliersUseCase().collect { suppliers ->
+                _uiState.update { it.copy(suppliers = suppliers) }
             }
-            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
@@ -134,6 +171,7 @@ class PurchaseViewModel(
             val order = PurchaseOrderEntity(
                 supplierId = supplier.id,
                 orderDate = System.currentTimeMillis(),
+                cashierId = authManager.getCurrentEmployer()?.id, // Set current cashier
                 status = "SUBMITTED",
                 totalAmount = totalAmount,
                 notes = ""
@@ -148,8 +186,18 @@ class PurchaseViewModel(
                     subtotal = it.subtotal
                 )
             }
-
-            createPurchaseOrderUseCase(order, items)
+            
+            val orderId = createPurchaseOrderUseCase(order, items)
+            
+            // Log audit trail
+            auditLogger.logAsync {
+                auditLogger.logCreate(
+                    "PURCHASE_ORDER",
+                    orderId,
+                    "Total: Rp ${String.format("%,.0f", totalAmount)}, Items: ${state.newOrderItems.size}"
+                )
+            }
+            
             _uiState.update { it.copy(isCreateOrderDialogOpen = false) }
         }
     }

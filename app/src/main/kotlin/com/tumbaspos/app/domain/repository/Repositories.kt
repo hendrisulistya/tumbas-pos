@@ -4,6 +4,7 @@ import com.tumbaspos.app.data.local.dao.SalesOrderWithItems
 import com.tumbaspos.app.data.local.entity.ProductEntity
 import com.tumbaspos.app.data.local.entity.SalesOrderEntity
 import com.tumbaspos.app.data.local.entity.SalesOrderItemEntity
+import com.tumbaspos.app.data.local.entity.EmployerEntity
 import kotlinx.coroutines.flow.Flow
 
 interface ProductRepository {
@@ -48,10 +49,10 @@ interface PurchaseOrderRepository {
 }
 
 interface ReportingRepository {
-    fun getDailySalesSummary(startDate: Long, endDate: Long): Flow<List<com.tumbaspos.app.domain.model.SalesSummary>>
-    fun getTopSellingProducts(startDate: Long, endDate: Long, limit: Int): Flow<List<com.tumbaspos.app.domain.model.TopProduct>>
+    fun getDailySalesSummary(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<List<com.tumbaspos.app.domain.model.SalesSummary>>
+    fun getTopSellingProducts(startDate: Long, endDate: Long, limit: Int, cashierId: Long? = null): Flow<List<com.tumbaspos.app.domain.model.TopProduct>>
     fun getLowStockProducts(threshold: Int): Flow<List<com.tumbaspos.app.domain.model.LowStockProduct>>
-    fun getTotalRevenue(startDate: Long, endDate: Long): Flow<Double>
+    fun getTotalRevenue(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
 }
 
 interface BackupRepository {

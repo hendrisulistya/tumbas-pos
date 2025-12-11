@@ -14,7 +14,7 @@ data class DashboardData(
 class GetDashboardDataUseCase(
     private val reportingRepository: ReportingRepository
 ) {
-    operator fun invoke() = reportingRepository.run {
+    operator fun invoke(cashierId: Long? = null) = reportingRepository.run {
         val calendar = Calendar.getInstance()
         val endDate = calendar.timeInMillis
         
@@ -26,10 +26,10 @@ class GetDashboardDataUseCase(
         val startDate = calendar.timeInMillis
 
         DashboardData(
-            salesSummary = getDailySalesSummary(startDate, endDate),
-            topProducts = getTopSellingProducts(startDate, endDate, 5),
+            salesSummary = getDailySalesSummary(startDate, endDate, cashierId),
+            topProducts = getTopSellingProducts(startDate, endDate, 5, cashierId),
             lowStock = getLowStockProducts(10),
-            totalRevenue = getTotalRevenue(startDate, endDate)
+            totalRevenue = getTotalRevenue(startDate, endDate, cashierId)
         )
     }
 }
@@ -37,7 +37,8 @@ class GetDashboardDataUseCase(
 class GetSalesReportUseCase(
     private val reportingRepository: ReportingRepository
 ) {
-    operator fun invoke(startDate: Long, endDate: Long) = reportingRepository.getDailySalesSummary(startDate, endDate)
+    operator fun invoke(startDate: Long, endDate: Long, cashierId: Long? = null) = 
+        reportingRepository.getDailySalesSummary(startDate, endDate, cashierId)
 }
 
 class GetLowStockReportUseCase(

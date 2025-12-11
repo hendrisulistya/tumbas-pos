@@ -128,7 +128,29 @@ fun PurchaseOrderList(
                             else MaterialTheme.colorScheme.error
                         )
                     }
+                    Text(
+                        "Supplier: ${orderWithItems.order.supplierId}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    
+                    // Show cashier name
                     Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = "Cashier",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "Cashier: ${orderWithItems.cashierName ?: "Unknown"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text("Total: ${currencyFormatter.format(orderWithItems.order.totalAmount)}")
                     Text("Items: ${orderWithItems.items.size}")
                     
