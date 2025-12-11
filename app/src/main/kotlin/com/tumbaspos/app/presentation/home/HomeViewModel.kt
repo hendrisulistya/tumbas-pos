@@ -93,4 +93,26 @@ class HomeViewModel(
     fun addToCart(productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory) {
         cartRepository.addToCart(productWithCategory.product, 1)
     }
+    
+    fun increaseQuantity(productId: Long) {
+        val cartItem = _uiState.value.cart.find { it.product.id == productId }
+        if (cartItem != null) {
+            cartRepository.updateQuantity(productId, cartItem.quantity + 1)
+        }
+    }
+    
+    fun decreaseQuantity(productId: Long) {
+        val cartItem = _uiState.value.cart.find { it.product.id == productId }
+        if (cartItem != null) {
+            if (cartItem.quantity > 1) {
+                cartRepository.updateQuantity(productId, cartItem.quantity - 1)
+            } else {
+                cartRepository.removeFromCart(productId)
+            }
+        }
+    }
+    
+    fun getCartQuantity(productId: Long): Int {
+        return _uiState.value.cart.find { it.product.id == productId }?.quantity ?: 0
+    }
 }

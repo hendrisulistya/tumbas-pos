@@ -10,6 +10,17 @@ import kotlinx.coroutines.flow.asStateFlow
 class SettingsRepository(private val context: Context) {
     private val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
     
+    companion object {
+        private const val KEY_ACTIVATED = "is_activated"
+        private const val KEY_STORE_ID = "store_id"
+        private const val KEY_DB_INITIALIZED = "db_initialized"
+        private const val KEY_THEME_MODE = "theme_mode"
+    }
+    
+    enum class ThemeMode {
+        SYSTEM, LIGHT, DARK
+    }
+    
     private val _r2Config = MutableStateFlow(loadR2Config())
     val r2Config: StateFlow<R2Config?> = _r2Config.asStateFlow()
 
@@ -64,18 +75,36 @@ class SettingsRepository(private val context: Context) {
     }
 
     fun setActivated(activated: Boolean) {
-        prefs.edit { putBoolean("is_activated", activated) }
+        prefs.edit { putBoolean(KEY_ACTIVATED, activated) }
     }
     
     fun isActivated(): Boolean {
-        return prefs.getBoolean("is_activated", false)
+        return prefs.getBoolean(KEY_ACTIVATED, false)
     }
 
     fun isDatabaseInitialized(): Boolean {
-        return prefs.getBoolean("is_database_initialized", false)
+        return prefs.getBoolean(KEY_DB_INITIALIZED, false)
     }
 
     fun setDatabaseInitialized(initialized: Boolean) {
-        prefs.edit { putBoolean("is_database_initialized", initialized) }
+        prefs.edit { putBoolean(KEY_DB_INITIALIZED, initialized) }
+    }
+    
+    // Theme preference methods
+    private val _themeMode = MutableStateFlow(getThemeMode())
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+    
+    fun getThemeMode(): ThemeMode {
+        val modeName = prefs.getString(KEY_THEME_MODE, ThemeMode.LIGHT.name)
+        return try {
+            ThemeMode.valueOf(modeName ?: ThemeMode.LIGHT.name)
+        } catch (e: Exception) {
+            ThemeMode.LIGHT
+        }
+    }
+    
+    fun setThemeMode(mode: ThemeMode) {
+        prefs.edit { putString(KEY_THEME_MODE, mode.name) }
+        _themeMode.value = mode
     }
 }

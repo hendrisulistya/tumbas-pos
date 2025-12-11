@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Settings
@@ -96,6 +97,9 @@ fun SettingsScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val isManager = currentEmployer?.role == "MANAGER"
+    val settingsRepository: com.tumbaspos.app.data.repository.SettingsRepository = koinInject()
+    val themeMode by settingsRepository.themeMode.collectAsState()
+    var showThemeDialog by remember { mutableStateOf(false) }
     
     if (showLogoutDialog) {
         AlertDialog(
@@ -118,6 +122,63 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Theme Selection Dialog
+    if (showThemeDialog) {
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            title = { Text("Choose Theme") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.values().forEach { mode ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    settingsRepository.setThemeMode(mode)
+                                    showThemeDialog = false
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = themeMode == mode,
+                                onClick = {
+                                    settingsRepository.setThemeMode(mode)
+                                    showThemeDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = when (mode) {
+                                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Light"
+                                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Dark"
+                                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "System default"
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = when (mode) {
+                                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Always use light theme"
+                                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Always use dark theme"
+                                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "Follow system setting"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeDialog = false }) {
+                    Text("Close")
                 }
             }
         )
@@ -186,6 +247,30 @@ fun SettingsScreen(
                         }
                     )
                 }
+            }
+            
+            // Appearance Section
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Appearance",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+            
+            item {
+                SettingsItem(
+                    icon = Icons.Default.Palette,
+                    title = "Theme",
+                    subtitle = when (themeMode) {
+                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Light"
+                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Dark"
+                        com.tumbaspos.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "System default"
+                    },
+                    onClick = { showThemeDialog = true }
+                )
             }
             
             item {

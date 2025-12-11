@@ -65,9 +65,9 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
 @Composable
 fun App() {
     KoinContext {
-        MaterialTheme {
+        val settingsRepository: SettingsRepository = koinInject()
+        com.tumbaspos.app.ui.theme.TumbasPOSTheme(settingsRepository = settingsRepository) {
             val navController = rememberNavController()
-            val settingsRepository: SettingsRepository = koinInject()
             val authManager: com.tumbaspos.app.domain.manager.AuthenticationManager = koinInject()
             val isAuthenticated by authManager.currentEmployer.collectAsState()
             

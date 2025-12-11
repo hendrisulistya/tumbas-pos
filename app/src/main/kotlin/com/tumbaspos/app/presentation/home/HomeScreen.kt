@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -164,10 +165,14 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(uiState.products) { productWithCategory ->
+                        val cartQty = viewModel.getCartQuantity(productWithCategory.product.id)
                         ProductCard(
                             productWithCategory = productWithCategory,
                             currencyFormatter = currencyFormatter,
-                            onAddToCart = { viewModel.addToCart(productWithCategory) }
+                            cartQuantity = cartQty,
+                            onAddToCart = { viewModel.addToCart(productWithCategory) },
+                            onIncrease = { viewModel.increaseQuantity(productWithCategory.product.id) },
+                            onDecrease = { viewModel.decreaseQuantity(productWithCategory.product.id) }
                         )
                     }
                 }
@@ -180,11 +185,13 @@ fun HomeScreen(
 fun ProductCard(
     productWithCategory: com.tumbaspos.app.data.local.dao.ProductWithCategory,
     currencyFormatter: NumberFormat,
-    onAddToCart: () -> Unit
+    cartQuantity: Int,
+    onAddToCart: () -> Unit,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit
 ) {
     val product = productWithCategory.product
     val categoryName = productWithCategory.category?.name ?: "Uncategorized"
-    var quantity by remember { mutableStateOf(1) }
     
     Card(
         modifier = Modifier
@@ -199,7 +206,7 @@ fun ProductCard(
         ) {
             // Top content (image, name, price, controls) - grouped together
             Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 // Image section at top
                 Box(
@@ -230,14 +237,21 @@ fun ProductCard(
                     }
                 }
                 
-                // Product name below image
-                Text(
-                    product.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Product name below image - fixed height for consistency (2 lines)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    Text(
+                        product.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 
                 // Price
                 Text(
@@ -247,110 +261,133 @@ fun ProductCard(
                     color = MaterialTheme.colorScheme.primary
                 )
                 
-                // Quantity controls with Add to Cart
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Quantity controls section (50% width)
-                    Row(
-                        modifier = Modifier.weight(0.5f),
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                // Show Add button OR quantity controls based on cart state
+                if (cartQuantity == 0) {
+                    // Product NOT in cart - show Add to Cart button
+                    Surface(
+                        onClick = onAddToCart,
+                        modifier = Modifier.fillMaxWidth().height(32.dp),
+                        enabled = product.stock > 0,
+                        color = if (product.stock > 0) 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(4.dp)
                     ) {
-                        // Minus button
-                        IconButton(
-                            onClick = { if (quantity > 1) quantity-- },
-                            modifier = Modifier.size(28.dp),
-                            enabled = quantity > 1
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.Default.Remove,
-                                contentDescription = "Decrease",
-                                modifier = Modifier.size(14.dp)
+                                Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = Color.Black
                             )
-                        }
-                        
-                        // Quantity display
-                        Text(
-                            quantity.toString(),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        // Plus button
-                        IconButton(
-                            onClick = { if (quantity < product.stock) quantity++ },
-                            modifier = Modifier.size(28.dp),
-                            enabled = quantity < product.stock
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = "Increase",
-                                modifier = Modifier.size(14.dp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                "Add to Cart",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.Black,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
-                    
-                    // Add to Cart button (50% width)
-                    FilledTonalButton(
-                        onClick = {
-                            repeat(quantity) { onAddToCart() }
-                            quantity = 1 // Reset after adding
-                        },
-                        modifier = Modifier.weight(0.5f).height(32.dp),
-                        enabled = product.stock > 0,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                } else {
+                    // Product IN cart - show quantity controls
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            "Add to Cart",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontSize = 8.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        // Minus button
+                        Surface(
+                            onClick = onDecrease,
+                            modifier = Modifier.size(32.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Remove,
+                                    contentDescription = "Decrease",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
+                        
+                        // Quantity display
+                        Surface(
+                            modifier = Modifier.weight(1f).height(32.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    "$cartQuantity in cart",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                        
+                        // Plus button
+                        Surface(
+                            onClick = onIncrease,
+                            modifier = Modifier.size(32.dp),
+                            enabled = cartQuantity < product.stock,
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "Increase",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
                     }
                 }
             }
             
-            // Stock and Category labels at bottom (always visible)
-            Column(
+            // Category and Stock labels in one row at bottom
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Category label
+                // Category label (60%)
                 Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = RoundedCornerShape(4.dp)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.weight(0.6f)
                 ) {
                     Text(
                         categoryName,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontSize = 7.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
                 
-                // Stock label
+                // Stock label (40%)
                 Surface(
-                    color = if (product.stock > 10) 
-                        MaterialTheme.colorScheme.tertiaryContainer 
-                    else 
-                        MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(4.dp)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.weight(0.4f)
                 ) {
                     Text(
                         "Stock: ${product.stock}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (product.stock > 10) 
-                            MaterialTheme.colorScheme.onTertiaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.onErrorContainer,
+                        fontSize = 7.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
