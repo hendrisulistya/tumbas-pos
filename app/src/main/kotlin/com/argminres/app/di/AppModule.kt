@@ -42,6 +42,7 @@ val appModule = module {
     single { get<AppDatabase>().ingredientUsageDao() }
     single { get<AppDatabase>().dishComponentDao() }
     single { get<AppDatabase>().dishHistoryDao() }
+    single { get<AppDatabase>().ingredientHistoryDao() }
 
     // Repositories
     single<com.argminres.app.domain.repository.DishRepository> { 
@@ -83,6 +84,9 @@ val appModule = module {
     }
     single<com.argminres.app.domain.repository.DishHistoryRepository> {
         com.argminres.app.data.repository.DishHistoryRepositoryImpl(get())
+    }
+    single<com.argminres.app.domain.repository.IngredientHistoryRepository> {
+        com.argminres.app.data.repository.IngredientHistoryRepositoryImpl(get())
     }
     single<com.argminres.app.domain.repository.ReportingRepository> { 
         com.argminres.app.data.repository.ReportingRepositoryImpl(get()) 
@@ -218,7 +222,7 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.wip.WorkInProcessViewModel(get()) }
     viewModel { com.argminres.app.presentation.startday.SessionCheckViewModel(get(), get(), get()) }
-    viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get()) }
+    viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.ingredientmaster.IngredientMasterViewModel(get()) }
     viewModel { com.argminres.app.presentation.dishmaster.DishMasterViewModel(get()) }
     viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get(), get(), get(), get()) }

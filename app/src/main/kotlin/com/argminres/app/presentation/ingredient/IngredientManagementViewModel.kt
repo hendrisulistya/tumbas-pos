@@ -22,7 +22,8 @@ data class IngredientManagementUiState(
 )
 
 class IngredientManagementViewModel(
-    private val ingredientRepository: IngredientRepository
+    private val ingredientRepository: IngredientRepository,
+    private val ingredientHistoryRepository: com.argminres.app.domain.repository.IngredientHistoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(IngredientManagementUiState())
@@ -132,6 +133,20 @@ class IngredientManagementViewModel(
                             stock = stock,
                             minimumStock = minimumStock,
                             costPerUnit = costPerUnit
+                        )
+                    )
+                }
+                
+                // Record in history (only for new additions with stock > 0)
+                if (stock > 0) {
+                    val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                    ingredientHistoryRepository.insertHistory(
+                        com.argminres.app.data.local.entity.IngredientHistoryEntity(
+                            ingredientId = ingredient?.id ?: 0,
+                            ingredientName = name,
+                            stockAdded = stock,
+                            unit = unit,
+                            sessionDate = today
                         )
                     )
                 }

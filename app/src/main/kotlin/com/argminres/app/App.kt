@@ -110,6 +110,9 @@ fun App() {
                                        currentDestination?.route != Screen.Activation.route &&
                                        currentDestination?.route != Screen.Cart.route &&
                                        currentDestination?.route != Screen.Showcase.route &&
+                                       currentDestination?.route != Screen.Ingredient.route &&
+                                       currentDestination?.route != Screen.DishMaster.route &&
+                                       currentDestination?.route != Screen.IngredientMaster.route &&
                                        currentDestination?.route != Screen.Purchase.route &&
                                        currentDestination?.route != Screen.Reporting.route &&
                                        currentDestination?.route != Screen.Backup.route
