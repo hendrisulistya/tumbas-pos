@@ -36,6 +36,13 @@ fun ShowcaseScreen(
                 },
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = viewModel::onAddDishClick
+            ) {
+                Icon(Icons.Default.Add, "Add Dish")
+            }
         }
     ) { padding ->
         Column(
@@ -72,15 +79,24 @@ fun ShowcaseScreen(
                 }
             }
         }
-    }
+        if (uiState.isStockAdjustmentDialogOpen && uiState.selectedProduct != null) {
+            val selectedProduct = uiState.selectedProduct
+            selectedProduct?.let {
+                StockAdjustmentDialog(
+                    product = it.dish,
+                    onDismiss = viewModel::onStockAdjustmentDialogDismiss,
+                    onConfirm = viewModel::onConfirmStockAdjustment
+                )
+            }
+        }
 
-
-    if (uiState.isStockAdjustmentDialogOpen) {
-        StockAdjustmentDialog(
-            product = uiState.selectedProduct!!.dish,
-            onDismiss = viewModel::onStockAdjustmentDialogDismiss,
-            onConfirm = viewModel::onConfirmStockAdjustment
-        )
+        if (uiState.isAddDishDialogOpen) {
+            AddDishFromMasterDialog(
+                masterDishes = uiState.masterDishes,
+                onDismiss = viewModel::onAddDishDialogDismiss,
+                onConfirm = viewModel::onConfirmAddDish
+            )
+        }
     }
 }
 
@@ -182,6 +198,95 @@ fun StockAdjustmentDialog(
                 enabled = quantity.isNotBlank() && reason.isNotBlank()
             ) {
                 Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun AddDishFromMasterDialog(
+    masterDishes: List<com.argminres.app.data.local.dao.DishWithCategory>,
+    onDismiss: () -> Unit,
+    onConfirm: (Long, Int) -> Unit
+) {
+    var selectedDishId by remember { mutableStateOf<Long?>(null) }
+    var stockText by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Dish to Etalase") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = masterDishes.find { it.dish.id == selectedDishId }?.dish?.name ?: "Select Dish",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Dish from Master") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        masterDishes.forEach { dishWithCat ->
+                            DropdownMenuItem(
+                                text = { 
+                                    Column {
+                                        Text(dishWithCat.dish.name)
+                                        Text(
+                                            dishWithCat.category?.name ?: "",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedDishId = dishWithCat.dish.id
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = stockText,
+                    onValueChange = { stockText = it },
+                    label = { Text("Initial Stock") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    supportingText = { Text("Stock quantity for today") }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val dishId = selectedDishId
+                    val stock = stockText.toIntOrNull()
+                    if (dishId != null && stock != null && stock > 0) {
+                        onConfirm(dishId, stock)
+                    }
+                },
+                enabled = selectedDishId != null && stockText.toIntOrNull() != null && stockText.toIntOrNull()!! > 0
+            ) {
+                Text("Add")
             }
         },
         dismissButton = {

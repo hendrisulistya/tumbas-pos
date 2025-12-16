@@ -60,12 +60,12 @@ fun WorkInProcessScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            "No Unclosed Sessions",
+                            "No Sessions Pending Closure",
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "All days have been properly closed.",
+                            "All sessions have been properly closed.",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -96,13 +96,13 @@ fun WorkInProcessScreen(
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
-                                                "${uiState.unclosedSessions.size} Unclosed Session(s)",
+                                                "${uiState.unclosedSessions.size} Session(s) Pending Closure",
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onErrorContainer
                                             )
                                             Text(
-                                                "Please close these sessions to maintain accurate records",
+                                                "These sessions need to be closed to complete the day",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onErrorContainer
                                             )
@@ -162,18 +162,13 @@ fun SessionCard(
                 }
                 
                 if (session.status == "PENDING_CLOSE") {
-                    AssistChip(
+                    Button(
                         onClick = onCloseClick,
-                        label = { Text("Close Now") },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
                         )
-                    )
-                } else {
-                    OutlinedButton(
-                        onClick = onCloseClick
                     ) {
-                        Text("Close Day")
+                        Text("Close Now")
                     }
                 }
             }

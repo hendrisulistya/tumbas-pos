@@ -29,11 +29,11 @@ class WorkInProcessViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
-            // Get all sessions that are not closed
+            // Get only PENDING_CLOSE sessions (ACTIVE sessions are handled at login)
             val allSessions = mutableListOf<DailySessionEntity>()
             dailySessionRepository.getAllSessions().collect { sessions ->
                 allSessions.clear()
-                allSessions.addAll(sessions.filter { it.status != "CLOSED" })
+                allSessions.addAll(sessions.filter { it.status == "PENDING_CLOSE" })
                 _uiState.value = _uiState.value.copy(
                     unclosedSessions = allSessions,
                     isLoading = false

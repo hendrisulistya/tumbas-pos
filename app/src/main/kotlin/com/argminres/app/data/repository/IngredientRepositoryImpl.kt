@@ -14,6 +14,8 @@ class IngredientRepositoryImpl(
 ) : IngredientRepository {
     override fun getAllIngredients(): Flow<List<IngredientWithCategory>> = ingredientDao.getAllIngredients()
     
+    override fun getIngredientsWithStock(): Flow<List<IngredientWithCategory>> = ingredientDao.getIngredientsWithStock()
+    
     override suspend fun getIngredientById(id: Long): IngredientWithCategory? = ingredientDao.getIngredientById(id)
     
     override fun searchIngredients(query: String): Flow<List<IngredientWithCategory>> = ingredientDao.searchIngredients(query)

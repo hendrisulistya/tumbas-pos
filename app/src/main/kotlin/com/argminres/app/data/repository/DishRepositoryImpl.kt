@@ -13,6 +13,10 @@ class DishRepositoryImpl(
     override fun getAllDishes(): Flow<List<DishWithCategory>> {
         return productDao.getAllDishes()
     }
+    
+    override fun getDishesWithStock(): Flow<List<DishWithCategory>> {
+        return productDao.getDishesWithStock()
+    }
 
     override fun getAllCategories(): Flow<List<com.argminres.app.data.local.entity.CategoryEntity>> {
         return categoryDao.getAllCategories()

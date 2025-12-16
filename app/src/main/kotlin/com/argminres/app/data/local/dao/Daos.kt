@@ -9,6 +9,10 @@ interface DishDao {
     @Transaction
     @Query("SELECT * FROM dishes ORDER BY name ASC")
     fun getAllDishes(): Flow<List<DishWithCategory>>
+    
+    @Transaction
+    @Query("SELECT * FROM dishes WHERE stock > 0 ORDER BY name ASC")
+    fun getDishesWithStock(): Flow<List<DishWithCategory>>
 
     @Transaction
     @Query("SELECT * FROM dishes WHERE id = :id")

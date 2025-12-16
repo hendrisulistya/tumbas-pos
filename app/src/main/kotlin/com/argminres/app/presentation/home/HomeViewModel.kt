@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
-    val products: List<com.argminres.app.data.local.dao.DishWithCategory> = emptyList(),
+    val dishes: List<com.argminres.app.data.local.dao.DishWithCategory> = emptyList(),
     val categories: List<String> = emptyList(),
     val selectedCategory: String = "All",
     val searchQuery: String = "",
@@ -30,13 +30,17 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        loadProducts()
+        loadDishes()
         observeCart()
     }
 
     private fun observeCart() {
         viewModelScope.launch {
             cartRepository.cartItems.collect { items ->
+                android.util.Log.d("HomeViewModel", "Cart updated: ${items.size} items")
+                items.forEach { item ->
+                    android.util.Log.d("HomeViewModel", "  - ${item.product.name}: qty=${item.quantity}")
+                }
                 _uiState.update { 
                     it.copy(
                         cart = items,
@@ -47,74 +51,70 @@ class HomeViewModel(
         }
     }
 
-    private fun loadProducts() {
+    private fun loadDishes() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            searchProductsUseCase("").collect { products: List<com.argminres.app.data.local.dao.DishWithCategory> ->
-                val categories = listOf("All") + products.mapNotNull { product: com.argminres.app.data.local.dao.DishWithCategory -> product.category?.name }.distinct().sorted()
-                _uiState.update {
+            
+            searchProductsUseCase(_uiState.value.searchQuery).collect { dishes ->
+                val categories = listOf("All") + dishes.map { it.category?.name ?: "Uncategorized" }.distinct()
+                
+                val filteredDishes = if (_uiState.value.selectedCategory == "All") {
+                    dishes
+                } else {
+                    dishes.filter { (it.category?.name ?: "Uncategorized") == _uiState.value.selectedCategory }
+                }
+                
+                _uiState.update { 
                     it.copy(
-                        products = products,
+                        dishes = filteredDishes,
                         categories = categories,
                         isLoading = false
-                    )
+                    ) 
                 }
             }
         }
     }
 
     fun onCategorySelected(category: String) {
-        _uiState.update { it.copy(selectedCategory = category, searchQuery = "") }
-        filterProducts()
+        _uiState.update { it.copy(selectedCategory = category) }
+        loadDishes()
     }
 
-    fun onSearchQueryChanged(query: String) {
+    fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
-        filterProducts()
+        loadDishes()
     }
 
-    private fun filterProducts() {
+    fun addToCart(dishWithCategory: com.argminres.app.data.local.dao.DishWithCategory) {
+        android.util.Log.d("HomeViewModel", "Adding to cart: ${dishWithCategory.dish.name}")
+        cartRepository.addToCart(dishWithCategory.dish, 1)
+    }
+
+    fun increaseQuantity(dishId: Long) {
         viewModelScope.launch {
-            val state = _uiState.value
-            val query = state.searchQuery
-            
-            searchProductsUseCase(query).collect { allProducts: List<com.argminres.app.data.local.dao.DishWithCategory> ->
-                val filtered = if (state.selectedCategory == "All") {
-                    allProducts
+            val item = _uiState.value.cart.find { it.product.id == dishId }
+            if (item != null) {
+                cartRepository.updateQuantity(dishId, item.quantity + 1)
+            }
+        }
+    }
+
+    fun decreaseQuantity(dishId: Long) {
+        viewModelScope.launch {
+            val item = _uiState.value.cart.find { it.product.id == dishId }
+            if (item != null) {
+                if (item.quantity > 1) {
+                    cartRepository.updateQuantity(dishId, item.quantity - 1)
                 } else {
-                    allProducts.filter { product: com.argminres.app.data.local.dao.DishWithCategory -> product.category?.name == state.selectedCategory }
+                    cartRepository.removeFromCart(dishId)
                 }
-                
-                _uiState.update { it.copy(products = filtered) }
             }
         }
     }
 
-    fun addToCart(productWithCategory: com.argminres.app.data.local.dao.DishWithCategory) {
-        cartRepository.addToCart(productWithCategory.dish, 1)
-    }
-    
-    fun increaseQuantity(productId: Long) {
-        viewModelScope.launch {
-            val currentQty = cartRepository.cartItems.value.find { it.product.id == productId }?.quantity ?: 0
-            if (currentQty > 0) {
-                cartRepository.updateQuantity(productId, currentQty + 1)
-            }
-        }
-    }
-    
-    fun decreaseQuantity(productId: Long) {
-        val cartItem = _uiState.value.cart.find { it.product.id == productId }
-        if (cartItem != null) {
-            if (cartItem.quantity > 1) {
-                cartRepository.updateQuantity(productId, cartItem.quantity - 1)
-            } else {
-                cartRepository.removeFromCart(productId)
-            }
-        }
-    }
-    
-    fun getCartQuantity(productId: Long): Int {
-        return _uiState.value.cart.find { it.product.id == productId }?.quantity ?: 0
+    fun getCartQuantity(dishId: Long): Int {
+        val qty = _uiState.value.cart.find { it.product.id == dishId }?.quantity ?: 0
+        android.util.Log.d("HomeViewModel", "getCartQuantity for dishId=$dishId: $qty")
+        return qty
     }
 }

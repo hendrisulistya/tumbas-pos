@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface DishRepository {
     fun getAllDishes(): Flow<List<com.argminres.app.data.local.dao.DishWithCategory>>
+    fun getDishesWithStock(): Flow<List<com.argminres.app.data.local.dao.DishWithCategory>>
     fun getAllCategories(): Flow<List<com.argminres.app.data.local.entity.CategoryEntity>>
     suspend fun getDishById(id: Long): com.argminres.app.data.local.dao.DishWithCategory?
     suspend fun getDishByBarcode(barcode: String): com.argminres.app.data.local.dao.DishWithCategory?

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface IngredientRepository {
     fun getAllIngredients(): Flow<List<IngredientWithCategory>>
+    fun getIngredientsWithStock(): Flow<List<IngredientWithCategory>>
     suspend fun getIngredientById(id: Long): IngredientWithCategory?
     fun searchIngredients(query: String): Flow<List<IngredientWithCategory>>
     suspend fun insertIngredient(ingredient: IngredientEntity): Long

@@ -85,9 +85,10 @@ fun SettingsScreen(
     onNavigateToStoreSettings: () -> Unit,
     onNavigateToSalesOrder: () -> Unit,
     onNavigateToShowcase: () -> Unit,
-    onNavigateToPurchaseOrder: () -> Unit,
+    onNavigateToIngredient: () -> Unit,
+    onNavigateToIngredientMaster: () -> Unit,
+    onNavigateToDishMaster: () -> Unit,
     onNavigateToReporting: () -> Unit,
-    onNavigateToProduct: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onNavigateToEmployers: () -> Unit = {},
     onNavigateToAuditLog: () -> Unit,
@@ -341,14 +342,7 @@ fun SettingsScreen(
                 )
             }
 
-            item {
-                SettingsItem(
-                    icon = Icons.Default.ShoppingBag,
-                    title = "Products",
-                    subtitle = "Manage products",
-                    onClick = onNavigateToProduct
-                )
-            }
+
 
             item {
                 SettingsItem(
@@ -359,22 +353,66 @@ fun SettingsScreen(
                 )
             }
 
-            item {
-                SettingsItem(
-                    icon = Icons.Default.Warehouse,
-                    title = "Etalase",
-                    subtitle = "Kelola inventori",
-                    onClick = onNavigateToShowcase
-                )
+            // Manager Only: Master Data
+            if (isManager) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Master Data",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
+                
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.ShoppingBag,
+                        title = "Kelola Bahan",
+                        subtitle = "Manage ingredient catalog",
+                        onClick = onNavigateToIngredientMaster
+                    )
+                }
+                
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Warehouse,
+                        title = "Kelola Etalase",
+                        subtitle = "Manage dish catalog",
+                        onClick = onNavigateToDishMaster
+                    )
+                }
+                
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Daily Operations",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
             }
 
-            item {
-                SettingsItem(
-                    icon = Icons.Default.ShoppingBag,
-                    title = "Purchase Orders",
-                    subtitle = "Manage purchases",
-                    onClick = onNavigateToPurchaseOrder
-                )
+            // Manager Only: Etalase (Dish Management)
+            if (isManager) {
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Warehouse,
+                        title = "Etalase",
+                        subtitle = "Kelola inventori",
+                        onClick = onNavigateToShowcase
+                    )
+                }
+                
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.ShoppingBag,
+                        title = "Bahan",
+                        subtitle = "Kelola bahan baku",
+                        onClick = onNavigateToIngredient
+                    )
+                }
             }
 
             item {

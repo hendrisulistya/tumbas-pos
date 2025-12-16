@@ -1,5 +1,6 @@
 package com.argminres.app
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -52,16 +54,19 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     data object Backup : Screen("backup", "Backup")
     data object Activation : Screen("activation", "Activation")
     data object PostActivation : Screen("post_activation", "Setup")
+    data object SessionCheck : Screen("session_check", "Session Check")
     data object RestoreStore : Screen("restore_store", "Restore Store")
     data object EndOfDay : Screen("end_of_day", "End of Day")
     data object WorkInProcess : Screen("work_in_process", "Work in Process")
     data object PrinterSettings : Screen("printer_settings", "Printer")
     data object StoreSettings : Screen("store_settings", "Store")
     data object SalesOrderDetail : Screen("sales_order_detail", "Order Details")
-    data object Product : Screen("products", "Products")
     data object About : Screen("about", "About")
     data object EmployerManagement : Screen("employer_management", "Manage Employees")
     data object AuditLog : Screen("audit_log", "Audit Log")
+    data object Ingredient : Screen("ingredient", "Bahan")
+    data object IngredientMaster : Screen("ingredient_master", "Kelola Bahan")
+    data object DishMaster : Screen("dish_master", "Kelola Etalase")
 }
 
 @Composable
@@ -158,14 +163,59 @@ fun App() {
                         )
                 ) {
                     composable(Screen.Login.route) {
-                        com.argminres.app.presentation.auth.LoginScreen(
-                            onLoginSuccess = {
+                    com.argminres.app.presentation.auth.LoginScreen(
+                        onLoginSuccess = {
+                            navController.navigate(Screen.SessionCheck.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+                
+                composable(Screen.SessionCheck.route) {
+                    val sessionCheckViewModel: com.argminres.app.presentation.startday.SessionCheckViewModel = koinViewModel()
+                    val uiState by sessionCheckViewModel.uiState.collectAsState()
+                    
+                    when {
+                        uiState.isLoading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = androidx.compose.ui.Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                        uiState.hasActiveSession -> {
+                            LaunchedEffect(Unit) {
                                 navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                    popUpTo(Screen.SessionCheck.route) { inclusive = true }
                                 }
                             }
-                        )
+                        }
+                        uiState.isManager && uiState.showStartDayDialog -> {
+                            com.argminres.app.presentation.startday.StartDayDialog(
+                                isStarting = uiState.isStartingSession,
+                                error = uiState.error,
+                                onStartDay = sessionCheckViewModel::startDay,
+                                onDismiss = {
+                                    sessionCheckViewModel.dismissDialog()
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        !uiState.isManager && !uiState.hasActiveSession -> {
+                            com.argminres.app.presentation.startday.NoSessionWarning(
+                                onLogout = {
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
                     }
+                }
                     
                     composable(Screen.Home.route) {
                         HomeScreen(
@@ -195,9 +245,10 @@ fun App() {
                         onNavigateToStoreSettings = { navController.navigate(Screen.StoreSettings.route) },
                         onNavigateToSalesOrder = { navController.navigate(Screen.SalesOrder.route) },
                         onNavigateToShowcase = { navController.navigate(Screen.Showcase.route) },
-                        onNavigateToPurchaseOrder = { navController.navigate(Screen.Purchase.route) },
+                        onNavigateToIngredient = { navController.navigate(Screen.Ingredient.route) },
+                        onNavigateToIngredientMaster = { navController.navigate(Screen.IngredientMaster.route) },
+                        onNavigateToDishMaster = { navController.navigate(Screen.DishMaster.route) },
                         onNavigateToReporting = { navController.navigate(Screen.Reporting.route) },
-                        onNavigateToProduct = { navController.navigate(Screen.Product.route) },
                         onNavigateToAbout = { navController.navigate(Screen.About.route) },
                         onNavigateToEmployers = { navController.navigate(Screen.EmployerManagement.route) },
                         onNavigateToAuditLog = { navController.navigate(Screen.AuditLog.route) },
@@ -287,6 +338,24 @@ fun App() {
                         )
                     }
                     
+                    composable(Screen.Ingredient.route) {
+                        com.argminres.app.presentation.ingredient.IngredientManagementScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    
+                    composable(Screen.IngredientMaster.route) {
+                        com.argminres.app.presentation.ingredientmaster.IngredientMasterScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    
+                    composable(Screen.DishMaster.route) {
+                        com.argminres.app.presentation.dishmaster.DishMasterScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    
                     composable(Screen.Purchase.route) {
                         com.argminres.app.presentation.purchase.PurchaseScreen(
                             onNavigateBack = { navController.popBackStack() }
@@ -340,12 +409,6 @@ fun App() {
                                     popUpTo(Screen.PostActivation.route) { inclusive = true }
                                 }
                             }
-                        )
-                    }
-
-                    composable(Screen.Product.route) {
-                        com.argminres.app.presentation.dish.ProductScreen(
-                            onNavigateBack = { navController.popBackStack() }
                         )
                     }
 

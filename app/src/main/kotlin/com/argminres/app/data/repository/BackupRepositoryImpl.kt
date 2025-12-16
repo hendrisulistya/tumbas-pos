@@ -14,7 +14,7 @@ import java.util.Locale
 class BackupRepositoryImpl(
     private val context: Context,
     private val settingsRepository: SettingsRepository,
-    private val dbName: String = "tumbas_pos.db"
+    private val dbName: String = "padang_pos.db"
 ) : BackupRepository {
 
     override suspend fun backupDatabase(r2Config: R2Config): Result<String> = withContext(Dispatchers.IO) {
@@ -41,7 +41,7 @@ class BackupRepositoryImpl(
             
             val result = s3Client.putObject(
                 bucket = r2Config.bucketName,
-                key = "$appId/$backupFileName",
+                key = "padangpos/$appId/$backupFileName",
                 file = backupFile
             )
             
@@ -71,7 +71,7 @@ class BackupRepositoryImpl(
             
             val result = s3Client.getObject(
                 bucket = r2Config.bucketName,
-                key = "$appId/$backupFileName"
+                key = "padangpos/$appId/$backupFileName"
             )
             
             result.fold(
@@ -115,14 +115,14 @@ class BackupRepositoryImpl(
             
             val result = s3Client.listObjects(
                 bucket = r2Config.bucketName,
-                prefix = "$appId/"
+                prefix = "padangpos/$appId/"
             )
             
             result.fold(
                 onSuccess = { keys ->
-                    // Strip the appId prefix from the keys for display
+                    // Strip the namespace and appId prefix from the keys for display
                     val backups = keys
-                        .map { it.removePrefix("$appId/") }
+                        .map { it.removePrefix("padangpos/$appId/") }
                         .filter { it.endsWith(".db") }
                         .sortedDescending()
                     Result.success(backups)

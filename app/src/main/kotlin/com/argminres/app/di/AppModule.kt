@@ -16,7 +16,7 @@ val appModule = module {
         Room.databaseBuilder(
             androidContext(),
             AppDatabase::class.java,
-            "tumbas_pos_db"
+            "padang_pos_db"
         )
             .fallbackToDestructiveMigration()
             .build()
@@ -40,6 +40,8 @@ val appModule = module {
     single { get<AppDatabase>().dailySessionDao() }
     single { get<AppDatabase>().wasteRecordDao() }
     single { get<AppDatabase>().ingredientUsageDao() }
+    single { get<AppDatabase>().dishComponentDao() }
+    single { get<AppDatabase>().dishHistoryDao() }
 
     // Repositories
     single<com.argminres.app.domain.repository.DishRepository> { 
@@ -63,11 +65,24 @@ val appModule = module {
     single<com.argminres.app.domain.repository.IngredientUsageRepository> {
         com.argminres.app.data.repository.IngredientUsageRepositoryImpl(get())
     }
+    
+    single<com.argminres.app.domain.repository.StockRepository> {
+        com.argminres.app.data.repository.StockRepositoryImpl(get())
+    }
     single<com.argminres.app.domain.repository.SupplierRepository> { 
         com.argminres.app.data.repository.SupplierRepositoryImpl(get()) 
     }
     single<com.argminres.app.domain.repository.PurchaseOrderRepository> { 
         com.argminres.app.data.repository.PurchaseOrderRepositoryImpl(get()) 
+    }
+    single<com.argminres.app.domain.repository.DishComponentRepository> {
+        com.argminres.app.data.repository.DishComponentRepositoryImpl(get(), get())
+    }
+    single<com.argminres.app.domain.repository.IngredientRepository> {
+        com.argminres.app.data.repository.IngredientRepositoryImpl(get(), get())
+    }
+    single<com.argminres.app.domain.repository.DishHistoryRepository> {
+        com.argminres.app.data.repository.DishHistoryRepositoryImpl(get())
     }
     single<com.argminres.app.domain.repository.ReportingRepository> { 
         com.argminres.app.data.repository.ReportingRepositoryImpl(get()) 
@@ -126,9 +141,16 @@ val appModule = module {
     factory { com.argminres.app.domain.usecase.session.EndOfDayUseCase(get(), get(), get(), get(), get()) }
     factory { com.argminres.app.domain.usecase.session.StartDailySessionUseCase(get()) }
     factory { com.argminres.app.domain.usecase.session.CheckAutoDailyCloseUseCase(get()) }
+    factory { com.argminres.app.domain.usecase.session.SessionCheckUseCase(get()) }
 
     // Dish Use Cases
     factory { com.argminres.app.domain.usecase.dish.ManageDishImageUseCase(get(), get()) }
+    
+    // Recipe Use Cases
+    factory { com.argminres.app.domain.usecase.recipe.GetPackageComponentsUseCase(get()) }
+    factory { com.argminres.app.domain.usecase.recipe.GetPackageAvailabilityUseCase(get()) }
+    factory { com.argminres.app.domain.usecase.recipe.ManageRecipeUseCase(get()) }
+    factory { com.argminres.app.domain.usecase.recipe.GetPackageDishesUseCase(get()) }
 
     // Purchase Order Use Cases
     factory { com.argminres.app.domain.usecase.purchase.GetPurchaseOrdersUseCase(get()) }
@@ -160,6 +182,7 @@ val appModule = module {
             get<com.argminres.app.data.local.dao.CategoryDao>(),
             get<com.argminres.app.data.local.dao.IngredientCategoryDao>(),
             get<com.argminres.app.data.local.dao.IngredientDao>(),
+            get<com.argminres.app.data.local.dao.DishComponentDao>(),
             get<SettingsRepository>(),
             get<com.argminres.app.data.local.dao.StoreSettingsDao>(),
             get<com.argminres.app.domain.repository.EmployerRepository>()
@@ -183,7 +206,7 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.auth.LoginViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
     viewModel { com.argminres.app.presentation.home.HomeViewModel(get(), get()) }
-    viewModel { com.argminres.app.presentation.showcase.ShowcaseViewModel(get(), get()) }
+    viewModel { com.argminres.app.presentation.showcase.ShowcaseViewModel(get(), get(), get(), get()) }
     viewModel { 
         com.argminres.app.presentation.purchase.PurchaseViewModel(
             get(), get(), get(), get(), get(), get(), get(), get(), get()
@@ -194,6 +217,10 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.activation.ActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.wip.WorkInProcessViewModel(get()) }
+    viewModel { com.argminres.app.presentation.startday.SessionCheckViewModel(get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get()) }
+    viewModel { com.argminres.app.presentation.ingredientmaster.IngredientMasterViewModel(get()) }
+    viewModel { com.argminres.app.presentation.dishmaster.DishMasterViewModel(get()) }
     viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderViewModel(get(), get(), get(), get()) }

@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
@@ -70,57 +72,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Search and Category Filter
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Search Bar (70%)
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChanged,
-                    label = { Text("Search") },
-                    leadingIcon = { Icon(Icons.Default.Search, null) },
-                    modifier = Modifier.weight(0.7f),
-                    singleLine = true
-                )
-
-                // Category Dropdown (30%)
-                ExposedDropdownMenuBox(
-                    expanded = categoryExpanded,
-                    onExpandedChange = { categoryExpanded = it },
-                    modifier = Modifier.weight(0.3f)
-                ) {
-                    OutlinedTextField(
-                        value = uiState.selectedCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        singleLine = true
-                    )
-                    ExposedDropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        uiState.categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category) },
-                                onClick = {
-                                    viewModel.onCategorySelected(category)
-                                    categoryExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
 
             // Product Grid
             if (uiState.isLoading) {
@@ -130,7 +81,7 @@ fun HomeScreen(
                 ) {
                     CircularProgressIndicator()
                 }
-            } else if (uiState.products.isEmpty()) {
+            } else if (uiState.dishes.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -143,37 +94,64 @@ fun HomeScreen(
                             Icons.Default.Inventory,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            "No products found",
+                            "No dishes available",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+                LazyColumn(
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
                         top = 4.dp,
                         bottom = 82.dp
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.products) { productWithCategory ->
-                        val cartQty = viewModel.getCartQuantity(productWithCategory.dish.id)
-                        ProductCard(
-                            productWithCategory = productWithCategory,
-                            currencyFormatter = currencyFormatter,
-                            cartQuantity = cartQty,
-                            onAddToCart = { viewModel.addToCart(productWithCategory) },
-                            onIncrease = { viewModel.increaseQuantity(productWithCategory.dish.id) },
-                            onDecrease = { viewModel.decreaseQuantity(productWithCategory.dish.id) }
-                        )
+                    // Group dishes by category
+                    val groupedDishes = uiState.dishes.groupBy { it.category?.name ?: "Uncategorized" }
+                    
+                    groupedDishes.forEach { (categoryName, dishes) ->
+                        // Category header with divider line
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp, bottom = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = categoryName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.weight(1f),
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+                        }
+                        
+                        // Dishes in this category
+                        items(dishes) { dishWithCategory ->
+                            val cartQty = viewModel.getCartQuantity(dishWithCategory.dish.id)
+                            ProductCard(
+                                productWithCategory = dishWithCategory,
+                                currencyFormatter = currencyFormatter,
+                                cartQuantity = cartQty,
+                                onAddToCart = { viewModel.addToCart(dishWithCategory) },
+                                onIncrease = { viewModel.increaseQuantity(dishWithCategory.dish.id) },
+                                onDecrease = { viewModel.decreaseQuantity(dishWithCategory.dish.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -196,200 +174,114 @@ fun ProductCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(80.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Top content (image, name, price, controls) - grouped together
-            Column(
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+            // Image - 30% width
+            Box(
+                modifier = Modifier
+                    .weight(0.3f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
             ) {
-                // Image section at top
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (product.image != null) {
-                        com.argminres.app.presentation.dish.ProductImageDisplay(
-                            image = product.image!!,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Icon(
-                            Icons.Default.Image,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                    }
-                }
-                
-                // Product name below image - fixed height for consistency (2 lines)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    contentAlignment = Alignment.TopStart
-                ) {
-                    Text(
-                        product.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                if (product.image != null) {
+                    com.argminres.app.presentation.dish.ProductImageDisplay(
+                        image = product.image!!,
+                        modifier = Modifier.fillMaxSize()
                     )
-                }
-                
-                // Price
-                Text(
-                    currencyFormatter.format(product.price),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                // Show Add button OR quantity controls based on cart state
-                if (cartQuantity == 0) {
-                    // Product NOT in cart - show Add to Cart button
-                    Surface(
-                        onClick = onAddToCart,
-                        modifier = Modifier.fillMaxWidth().height(32.dp),
-                        enabled = product.stock > 0,
-                        color = if (product.stock > 0) 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.ShoppingCart,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = Color.Black
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                "Add to Cart",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.Black,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
                 } else {
-                    // Product IN cart - show quantity controls
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Minus button
-                        Surface(
-                            onClick = onDecrease,
-                            modifier = Modifier.size(32.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Remove,
-                                    contentDescription = "Decrease",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                        }
-                        
-                        // Quantity display
-                        Surface(
-                            modifier = Modifier.weight(1f).height(32.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    "$cartQuantity in cart",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
-                            }
-                        }
-                        
-                        // Plus button
-                        Surface(
-                            onClick = onIncrease,
-                            modifier = Modifier.size(32.dp),
-                            enabled = cartQuantity < product.stock,
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = "Increase",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                        }
-                    }
+                    Icon(
+                        Icons.Default.Image,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
                 }
             }
             
-            // Category and Stock labels in one row at bottom
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            // Name and Price - 40% width
+            Column(
+                modifier = Modifier
+                    .weight(0.4f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Center
             ) {
-                // Category label (60%)
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.weight(0.6f)
-                ) {
-                    Text(
-                        categoryName,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 7.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                
-                // Stock label (40%)
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.weight(0.4f)
-                ) {
-                    Text(
-                        "Stock: ${product.stock}",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 7.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                Text(
+                    product.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    currencyFormatter.format(product.price),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Stock: ${product.stock}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (product.stock > 0) androidx.compose.ui.graphics.Color.Green else MaterialTheme.colorScheme.error
+                )
+            }
+            
+            // Cart Button - 30% width
+            Box(
+                modifier = Modifier
+                    .weight(0.3f)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (cartQuantity == 0) {
+                    Button(
+                        onClick = {
+                            android.util.Log.d("ProductCard", "Add button clicked for ${product.name}")
+                            onAddToCart()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        enabled = product.stock > 0,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (product.stock > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Icon(Icons.Default.Add, "Add", modifier = Modifier.size(24.dp))
+                    }
+                } else {
+                    // Horizontal quantity controls: - 1 +
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onDecrease,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(Icons.Default.Remove, "Decrease", modifier = Modifier.size(18.dp))
+                        }
+                        Text(
+                            cartQuantity.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(
+                            onClick = onIncrease,
+                            modifier = Modifier.size(28.dp),
+                            enabled = cartQuantity < product.stock
+                        ) {
+                            Icon(Icons.Default.Add, "Increase", modifier = Modifier.size(18.dp))
+                        }
+                    }
                 }
             }
         }

@@ -24,9 +24,11 @@ import com.argminres.app.data.local.entity.*
         IngredientStockMovementEntity::class,
         DailySessionEntity::class,
         WasteRecordEntity::class,
-        IngredientUsageEntity::class
+        IngredientUsageEntity::class,
+        DishComponentEntity::class,
+        DishHistoryEntity::class
     ],
-    version = 3,
+    version = 1,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -47,4 +49,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dailySessionDao(): com.argminres.app.data.local.dao.DailySessionDao
     abstract fun wasteRecordDao(): com.argminres.app.data.local.dao.WasteRecordDao
     abstract fun ingredientUsageDao(): com.argminres.app.data.local.dao.IngredientUsageDao
+    abstract fun dishComponentDao(): DishComponentDao
+    abstract fun dishHistoryDao(): DishHistoryDao
 }

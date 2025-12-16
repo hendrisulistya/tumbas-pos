@@ -9,12 +9,16 @@ import kotlinx.coroutines.flow.Flow
 class GetShowcaseInventoryUseCase(
     private val dishRepository: DishRepository
 ) {
-    operator fun invoke(): Flow<List<com.argminres.app.data.local.dao.DishWithCategory>> = dishRepository.getAllDishes()
+    operator fun invoke(): Flow<List<com.argminres.app.data.local.dao.DishWithCategory>> = dishRepository.getDishesWithStock()
 }
 
 class ManageShowcaseDishUseCase(
     private val dishRepository: DishRepository
 ) {
+    fun getAllDishes(): Flow<List<com.argminres.app.data.local.dao.DishWithCategory>> {
+        return dishRepository.getAllDishes()
+    }
+    
     suspend fun createDish(product: DishEntity): Long {
         return dishRepository.insertDish(product)
     }

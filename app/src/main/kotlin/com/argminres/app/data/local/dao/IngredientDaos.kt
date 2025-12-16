@@ -9,6 +9,10 @@ interface IngredientDao {
     @Transaction
     @Query("SELECT * FROM ingredients ORDER BY name ASC")
     fun getAllIngredients(): Flow<List<IngredientWithCategory>>
+    
+    @Transaction
+    @Query("SELECT * FROM ingredients WHERE stock > 0 ORDER BY name ASC")
+    fun getIngredientsWithStock(): Flow<List<IngredientWithCategory>>
 
     @Transaction
     @Query("SELECT * FROM ingredients WHERE id = :id")

@@ -16,6 +16,7 @@ class DatabaseInitializer(
     private val categoryDao: com.argminres.app.data.local.dao.CategoryDao,
     private val ingredientCategoryDao: com.argminres.app.data.local.dao.IngredientCategoryDao,
     private val ingredientDao: com.argminres.app.data.local.dao.IngredientDao,
+    private val dishComponentDao: com.argminres.app.data.local.dao.DishComponentDao,
     private val settingsRepository: SettingsRepository,
     private val storeSettingsDao: com.argminres.app.data.local.dao.StoreSettingsDao,
     private val employerRepository: com.argminres.app.domain.repository.EmployerRepository
@@ -25,11 +26,17 @@ class DatabaseInitializer(
             return@withContext
         }
 
+
         // Insert categories from CSV
         insertCategoriesFromCsv()
 
-        // Insert products from CSV
+        // Insert dishes from CSV as MASTER DATA (stock = 0)
+        // These dishes populate Kelola Etalase for managers to select from
+        // Managers then add selected dishes to daily Etalase with stock
         insertProductsFromCsv()
+        
+        // Insert dish components (package recipes) from CSV
+        insertDishComponentsFromCsv()
         
         // Insert ingredient categories from CSV
         insertIngredientCategoriesFromCsv()
@@ -148,7 +155,7 @@ class DatabaseInitializer(
     private suspend fun insertCategoriesFromCsv() {
         try {
             val categories = mutableListOf<com.argminres.app.data.local.entity.CategoryEntity>()
-            context.assets.open("categories.csv").bufferedReader().use { reader ->
+            context.assets.open("dish_categories.csv").bufferedReader().use { reader ->
                 reader.readLine() // Skip header
                 reader.forEachLine { line ->
                     val tokens = parseCsvLine(line)
@@ -220,8 +227,9 @@ class DatabaseInitializer(
                 reader.readLine() // Skip header
                 reader.forEachLine { line ->
                     val tokens = parseCsvLine(line)
-                    // tokens: barcode, name, description, price, costPrice, stock, categoryId, image
-                    if (tokens.size >= 7) {
+                    // New format: barcode, name, description, price, costPrice, categoryId, image
+                    // Stock is always 0 for master data (set manually in Etalase)
+                    if (tokens.size >= 6) {
                         products.add(
                             DishEntity(
                                 barcode = tokens[0],
@@ -229,9 +237,9 @@ class DatabaseInitializer(
                                 description = tokens[2],
                                 price = tokens[3].toDoubleOrNull() ?: 0.0,
                                 costPrice = tokens[4].toDoubleOrNull() ?: 0.0,
-                                stock = tokens[5].toIntOrNull() ?: 0,
-                                categoryId = tokens[6].toLongOrNull() ?: 0L,
-                                image = if (tokens.size > 7 && tokens[7].isNotBlank()) tokens[7] else null
+                                stock = 0, // Always 0 for master data
+                                categoryId = tokens[5].toLongOrNull() ?: 0L,
+                                image = if (tokens.size > 6 && tokens[6].isNotBlank()) tokens[6] else null
                             )
                         )
                     }
@@ -293,16 +301,18 @@ class DatabaseInitializer(
                 reader.readLine() // Skip header
                 reader.forEachLine { line ->
                     val parts = line.split(",")
-                    if (parts.size >= 7) {
+                    // New format: id,name,categoryId,unit,costPerUnit
+                    // Stock and minimumStock are always 0 for master data
+                    if (parts.size >= 5) {
                         ingredients.add(
                             com.argminres.app.data.local.entity.IngredientEntity(
                                 id = parts[0].toLongOrNull() ?: 0,
                                 name = parts[1],
                                 categoryId = parts[2].toLongOrNull() ?: 0,
                                 unit = parts[3],
-                                stock = parts[4].toDoubleOrNull() ?: 0.0,
-                                minimumStock = parts[5].toDoubleOrNull() ?: 0.0,
-                                costPerUnit = parts[6].toDoubleOrNull() ?: 0.0,
+                                stock = 0.0, // Always 0 for master data
+                                minimumStock = 0.0, // Not used for master data
+                                costPerUnit = parts[4].toDoubleOrNull() ?: 0.0,
                                 createdAt = System.currentTimeMillis(),
                                 updatedAt = System.currentTimeMillis()
                             )
@@ -313,6 +323,33 @@ class DatabaseInitializer(
             ingredients.forEach { ingredientDao.insertIngredient(it) }
         } catch (e: Exception) {
             android.util.Log.e("DatabaseInitializer", "Error inserting ingredients", e)
+        }
+    }
+    
+    private suspend fun insertDishComponentsFromCsv() {
+        try {
+            val components = mutableListOf<com.argminres.app.data.local.entity.DishComponentEntity>()
+            
+            context.assets.open("dish_components.csv").bufferedReader().use { reader ->
+                reader.readLine() // Skip header
+                reader.forEachLine { line ->
+                    if (line.isNotBlank()) {
+                        val parts = line.split(",")
+                        if (parts.size >= 2) {
+                            components.add(
+                                com.argminres.app.data.local.entity.DishComponentEntity(
+                                    packageDishId = parts[0].toLongOrNull() ?: 0,
+                                    componentDishId = parts[1].toLongOrNull() ?: 0,
+                                    quantity = 1
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            components.forEach { dishComponentDao.insertComponent(it) }
+        } catch (e: Exception) {
+            android.util.Log.e("DatabaseInitializer", "Error inserting dish components", e)
         }
     }
 }
