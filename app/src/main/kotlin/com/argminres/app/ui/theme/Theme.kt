@@ -89,7 +89,7 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun TumbasPOSTheme(
+fun PadangPOSTheme(
     settingsRepository: com.argminres.app.data.repository.SettingsRepository,
     content: @Composable () -> Unit
 ) {

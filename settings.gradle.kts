@@ -1,4 +1,4 @@
-rootProject.name = "TumbasPOS"
+rootProject.name = "PadangPOS"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

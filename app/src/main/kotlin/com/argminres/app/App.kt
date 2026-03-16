@@ -73,7 +73,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
 fun App() {
     KoinContext {
         val settingsRepository: SettingsRepository = koinInject()
-        com.argminres.app.ui.theme.TumbasPOSTheme(settingsRepository = settingsRepository) {
+        com.argminres.app.ui.theme.PadangPOSTheme(settingsRepository = settingsRepository) {
             val navController = rememberNavController()
             val authManager: com.argminres.app.domain.manager.AuthenticationManager = koinInject()
             val isAuthenticated by authManager.currentEmployer.collectAsState()

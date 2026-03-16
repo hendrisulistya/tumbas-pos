@@ -190,7 +190,8 @@ class S3Client(
         prefix: String = ""
     ): Result<List<String>> {
         return try {
-            val queryParams = if (prefix.isNotEmpty()) "?prefix=$prefix&list-type=2" else "?list-type=2"
+            val encodedPrefix = java.net.URLEncoder.encode(prefix, "UTF-8")
+            val queryParams = if (prefix.isNotEmpty()) "?list-type=2&prefix=$encodedPrefix" else "?list-type=2"
             val url = "$endpoint/$bucket/$queryParams"
             val amzDate = AwsSignatureV4.getAmzDate()
             val emptyPayload = ByteArray(0)
@@ -220,12 +221,21 @@ class S3Client(
                 .header("x-amz-date", amzDate)
                 .build()
             
+            android.util.Log.d("S3Client", "LIST request URL: $url")
+            android.util.Log.d("S3Client", "LIST prefix: $prefix")
+            android.util.Log.d("S3Client", "LIST encoded prefix: $encodedPrefix")
+            
             val response = client.newCall(request).execute()
+            android.util.Log.d("S3Client", "LIST response code: ${response.code}")
+            android.util.Log.d("S3Client", "LIST response message: ${response.message}")
+            
             if (response.isSuccessful) {
                 val xml = response.body?.string() ?: ""
                 val keys = parseListObjectsResponse(xml)
                 Result.success(keys)
             } else {
+                val errorBody = response.body?.string() ?: ""
+                android.util.Log.e("S3Client", "LIST error body: $errorBody")
                 Result.failure(IOException("S3 LIST failed: ${response.code} ${response.message}"))
             }
         } catch (e: Exception) {

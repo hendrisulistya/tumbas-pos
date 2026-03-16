@@ -1,6 +1,7 @@
 package com.argminres.app.data.repository
 
 import android.content.Context
+import com.argminres.app.BuildConfig
 import com.argminres.app.data.s3.S3Client
 import com.argminres.app.domain.model.R2Config
 import com.argminres.app.domain.repository.BackupRepository
@@ -14,7 +15,7 @@ import java.util.Locale
 class BackupRepositoryImpl(
     private val context: Context,
     private val settingsRepository: SettingsRepository,
-    private val dbName: String = "padang_pos.db"
+    private val dbName: String = "padang_pos_db"
 ) : BackupRepository {
 
     override suspend fun backupDatabase(r2Config: R2Config): Result<String> = withContext(Dispatchers.IO) {
@@ -41,7 +42,7 @@ class BackupRepositoryImpl(
             
             val result = s3Client.putObject(
                 bucket = r2Config.bucketName,
-                key = "padangpos/$appId/$backupFileName",
+                key = "${BuildConfig.APPLICATION_ID}/$appId/$backupFileName",
                 file = backupFile
             )
             
@@ -71,7 +72,7 @@ class BackupRepositoryImpl(
             
             val result = s3Client.getObject(
                 bucket = r2Config.bucketName,
-                key = "padangpos/$appId/$backupFileName"
+                key = "${BuildConfig.APPLICATION_ID}/$namespace/$backupFileName"
             )
             
             result.fold(
@@ -115,14 +116,14 @@ class BackupRepositoryImpl(
             
             val result = s3Client.listObjects(
                 bucket = r2Config.bucketName,
-                prefix = "padangpos/$appId/"
+                prefix = "${BuildConfig.APPLICATION_ID}/$appId/"
             )
             
             result.fold(
                 onSuccess = { keys ->
-                    // Strip the namespace and appId prefix from the keys for display
+                    // Strip the applicationId and appId prefix from the keys for display
                     val backups = keys
-                        .map { it.removePrefix("padangpos/$appId/") }
+                        .map { it.removePrefix("${BuildConfig.APPLICATION_ID}/$appId/") }
                         .filter { it.endsWith(".db") }
                         .sortedDescending()
                     Result.success(backups)

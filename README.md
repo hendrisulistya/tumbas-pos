@@ -1,6 +1,6 @@
-# TumbasPOS
+# PadangPOS
 
-TumbasPOS is a modern, offline-first Point of Sale (POS) application built natively for Android using Kotlin and Jetpack Compose. It is designed to help small businesses manage sales, inventory, and reporting efficiently.
+PadangPOS is a modern, offline-first Point of Sale (POS) application built natively for Android using Kotlin and Jetpack Compose. It is designed to help small businesses manage sales, inventory, and reporting efficiently.
 
 ## Features
 

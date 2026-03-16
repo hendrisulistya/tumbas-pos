@@ -307,7 +307,7 @@ class EscPosPrinterManager(
             val dateStr = dateFormat.format(Date(order.orderDate))
             
             val sb = StringBuilder()
-            sb.append("[C]<b><font size='big'>TumbasPOS</font></b>\n")
+            sb.append("[C]<b><font size='big'>PadangPOS</font></b>\n")
             sb.append("[C]================================\n")
             sb.append("[L]<b>Date:</b> $dateStr\n")
             sb.append("[L]<b>Order ID:</b> ${order.orderNumber}\n")
