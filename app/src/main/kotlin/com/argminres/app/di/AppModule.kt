@@ -115,14 +115,6 @@ val appModule = module {
         com.argminres.app.data.repository.EmployerRepositoryImpl(get(), androidContext())
     }
     
-    single {
-        com.argminres.app.domain.model.R2Config(
-            accountId = com.argminres.app.core.Secrets.R2_ACCOUNT_ID,
-            accessKeyId = com.argminres.app.core.Secrets.R2_ACCESS_KEY_ID,
-            secretAccessKey = com.argminres.app.core.Secrets.R2_SECRET_ACCESS_KEY,
-            bucketName = com.argminres.app.core.Secrets.R2_BUCKET_NAME
-        )
-    }
 
     // Use Cases
     factory { com.argminres.app.domain.usecase.sales.CreateSalesOrderUseCase(get(), get()) }
@@ -217,7 +209,7 @@ val appModule = module {
         ) 
     }
     viewModel { com.argminres.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get()) }
-    viewModel { com.argminres.app.presentation.backup.BackupViewModel(get(), get(), get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.backup.BackupViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.ActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.wip.WorkInProcessViewModel(get()) }
@@ -225,8 +217,8 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.ingredientmaster.IngredientMasterViewModel(get()) }
     viewModel { com.argminres.app.presentation.dishmaster.DishMasterViewModel(get()) }
-    viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get(), get(), get(), get()) }
-    viewModel { com.argminres.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get()) }
+    viewModel { com.argminres.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.scan.ScanViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.settings.printer.PrinterSettingsViewModel(get(), androidContext()) }

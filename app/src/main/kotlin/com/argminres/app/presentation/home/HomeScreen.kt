@@ -36,6 +36,9 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
     var categoryExpanded by remember { mutableStateOf(false) }
+    
+    // Optimization: Use derivedStateOf to prevent Scaffold recomposition on every cart count change
+    val showFab by remember { derivedStateOf { uiState.cartItemCount > 0 } }
 
     Scaffold(
         topBar = {
@@ -49,7 +52,7 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            if (uiState.cartItemCount > 0) {
+            if (showFab) {
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToCart,
                     icon = { 
@@ -118,7 +121,10 @@ fun HomeScreen(
                     
                     groupedDishes.forEach { (categoryName, dishes) ->
                         // Category header with divider line
-                        item {
+                        item(
+                            key = "header_$categoryName",
+                            contentType = "header"
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -141,7 +147,11 @@ fun HomeScreen(
                         }
                         
                         // Dishes in this category
-                        items(dishes) { dishWithCategory ->
+                        items(
+                            items = dishes,
+                            key = { it.dish.id },
+                            contentType = { "product" }
+                        ) { dishWithCategory ->
                             val cartQty = viewModel.getCartQuantity(dishWithCategory.dish.id)
                             ProductCard(
                                 productWithCategory = dishWithCategory,

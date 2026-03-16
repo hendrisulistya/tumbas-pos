@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
@@ -29,7 +29,7 @@ fun BackupScreen(
                 title = { Text("Backup & Restore") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
@@ -48,7 +48,7 @@ fun BackupScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !uiState.isLoading
                 ) {
-                    Icon(Icons.Default.CloudUpload, null)
+                    Icon(Icons.Default.Backup, null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Backup Database Now")
                 }
@@ -117,7 +117,7 @@ fun BackupItem(
         ) {
             Text(fileName, style = MaterialTheme.typography.bodyMedium)
             Button(onClick = onRestore, enabled = enabled) {
-                Icon(Icons.Default.CloudDownload, null)
+                Icon(Icons.Default.Restore, null)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Restore")
             }

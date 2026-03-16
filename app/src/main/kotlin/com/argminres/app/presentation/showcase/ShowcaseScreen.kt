@@ -69,7 +69,11 @@ fun ShowcaseScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.filteredProducts) { productWithCategory ->
+                    items(
+                        items = uiState.filteredProducts,
+                        key = { it.dish.id },
+                        contentType = { "product" }
+                    ) { productWithCategory ->
                         ProductItem(
                             productWithCategory = productWithCategory,
                             currencyFormatter = currencyFormatter,

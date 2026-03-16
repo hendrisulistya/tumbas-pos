@@ -22,8 +22,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
 import com.argminres.app.data.local.entity.DishEntity
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -86,7 +88,11 @@ fun ProductScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.filteredProducts) { productWithCategory ->
+                    items(
+                        items = uiState.filteredProducts,
+                        key = { it.dish.id },
+                        contentType = { "product" }
+                    ) { productWithCategory ->
                         ProductItem(
                             productWithCategory = productWithCategory,
                             currencyFormatter = currencyFormatter,
@@ -420,43 +426,28 @@ fun ProductDialog(
 
 @Composable
 fun ProductImageDisplay(image: String, modifier: Modifier = Modifier) {
-    if (image.startsWith("data:image")) {
-        val bitmap = remember(image) {
+    // Optimization: Use Coil's AsyncImage for efficient background decoding and memory management
+    val imageData = remember(image) {
+        if (image.startsWith("data:image")) {
             try {
                 val base64Data = image.substringAfter("base64,")
-                val imageBytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
-                android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT)
             } catch (e: Exception) {
                 null
             }
-        }
-
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Product Image",
-                modifier = modifier,
-                contentScale = ContentScale.Crop
-            )
         } else {
-            Box(modifier = modifier, contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.BrokenImage, "Invalid Image", tint = MaterialTheme.colorScheme.error)
-            }
-        }
-    } else {
-        // URL image
-        Box(
-            modifier = modifier,
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Image,
-                contentDescription = "Product Image",
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            image // Use URL directly
         }
     }
+
+    AsyncImage(
+        model = imageData,
+        contentDescription = "Product Image",
+        modifier = modifier,
+        contentScale = ContentScale.Crop,
+        error = rememberVectorPainter(Icons.Default.BrokenImage),
+        placeholder = rememberVectorPainter(Icons.Default.Image)
+    )
 }
 
 @Composable

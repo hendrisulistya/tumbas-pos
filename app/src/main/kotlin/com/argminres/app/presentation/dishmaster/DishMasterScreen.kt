@@ -96,7 +96,11 @@ fun DishMasterScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.filteredDishes) { dishWithCat ->
+                    items(
+                        items = uiState.filteredDishes,
+                        key = { it.dish.id },
+                        contentType = { "dish" }
+                    ) { dishWithCat ->
                         DishMasterCard(
                             dishWithCategory = dishWithCat,
                             currencyFormatter = currencyFormatter,

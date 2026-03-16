@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.argminres.app.data.local.DatabaseInitializer
 import com.argminres.app.data.repository.SettingsRepository
-import com.argminres.app.domain.model.R2Config
 import com.argminres.app.domain.usecase.backup.GetBackupsUseCase
 import com.argminres.app.domain.usecase.backup.RestoreDatabaseUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +25,6 @@ data class RestoreStoreUiState(
 )
 
 class RestoreStoreViewModel(
-    private val r2Config: R2Config,
     private val getBackupsUseCase: GetBackupsUseCase,
     private val restoreDatabaseUseCase: RestoreDatabaseUseCase,
     private val settingsRepository: SettingsRepository,
@@ -107,37 +105,21 @@ class RestoreStoreViewModel(
             try {
                 _uiState.update { it.copy(isLoading = true, error = null, showBackupList = false) }
                 
-                // Check for backups in the specified App ID namespace
-                val result = getBackupsUseCase(r2Config, appId)
+                // Since cloud backup is removed, we only check for local backups if applicable
+                // For now, we'll just proceed as "Activated" but with no cloud backups found
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        backups = emptyList(),
+                        showBackupList = false,
+                        isComplete = true // Directly complete fresh activation
+                    ) 
+                }
                 
-                result.fold(
-                    onSuccess = { backupList ->
-                        if (backupList.isNotEmpty()) {
-                            _uiState.update { 
-                                it.copy(
-                                    isLoading = false,
-                                    backups = backupList,
-                                    showBackupList = true
-                                ) 
-                            }
-                        } else {
-                            _uiState.update { 
-                                it.copy(
-                                    isLoading = false,
-                                    error = "No backups found for App ID: $appId"
-                                ) 
-                            }
-                        }
-                    },
-                    onFailure = { e ->
-                        _uiState.update { 
-                            it.copy(
-                                isLoading = false,
-                                error = "Failed to check backups: ${e.message}"
-                            ) 
-                        }
-                    }
-                )
+                settingsRepository.saveStoreId(appId)
+                settingsRepository.setActivated(true)
+                databaseInitializer.initializeIfNeeded()
+
             } catch (e: Exception) {
                 e.printStackTrace()
                 _uiState.update { 
@@ -148,7 +130,7 @@ class RestoreStoreViewModel(
                 }
             }
         }
-    }
+   }
 
     private fun verifyActivation(appId: String, code: String): Boolean {
         return try {
@@ -189,8 +171,8 @@ class RestoreStoreViewModel(
                     ) 
                 }
                 
-                val result = restoreDatabaseUseCase(r2Config, fileName, appId)
-                
+                val result = restoreDatabaseUseCase(fileName)
+               
                 result.fold(
                     onSuccess = {
                         // Update App ID and set activated

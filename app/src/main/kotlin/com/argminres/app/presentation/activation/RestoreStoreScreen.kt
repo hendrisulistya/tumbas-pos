@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,7 +35,7 @@ fun RestoreStoreScreen(
                 title = { Text("Restore Store") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
@@ -100,7 +101,7 @@ fun RestoreStoreScreen(
                                             )
                                         }
                                         Icon(
-                                            Icons.Default.CloudDownload,
+                                            Icons.Default.Restore,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.primary
                                         )

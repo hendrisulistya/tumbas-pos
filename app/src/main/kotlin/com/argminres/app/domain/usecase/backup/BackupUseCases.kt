@@ -1,28 +1,27 @@
 package com.argminres.app.domain.usecase.backup
 
-import com.argminres.app.domain.model.R2Config
 import com.argminres.app.domain.repository.BackupRepository
 
 class BackupDatabaseUseCase(
     private val backupRepository: BackupRepository
 ) {
-    suspend operator fun invoke(r2Config: R2Config): Result<String> {
-        return backupRepository.backupDatabase(r2Config)
+    suspend operator fun invoke(): Result<String> {
+        return backupRepository.backupDatabase()
     }
 }
 
 class RestoreDatabaseUseCase(
     private val backupRepository: BackupRepository
 ) {
-    suspend operator fun invoke(r2Config: R2Config, backupFileName: String, namespace: String? = null): Result<Unit> {
-        return backupRepository.restoreDatabase(r2Config, backupFileName, namespace)
+    suspend operator fun invoke(backupFileName: String): Result<Unit> {
+        return backupRepository.restoreDatabase(backupFileName)
     }
 }
 
 class GetBackupsUseCase(
     private val backupRepository: BackupRepository
 ) {
-    suspend operator fun invoke(r2Config: R2Config, namespace: String? = null): Result<List<String>> {
-        return backupRepository.getBackups(r2Config, namespace)
+    suspend operator fun invoke(): Result<List<String>> {
+        return backupRepository.getBackups()
     }
 }

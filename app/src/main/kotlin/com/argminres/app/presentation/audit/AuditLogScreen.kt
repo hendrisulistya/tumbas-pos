@@ -85,7 +85,11 @@ fun AuditLogScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(uiState.logs) { log ->
+                items(
+                    items = uiState.logs,
+                    key = { it.id ?: 0L },
+                    contentType = { "log" }
+                ) { log ->
                     AuditLogItem(log)
                 }
             }

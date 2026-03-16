@@ -101,16 +101,7 @@ if (localPropertiesFile.exists()) {
 }
 
 android.defaultConfig {
-    val r2AccountId = localProperties.getProperty("R2_ACCOUNT_ID", "").trim().trim('"')
-    val r2AccessKeyId = localProperties.getProperty("R2_ACCESS_KEY_ID", "").trim().trim('"')
-    val r2SecretAccessKey = localProperties.getProperty("R2_SECRET_ACCESS_KEY", "").trim().trim('"')
-    val r2BucketName = localProperties.getProperty("R2_BUCKET_NAME", "").trim().trim('"')
     val activationSecret = localProperties.getProperty("APP_SECRET", "").trim().trim('"')
-
-    buildConfigField("String", "R2_ACCOUNT_ID", "\"$r2AccountId\"")
-    buildConfigField("String", "R2_ACCESS_KEY_ID", "\"$r2AccessKeyId\"")
-    buildConfigField("String", "R2_SECRET_ACCESS_KEY", "\"$r2SecretAccessKey\"")
-    buildConfigField("String", "R2_BUCKET_NAME", "\"$r2BucketName\"")
     buildConfigField("String", "ACTIVATION_SECRET", "\"$activationSecret\"")
 }
 
@@ -149,8 +140,6 @@ dependencies {
     implementation(libs.koin.androidx.compose)
     implementation(libs.koin.core)
     
-    // OkHttp for S3 client
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
     // ML Kit Barcode Scanning (Unbundled)
     implementation(libs.mlkit.barcode.scanning)
@@ -162,6 +151,9 @@ dependencies {
     
     // Printer
     implementation(libs.escpos.printer)
+    
+    // Coil
+    implementation(libs.coil.compose)
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

@@ -57,9 +57,9 @@ interface ReportingRepository {
 }
 
 interface BackupRepository {
-    suspend fun backupDatabase(r2Config: com.argminres.app.domain.model.R2Config): Result<String>
-    suspend fun restoreDatabase(r2Config: com.argminres.app.domain.model.R2Config, backupFileName: String, namespace: String? = null): Result<Unit>
-    suspend fun getBackups(r2Config: com.argminres.app.domain.model.R2Config, namespace: String? = null): Result<List<String>>
+    suspend fun backupDatabase(): Result<String>
+    suspend fun restoreDatabase(backupFileName: String): Result<Unit>
+    suspend fun getBackups(): Result<List<String>>
 }
 
 interface StoreSettingsRepository {

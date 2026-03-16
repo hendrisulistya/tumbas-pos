@@ -2,8 +2,6 @@ package com.argminres.app.data.repository
 
 import android.content.Context
 import com.argminres.app.BuildConfig
-import com.argminres.app.data.s3.S3Client
-import com.argminres.app.domain.model.R2Config
 import com.argminres.app.domain.repository.BackupRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,7 +16,15 @@ class BackupRepositoryImpl(
     private val dbName: String = "padang_pos_db"
 ) : BackupRepository {
 
-    override suspend fun backupDatabase(r2Config: R2Config): Result<String> = withContext(Dispatchers.IO) {
+    private val backupDir: File by lazy {
+        File(context.filesDir, "backups").apply {
+            if (!exists()) {
+                mkdirs()
+            }
+        }
+    }
+
+    override suspend fun backupDatabase(): Result<String> = withContext(Dispatchers.IO) {
         try {
             val dbFile = context.getDatabasePath(dbName)
             if (!dbFile.exists()) {
@@ -28,110 +34,53 @@ class BackupRepositoryImpl(
             // Create a backup file with timestamp
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val backupFileName = "backup_$timestamp.db"
-            val backupFile = File(context.cacheDir, backupFileName)
+            val backupFile = File(backupDir, backupFileName)
+            
             dbFile.copyTo(backupFile, overwrite = true)
 
-            // Upload to R2 with App ID namespace
-            val appId = settingsRepository.getAppId()
-            val s3Client = S3Client(
-                endpoint = r2Config.endpointUrl,
-                accessKeyId = r2Config.accessKeyId,
-                secretAccessKey = r2Config.secretAccessKey,
-                region = "auto"
-            )
-            
-            val result = s3Client.putObject(
-                bucket = r2Config.bucketName,
-                key = "${BuildConfig.APPLICATION_ID}/$appId/$backupFileName",
-                file = backupFile
-            )
-            
-            // Clean up local backup file
-            backupFile.delete()
-
-            result.fold(
-                onSuccess = { Result.success(backupFileName) },
-                onFailure = { e -> Result.failure(e) }
-            )
+            if (backupFile.exists()) {
+                Result.success(backupFileName)
+            } else {
+                Result.failure(Exception("Failed to create local backup file"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override suspend fun restoreDatabase(r2Config: R2Config, backupFileName: String, namespace: String?): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun restoreDatabase(backupFileName: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val appId = namespace ?: settingsRepository.getAppId()
-            val s3Client = S3Client(
-                endpoint = r2Config.endpointUrl,
-                accessKeyId = r2Config.accessKeyId,
-                secretAccessKey = r2Config.secretAccessKey,
-                region = "auto"
-            )
-
-            val tempFile = File(context.cacheDir, "restore_temp.db")
+            val backupFile = File(backupDir, backupFileName)
             
-            val result = s3Client.getObject(
-                bucket = r2Config.bucketName,
-                key = "${BuildConfig.APPLICATION_ID}/$namespace/$backupFileName"
-            )
+            if (!backupFile.exists()) {
+                return@withContext Result.failure(Exception("Backup file not found: $backupFileName"))
+            }
+
+            // Replace current database
+            val dbFile = context.getDatabasePath(dbName)
             
-            result.fold(
-                onSuccess = { bytes ->
-                    tempFile.writeBytes(bytes)
-                    
-                    // Validate the downloaded file (basic check)
-                    if (!tempFile.exists() || tempFile.length() == 0L) {
-                        throw Exception("Downloaded backup file is invalid")
-                    }
+            // It's safer to close the database before replacing, 
+            // but usually Room handles it or the app requires a restart anyway.
+            // For simplicity and matching previous logic, we just copy.
+            if (dbFile.exists()) {
+                dbFile.delete()
+            }
+            backupFile.copyTo(dbFile, overwrite = true)
 
-                    // Replace current database
-                    val dbFile = context.getDatabasePath(dbName)
-                    
-                    if (dbFile.exists()) {
-                        dbFile.delete()
-                    }
-                    tempFile.copyTo(dbFile, overwrite = true)
-                    tempFile.delete()
-
-                    Result.success(Unit)
-                },
-                onFailure = { e ->
-                    Result.failure(e)
-                }
-            )
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override suspend fun getBackups(r2Config: R2Config, namespace: String?): Result<List<String>> = withContext(Dispatchers.IO) {
+    override suspend fun getBackups(): Result<List<String>> = withContext(Dispatchers.IO) {
         try {
-            val appId = namespace ?: settingsRepository.getAppId()
-            val s3Client = S3Client(
-                endpoint = r2Config.endpointUrl,
-                accessKeyId = r2Config.accessKeyId,
-                secretAccessKey = r2Config.secretAccessKey,
-                region = "auto"
-            )
-            
-            val result = s3Client.listObjects(
-                bucket = r2Config.bucketName,
-                prefix = "${BuildConfig.APPLICATION_ID}/$appId/"
-            )
-            
-            result.fold(
-                onSuccess = { keys ->
-                    // Strip the applicationId and appId prefix from the keys for display
-                    val backups = keys
-                        .map { it.removePrefix("${BuildConfig.APPLICATION_ID}/$appId/") }
-                        .filter { it.endsWith(".db") }
-                        .sortedDescending()
-                    Result.success(backups)
-                },
-                onFailure = { e ->
-                    Result.failure(e)
-                }
-            )
+            val backups = backupDir.listFiles()
+                ?.filter { it.isFile && it.name.endsWith(".db") }
+                ?.map { it.name }
+                ?.sortedDescending()
+                ?: emptyList()
+            Result.success(backups)
         } catch (e: Exception) {
             Result.failure(e)
         }
