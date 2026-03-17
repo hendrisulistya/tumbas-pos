@@ -2,7 +2,7 @@ package com.argminres.app.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.argminres.app.data.local.entity.DishEntity
+import com.argminres.app.data.local.dao.DishWithCategory
 import com.argminres.app.domain.usecase.sales.SearchDishesUseCase
 import com.argminres.app.presentation.sales.CartItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
-    val dishes: List<com.argminres.app.data.local.dao.DishWithCategory> = emptyList(),
+    val allDishes: List<DishWithCategory> = emptyList(),
+    val dishes: List<DishWithCategory> = emptyList(),
     val categories: List<String> = emptyList(),
     val selectedCategory: String = "All",
     val searchQuery: String = "",
@@ -37,15 +38,11 @@ class HomeViewModel(
     private fun observeCart() {
         viewModelScope.launch {
             cartRepository.cartItems.collect { items ->
-                android.util.Log.d("HomeViewModel", "Cart updated: ${items.size} items")
-                items.forEach { item ->
-                    android.util.Log.d("HomeViewModel", "  - ${item.product.name}: qty=${item.quantity}")
-                }
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         cart = items,
                         cartItemCount = items.sumOf { item -> item.quantity }
-                    ) 
+                    )
                 }
             }
         }
@@ -54,39 +51,48 @@ class HomeViewModel(
     private fun loadDishes() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            
-            searchProductsUseCase(_uiState.value.searchQuery).collect { dishes ->
-                val categories = listOf("All") + dishes.map { it.category?.name ?: "Uncategorized" }.distinct()
-                
-                val filteredDishes = if (_uiState.value.selectedCategory == "All") {
-                    dishes
-                } else {
-                    dishes.filter { (it.category?.name ?: "Uncategorized") == _uiState.value.selectedCategory }
-                }
-                
-                _uiState.update { 
+
+            searchProductsUseCase("").collect { allDishes ->
+                val categoryOrder = listOf("Paket", "Makanan", "Minuman", "Lain-lain")
+                val categories = listOf("All") + allDishes
+                    .map { it.category?.name ?: "Uncategorized" }
+                    .distinct()
+                    .sortedWith(compareBy { name ->
+                        val idx = categoryOrder.indexOf(name)
+                        if (idx >= 0) idx else Int.MAX_VALUE
+                    })
+
+                val filteredDishes = filterDishes(allDishes, _uiState.value.selectedCategory, _uiState.value.searchQuery)
+
+                _uiState.update {
                     it.copy(
+                        allDishes = allDishes,
                         dishes = filteredDishes,
                         categories = categories,
                         isLoading = false
-                    ) 
+                    )
                 }
             }
         }
     }
 
+    private fun filterDishes(allDishes: List<DishWithCategory>, category: String, query: String): List<DishWithCategory> {
+        return allDishes
+            .filter { category == "All" || (it.category?.name ?: "Uncategorized") == category }
+            .filter { query.isBlank() || it.dish.name.contains(query, ignoreCase = true) }
+    }
+
     fun onCategorySelected(category: String) {
-        _uiState.update { it.copy(selectedCategory = category) }
-        loadDishes()
+        val filtered = filterDishes(_uiState.value.allDishes, category, _uiState.value.searchQuery)
+        _uiState.update { it.copy(selectedCategory = category, dishes = filtered) }
     }
 
     fun onSearchQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
-        loadDishes()
+        val filtered = filterDishes(_uiState.value.allDishes, _uiState.value.selectedCategory, query)
+        _uiState.update { it.copy(searchQuery = query, dishes = filtered) }
     }
 
-    fun addToCart(dishWithCategory: com.argminres.app.data.local.dao.DishWithCategory) {
-        android.util.Log.d("HomeViewModel", "Adding to cart: ${dishWithCategory.dish.name}")
+    fun addToCart(dishWithCategory: DishWithCategory) {
         cartRepository.addToCart(dishWithCategory.dish, 1)
     }
 
@@ -113,8 +119,6 @@ class HomeViewModel(
     }
 
     fun getCartQuantity(dishId: Long): Int {
-        val qty = _uiState.value.cart.find { it.product.id == dishId }?.quantity ?: 0
-        android.util.Log.d("HomeViewModel", "getCartQuantity for dishId=$dishId: $qty")
-        return qty
+        return _uiState.value.cart.find { it.product.id == dishId }?.quantity ?: 0
     }
 }

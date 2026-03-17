@@ -1,23 +1,22 @@
 package com.argminres.app.presentation.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,6 +25,16 @@ import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.util.Locale
+
+// Map category names to icons
+private fun categoryIcon(name: String): ImageVector = when {
+    name.contains("Paket", ignoreCase = true) -> Icons.Default.LocalOffer
+    name.contains("Makanan", ignoreCase = true) -> Icons.Default.Restaurant
+    name.contains("Minuman", ignoreCase = true) -> Icons.Default.LocalDrink
+    name.contains("Lain", ignoreCase = true) -> Icons.Default.MoreHoriz
+    name == "All" -> Icons.Default.GridView
+    else -> Icons.Default.Category
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,9 +45,6 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
-    var categoryExpanded by remember { mutableStateOf(false) }
-    
-    // Optimization: Use derivedStateOf to prevent Scaffold recomposition on every cart count change
     val showFab by remember { derivedStateOf { uiState.cartItemCount > 0 } }
 
     Scaffold(
@@ -61,7 +67,7 @@ fun HomeScreen(
             if (showFab) {
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToCart,
-                    icon = { 
+                    icon = {
                         BadgedBox(
                             badge = {
                                 Badge { Text(uiState.cartItemCount.toString()) }
@@ -76,90 +82,71 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                // ---- Category Sidebar (20%) ----
+                CategorySidebar(
+                    categories = uiState.categories,
+                    selectedCategory = uiState.selectedCategory,
+                    onCategorySelected = viewModel::onCategorySelected,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(0.20f)
+                )
 
-            // Product Grid
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.dishes.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                // ---- Dish Grid (80%) ----
+                if (uiState.dishes.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(0.80f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.Inventory,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            "No dishes available",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 4.dp,
-                        bottom = 16.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Group dishes by category
-                    val groupedDishes = uiState.dishes.groupBy { it.category?.name ?: "Uncategorized" }
-                    
-                    groupedDishes.forEach { (categoryName, dishes) ->
-                        // Category header with divider line
-                        item(
-                            key = "header_$categoryName",
-                            contentType = "header"
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 12.dp, bottom = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = categoryName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                HorizontalDivider(
-                                    modifier = Modifier.weight(1f),
-                                    thickness = 1.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant
-                                )
-                            }
+                            Icon(
+                                Icons.Default.Inventory,
+                                contentDescription = null,
+                                modifier = Modifier.size(56.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "No dishes available",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                        
-                        // Dishes in this category
-                        items(
-                            items = dishes,
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier
+                            .weight(0.80f)
+                            .fillMaxHeight(),
+                        contentPadding = PaddingValues(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        gridItems(
+                            items = uiState.dishes,
                             key = { it.dish.id },
                             contentType = { "product" }
                         ) { dishWithCategory ->
                             val cartQty = viewModel.getCartQuantity(dishWithCategory.dish.id)
-                            ProductCard(
+                            ProductGridItem(
                                 productWithCategory = dishWithCategory,
                                 currencyFormatter = currencyFormatter,
                                 cartQuantity = cartQty,
@@ -176,7 +163,90 @@ fun HomeScreen(
 }
 
 @Composable
-fun ProductCard(
+private fun CategorySidebar(
+    categories: List<String>,
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 2.dp
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 4.dp)
+        ) {
+            items(categories.size) { index ->
+                val category = categories[index]
+                val isSelected = category == selectedCategory
+                CategoryItem(
+                    category = category,
+                    icon = categoryIcon(category),
+                    isSelected = isSelected,
+                    onClick = { onCategorySelected(category) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryItem(
+    category: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isSelected)
+        MaterialTheme.colorScheme.primaryContainer
+    else
+        MaterialTheme.colorScheme.surfaceVariant
+
+    val contentColor = if (isSelected)
+        MaterialTheme.colorScheme.onPrimaryContainer
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .background(backgroundColor)
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = category,
+            tint = contentColor,
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = category,
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 10.sp,
+            color = contentColor,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .width(20.dp)
+                    .height(2.dp)
+                    .clip(RoundedCornerShape(1.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
+    }
+}
+
+@Composable
+fun ProductGridItem(
     productWithCategory: com.argminres.app.data.local.dao.DishWithCategory,
     currencyFormatter: NumberFormat,
     cartQuantity: Int,
@@ -185,26 +255,18 @@ fun ProductCard(
     onDecrease: () -> Unit
 ) {
     val product = productWithCategory.dish
-    val categoryName = productWithCategory.category?.name ?: "Uncategorized"
-    
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp)
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Image - 30% width
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Product Image
             Box(
                 modifier = Modifier
-                    .weight(0.3f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(6.dp))
+                    .fillMaxWidth()
+                    .height(100.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
@@ -217,85 +279,84 @@ fun ProductCard(
                     Icon(
                         Icons.Default.Image,
                         contentDescription = null,
-                        modifier = Modifier.size(32.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        modifier = Modifier.size(36.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                     )
                 }
             }
-            
-            // Name and Price - 40% width
+
+            // Name & Price
             Column(
                 modifier = Modifier
-                    .weight(0.4f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 Text(
                     product.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     currencyFormatter.format(product.price),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Text(
-                    "Stock: ${product.stock}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (product.stock > 0) androidx.compose.ui.graphics.Color.Green else MaterialTheme.colorScheme.error
-                )
+                if (product.stock <= 0) {
+                    Text(
+                        "Habis",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
-            
-            // Cart Button - 30% width
+
+            // Add / Quantity Controls
             Box(
                 modifier = Modifier
-                    .weight(0.3f)
-                    .fillMaxHeight(),
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (cartQuantity == 0) {
                     Button(
-                        onClick = {
-                            android.util.Log.d("ProductCard", "Add button clicked for ${product.name}")
-                            onAddToCart()
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        onClick = onAddToCart,
+                        modifier = Modifier.fillMaxWidth().height(36.dp),
                         enabled = product.stock > 0,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (product.stock > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        shape = RoundedCornerShape(6.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Icon(Icons.Default.Add, "Add", modifier = Modifier.size(24.dp))
+                        Icon(Icons.Default.Add, "Add", modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Tambah", style = MaterialTheme.typography.labelMedium)
                     }
                 } else {
-                    // Horizontal quantity controls: - 1 +
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(
+                        FilledIconButton(
                             onClick = onDecrease,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(30.dp)
                         ) {
-                            Icon(Icons.Default.Remove, "Decrease", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Remove, "Decrease", modifier = Modifier.size(16.dp))
                         }
                         Text(
                             cartQuantity.toString(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        IconButton(
+                        FilledIconButton(
                             onClick = onIncrease,
-                            modifier = Modifier.size(28.dp),
+                            modifier = Modifier.size(30.dp),
                             enabled = cartQuantity < product.stock
                         ) {
-                            Icon(Icons.Default.Add, "Increase", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Add, "Increase", modifier = Modifier.size(16.dp))
                         }
                     }
                 }
