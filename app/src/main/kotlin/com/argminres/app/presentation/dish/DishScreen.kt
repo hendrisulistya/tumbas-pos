@@ -1,5 +1,6 @@
 package com.argminres.app.presentation.dish
 
+import com.argminres.app.presentation.scan.BarcodeScannerDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -42,21 +43,6 @@ fun ProductScreen(
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Products") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(onClick = viewModel::onAddProductClick) {
                 Icon(Icons.Default.Add, "Add Product")
@@ -448,79 +434,4 @@ fun ProductImageDisplay(image: String, modifier: Modifier = Modifier) {
         error = rememberVectorPainter(Icons.Default.BrokenImage),
         placeholder = rememberVectorPainter(Icons.Default.Image)
     )
-}
-
-@Composable
-fun BarcodeScannerDialog(
-    onBarcodeScanned: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var hasScanned by remember { mutableStateOf(false) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.85f),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Scan Barcode",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, "Close")
-                    }
-                }
-                
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    com.argminres.app.presentation.scan.BarcodeScanner(
-                        onBarcodeScanned = { code ->
-                            if (!hasScanned) {
-                                hasScanned = true
-                                onBarcodeScanned(code)
-                            }
-                        }
-                    )
-                }
-                
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        "Point camera at barcode",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "The barcode will be detected automatically",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
 }

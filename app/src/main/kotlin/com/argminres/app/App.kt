@@ -44,7 +44,6 @@ import com.argminres.app.presentation.sales.SalesOrderDetailScreen
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
     data object Login : Screen("login", "Login")
     data object Home : Screen("home", "Home", Icons.Default.Home)
-    data object Scan : Screen("scan", "Scan", Icons.Default.QrCodeScanner)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
     data object Cart : Screen("cart", "Cart")
     data object SalesOrder : Screen("sales_orders", "Sales Orders", Icons.Default.Receipt)
@@ -99,57 +98,8 @@ fun App() {
                 }
             }
             
-            val bottomNavItems = listOf(Screen.Home, Screen.Scan, Screen.Settings)
-
             Scaffold(
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                bottomBar = {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
-                    val showBottomBar = currentDestination?.route != Screen.Login.route &&
-                                       currentDestination?.route != Screen.Activation.route &&
-                                       currentDestination?.route != Screen.Cart.route &&
-                                       currentDestination?.route != Screen.Showcase.route &&
-                                       currentDestination?.route != Screen.Ingredient.route &&
-                                       currentDestination?.route != Screen.DishMaster.route &&
-                                       currentDestination?.route != Screen.IngredientMaster.route &&
-                                       currentDestination?.route != Screen.Purchase.route &&
-                                       currentDestination?.route != Screen.Reporting.route &&
-                                       currentDestination?.route != Screen.Backup.route
-                    
-                    if (showBottomBar) {
-                        NavigationBar(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 4.dp)
-                                .windowInsetsPadding(WindowInsets.navigationBars)
-                                .height(62.dp),
-                            windowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
-                        ) {
-                            bottomNavItems.forEach { screen ->
-                                NavigationBarItem(
-                                    icon = { Icon(screen.icon!!, contentDescription = null) },
-                                    label = { Text(screen.title) },
-                                    selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                                    onClick = {
-                                        navController.navigate(screen.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
+                contentWindowInsets = WindowInsets(0, 0, 0, 0)
             ) { innerPadding ->
                 NavHost(
                     navController = navController,
@@ -224,14 +174,9 @@ fun App() {
                         HomeScreen(
                             onNavigateToCart = {
                                 navController.navigate(Screen.Cart.route)
-                            }
-                        )
-                    }
-                    
-                    composable(Screen.Scan.route) {
-                        com.argminres.app.presentation.scan.ScanScreen(
-                            onNavigateToCart = {
-                                navController.navigate(Screen.Cart.route)
+                            },
+                            onNavigateToSettings = {
+                                navController.navigate(Screen.Settings.route)
                             }
                         )
                     }

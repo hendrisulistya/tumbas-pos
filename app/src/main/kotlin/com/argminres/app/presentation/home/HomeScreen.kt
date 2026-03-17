@@ -31,7 +31,8 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
-    onNavigateToCart: () -> Unit
+    onNavigateToCart: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
@@ -44,6 +45,11 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = { Text("PadangPOS") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -65,7 +71,7 @@ fun HomeScreen(
                         }
                     },
                     text = { Text("View Cart") },
-                    modifier = Modifier.padding(bottom = 80.dp)
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
         }
@@ -112,7 +118,7 @@ fun HomeScreen(
                         start = 16.dp,
                         end = 16.dp,
                         top = 4.dp,
-                        bottom = 82.dp
+                        bottom = 16.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

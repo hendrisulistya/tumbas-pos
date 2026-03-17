@@ -59,7 +59,7 @@ fun LoginScreen(
                 
                 // Title
                 Text(
-                    text = "Tumbas POS",
+                    text = "Padang POS",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )

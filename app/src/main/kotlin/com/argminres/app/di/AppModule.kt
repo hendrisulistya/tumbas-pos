@@ -220,7 +220,6 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderViewModel(get(), get(), get(), get()) }
-    viewModel { com.argminres.app.presentation.scan.ScanViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.settings.printer.PrinterSettingsViewModel(get(), androidContext()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
     viewModel { com.argminres.app.presentation.employer.EmployerManagementViewModel(get(), get(), get()) }

@@ -8,9 +8,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-
+import androidx.compose.material.icons.filled.QrCodeScanner
+import com.argminres.app.presentation.scan.BarcodeScannerDialog
 import androidx.compose.ui.unit.dp
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.ui.text.input.TextFieldValue
 
 @Composable
 fun ActivationScreen(
@@ -19,7 +21,7 @@ fun ActivationScreen(
     onNavigateToRestore: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
+    var showScanner by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             onActivationSuccess()
@@ -83,7 +85,12 @@ fun ActivationScreen(
                         leadingIcon = { Icon(Icons.Default.Lock, null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        placeholder = { Text("XXXX-XXXX-XXXX-XXXX") }
+                        placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
+                        trailingIcon = {
+                            IconButton(onClick = { showScanner = true }) {
+                                Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR Code")
+                            }
+                        }
                     )
 
                     if (uiState.error != null) {
@@ -122,6 +129,16 @@ fun ActivationScreen(
                     }
                 }
             }
+        }
+
+        if (showScanner) {
+            BarcodeScannerDialog(
+                onBarcodeScanned = { code ->
+                    viewModel.onActivationCodeChange(TextFieldValue(code))
+                    showScanner = false
+                },
+                onDismiss = { showScanner = false }
+            )
         }
     }
 }
