@@ -8,6 +8,8 @@ import com.argminres.app.presentation.sales.CartItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -19,12 +21,14 @@ data class HomeUiState(
     val searchQuery: String = "",
     val cart: List<CartItem> = emptyList(),
     val cartItemCount: Int = 0,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val componentEntities: List<com.argminres.app.data.local.entity.DishComponentEntity> = emptyList()
 )
 
 class HomeViewModel(
     private val searchProductsUseCase: SearchDishesUseCase,
-    private val cartRepository: com.argminres.app.domain.repository.CartRepository
+    private val cartRepository: com.argminres.app.domain.repository.CartRepository,
+    private val dishComponentRepository: com.argminres.app.domain.repository.DishComponentRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -52,28 +56,63 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            searchProductsUseCase("").collect { allDishes ->
+            // Use explicit flow variables to help the compiler with type inference
+            val dishesFlow: kotlinx.coroutines.flow.Flow<List<DishWithCategory>> = searchProductsUseCase("")
+            val componentsFlow: kotlinx.coroutines.flow.Flow<List<com.argminres.app.data.local.entity.DishComponentEntity>> = 
+                dishComponentRepository.getAllComponentEntities()
+
+            dishesFlow.combine(componentsFlow) { allDishes, components ->
+                allDishes to components
+            }.collect { (allDishesFromFlow, componentsFromFlow) ->
                 val categoryOrder = listOf("Paket", "Makanan", "Minuman", "Lain-lain")
-                val categories = listOf("All") + allDishes
-                    .map { it.category?.name ?: "Uncategorized" }
+                val categories = listOf("All") + allDishesFromFlow
+                    .map { dwc: DishWithCategory -> dwc.category?.name ?: "Uncategorized" }
                     .distinct()
-                    .sortedWith(compareBy { name ->
+                    .sortedWith(compareBy<String> { name: String ->
                         val idx = categoryOrder.indexOf(name)
                         if (idx >= 0) idx else Int.MAX_VALUE
                     })
 
-                val filteredDishes = filterDishes(allDishes, _uiState.value.selectedCategory, _uiState.value.searchQuery)
+                val dishesWithVirtualStock = allDishesFromFlow.map { dwc: DishWithCategory ->
+                    val virtualStock = calculateVirtualStock(dwc, allDishesFromFlow, componentsFromFlow)
+                    dwc.copy(
+                        dish = dwc.dish.copy(stock = virtualStock)
+                    )
+                }
 
-                _uiState.update {
-                    it.copy(
-                        allDishes = allDishes,
+                val filteredDishes = filterDishes(dishesWithVirtualStock, _uiState.value.selectedCategory, _uiState.value.searchQuery)
+
+                _uiState.update { state ->
+                    state.copy(
+                        allDishes = dishesWithVirtualStock,
                         dishes = filteredDishes,
                         categories = categories,
+                        componentEntities = componentsFromFlow,
                         isLoading = false
                     )
                 }
             }
         }
+    }
+
+    private fun calculateVirtualStock(
+        dishWithCat: DishWithCategory,
+        allDishes: List<DishWithCategory>,
+        components: List<com.argminres.app.data.local.entity.DishComponentEntity>
+    ): Int {
+        val dishComponents = components.filter { it.packageDishId == dishWithCat.dish.id }
+        if (dishComponents.isEmpty()) return dishWithCat.dish.stock
+
+        // For packages, stock is the minimum stock of its components
+        var minStock = Int.MAX_VALUE
+        dishComponents.forEach { component ->
+            val compDish = allDishes.find { it.dish.id == component.componentDishId }
+            val compStock = compDish?.dish?.stock ?: 0
+            if (compStock < minStock) {
+                minStock = compStock
+            }
+        }
+        return if (minStock == Int.MAX_VALUE) 0 else minStock
     }
 
     private fun filterDishes(allDishes: List<DishWithCategory>, category: String, query: String): List<DishWithCategory> {

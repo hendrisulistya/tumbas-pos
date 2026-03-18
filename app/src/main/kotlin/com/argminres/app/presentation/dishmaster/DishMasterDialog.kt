@@ -14,15 +14,14 @@ import org.koin.compose.koinInject
 fun DishMasterDialog(
     dish: DishWithCategory?,
     onDismiss: () -> Unit,
-    onSave: (String, Long, Double, String) -> Unit
+    onSave: (String, String, Double) -> Unit
 ) {
     val dishRepository: com.argminres.app.domain.repository.DishRepository = koinInject()
     val categories by dishRepository.getAllCategories().collectAsState(initial = emptyList())
     
     var name by remember { mutableStateOf(dish?.dish?.name ?: "") }
-    var selectedCategoryId by remember { mutableStateOf(dish?.dish?.categoryId ?: (categories.firstOrNull()?.id ?: 1L)) }
+    var selectedCategory by remember { mutableStateOf(dish?.dish?.category ?: (categories.firstOrNull()?.name ?: "")) }
     var price by remember { mutableStateOf(dish?.dish?.price?.toString() ?: "0") }
-    var barcode by remember { mutableStateOf(dish?.dish?.barcode ?: "") }
     var expandedCategory by remember { mutableStateOf(false) }
     
     AlertDialog(
@@ -46,7 +45,7 @@ fun DishMasterDialog(
                     onExpandedChange = { expandedCategory = it }
                 ) {
                     OutlinedTextField(
-                        value = categories.find { it.id == selectedCategoryId }?.name ?: "Select Category",
+                        value = if (selectedCategory.isBlank()) "Select Category" else selectedCategory,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Category") },
@@ -63,7 +62,7 @@ fun DishMasterDialog(
                             DropdownMenuItem(
                                 text = { Text(category.name) },
                                 onClick = {
-                                    selectedCategoryId = category.id
+                                    selectedCategory = category.name
                                     expandedCategory = false
                                 }
                             )
@@ -79,15 +78,6 @@ fun DishMasterDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
-                OutlinedTextField(
-                    value = barcode,
-                    onValueChange = { barcode = it },
-                    label = { Text("Barcode") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    supportingText = { Text("Optional - for scanning") }
-                )
             }
         },
         confirmButton = {
@@ -95,12 +85,11 @@ fun DishMasterDialog(
                 onClick = {
                     onSave(
                         name,
-                        selectedCategoryId,
-                        price.toDoubleOrNull() ?: 0.0,
-                        barcode
+                        selectedCategory,
+                        price.toDoubleOrNull() ?: 0.0
                     )
                 },
-                enabled = name.isNotBlank()
+                enabled = name.isNotBlank() && selectedCategory.isNotBlank()
             ) {
                 Text("Save")
             }

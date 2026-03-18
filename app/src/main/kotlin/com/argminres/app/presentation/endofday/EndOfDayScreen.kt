@@ -288,11 +288,7 @@ fun EndOfDayCompleteScreen(
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
-                            Text(
-                                currencyFormatter.format(record.totalLoss),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.error
-                            )
+                            // totalLoss removed from simplified dish model
                         }
                     }
                 }

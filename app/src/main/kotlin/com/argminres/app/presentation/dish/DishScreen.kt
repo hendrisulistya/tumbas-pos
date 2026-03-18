@@ -1,6 +1,5 @@
 package com.argminres.app.presentation.dish
 
-import com.argminres.app.presentation.scan.BarcodeScannerDialog
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -61,7 +60,7 @@ fun ProductScreen(
                 label = { Text("Search Products") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Search, null) },
-                placeholder = { Text("Search by name, barcode, or category") }
+                placeholder = { Text("Search by name or category") }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -122,7 +121,7 @@ fun ProductItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(product.name, style = MaterialTheme.typography.titleMedium)
-                    Text(product.barcode, style = MaterialTheme.typography.bodySmall)
+                    Text("ID: ${product.id}", style = MaterialTheme.typography.bodySmall)
                     Text(
                         categoryName,
                         style = MaterialTheme.typography.bodySmall,
@@ -145,13 +144,8 @@ fun ProductItem(
             ) {
                 Column {
                     Text(
-                        "Sell: ${currencyFormatter.format(product.price)}",
+                        "Price: ${currencyFormatter.format(product.price)}",
                         style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        "Cost: ${currencyFormatter.format(product.costPrice)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 
@@ -179,10 +173,8 @@ fun ProductDialog(
 ) {
     val product = productWithCategory?.dish
     var name by remember { mutableStateOf(product?.name ?: "") }
-    var barcode by remember { mutableStateOf(product?.barcode ?: "") }
     var description by remember { mutableStateOf(product?.description ?: "") }
     var price by remember { mutableStateOf(product?.price?.toString() ?: "") }
-    var costPrice by remember { mutableStateOf(product?.costPrice?.toString() ?: "") }
     var selectedCategory by remember(productWithCategory) { 
         mutableStateOf(productWithCategory?.category) 
     }
@@ -195,7 +187,6 @@ fun ProductDialog(
     }
     
     var image by remember { mutableStateOf(product?.image) }
-    var showBarcodeScanner by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
     
     val uiState by viewModel.uiState.collectAsState()
@@ -226,15 +217,6 @@ fun ProductDialog(
         }
     }
 
-    if (showBarcodeScanner) {
-        BarcodeScannerDialog(
-            onBarcodeScanned = { scannedCode ->
-                barcode = scannedCode
-                showBarcodeScanner = false
-            },
-            onDismiss = { showBarcodeScanner = false }
-        )
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -294,29 +276,6 @@ fun ProductDialog(
                     }
                 }
                 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = barcode,
-                        onValueChange = { barcode = it },
-                        label = { Text("Barcode *") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    IconButton(
-                        onClick = { showBarcodeScanner = true },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.QrCodeScanner,
-                            contentDescription = "Scan Barcode",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
                 
                 OutlinedTextField(
                     value = name,
@@ -343,14 +302,6 @@ fun ProductDialog(
                     singleLine = true
                 )
                 
-                OutlinedTextField(
-                    value = costPrice,
-                    onValueChange = { costPrice = it },
-                    label = { Text("Cost Price *") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
                 
                 ExposedDropdownMenuBox(
                     expanded = categoryExpanded,
@@ -386,18 +337,16 @@ fun ProductDialog(
                 onClick = {
                     val newProduct = DishEntity(
                         id = product?.id ?: 0,
-                        barcode = barcode,
                         name = name,
                         description = description,
                         price = price.toDoubleOrNull() ?: 0.0,
-                        costPrice = costPrice.toDoubleOrNull() ?: 0.0,
                         stock = product?.stock ?: 0,
-                        categoryId = selectedCategory?.id ?: 0L,
+                        category = selectedCategory?.name ?: "",
                         image = image
                     )
                     onSave(newProduct)
                 },
-                enabled = name.isNotBlank() && barcode.isNotBlank() && price.isNotBlank() && costPrice.isNotBlank() && selectedCategory != null && !uiState.isUploadingImage
+                enabled = name.isNotBlank() && price.isNotBlank() && selectedCategory != null && !uiState.isUploadingImage
             ) {
                 Text("Save")
             }

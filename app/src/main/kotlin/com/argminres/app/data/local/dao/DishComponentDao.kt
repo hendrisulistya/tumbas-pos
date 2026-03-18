@@ -25,4 +25,7 @@ interface DishComponentDao {
     
     @Query("SELECT * FROM dish_components WHERE packageDishId = :packageId")
     fun getComponentEntities(packageId: Long): Flow<List<DishComponentEntity>>
+    
+    @Query("SELECT * FROM dish_components")
+    fun getAllComponentEntities(): Flow<List<DishComponentEntity>>
 }

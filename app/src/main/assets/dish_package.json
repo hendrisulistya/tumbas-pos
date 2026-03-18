@@ -1,0 +1,30 @@
+[
+  {
+    "package_id": 1025,
+    "package_name": "Paket Rendang",
+    "description": "Nasi putih + Rendang + Gulai Nangka + Sambal + Es Teh",
+    "price": 50000.0,
+    "components": [1011, 1001, 1009, 1016]
+  },
+  {
+    "package_id": 1026,
+    "package_name": "Paket Ayam Pop",
+    "description": "Nasi putih + Ayam Pop + Gulai Daun Singkong + Sambal + Es Teh",
+    "price": 45000.0,
+    "components": [1011, 1004, 1016]
+  },
+  {
+    "package_id": 1027,
+    "package_name": "Paket Ikan",
+    "description": "Nasi putih + Gulai Ikan + Terong Balado + Sambal + Es Teh",
+    "price": 48000.0,
+    "components": [1011, 1003, 1009, 1016]
+  },
+  {
+    "package_id": 1028,
+    "package_name": "Paket Hemat",
+    "description": "Nasi putih + Telur Balado + Gulai Nangka + Teh Tawar",
+    "price": 25000.0,
+    "components": [1011, 1018]
+  }
+]

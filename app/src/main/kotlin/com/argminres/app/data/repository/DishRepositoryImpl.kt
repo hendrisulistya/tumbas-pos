@@ -26,10 +26,6 @@ class DishRepositoryImpl(
         return productDao.getDishById(id)
     }
 
-    override suspend fun getDishByBarcode(barcode: String): DishWithCategory? {
-        return productDao.getDishByBarcode(barcode)
-    }
-
     override fun searchDishes(query: String): Flow<List<DishWithCategory>> {
         return productDao.searchDishes(query)
     }

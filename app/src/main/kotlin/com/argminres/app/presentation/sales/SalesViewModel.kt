@@ -6,7 +6,6 @@ import com.argminres.app.data.local.entity.DishEntity
 import com.argminres.app.data.local.entity.SalesOrderEntity
 import com.argminres.app.data.local.entity.SalesOrderItemEntity
 import com.argminres.app.domain.usecase.sales.CreateSalesOrderUseCase
-import com.argminres.app.domain.usecase.sales.GetProductByBarcodeUseCase
 import com.argminres.app.domain.usecase.sales.SearchDishesUseCase
 import com.argminres.app.domain.usecase.settings.GetStoreSettingsUseCase
 import com.argminres.app.data.local.entity.CustomerEntity
@@ -50,7 +49,6 @@ data class SalesUiState(
 
 class SalesViewModel(
     private val createSalesOrderUseCase: CreateSalesOrderUseCase,
-    private val getProductByBarcodeUseCase: GetProductByBarcodeUseCase,
     private val searchProductsUseCase: SearchDishesUseCase,
     private val getStoreSettingsUseCase: GetStoreSettingsUseCase,
     private val cartRepository: com.argminres.app.domain.repository.CartRepository,
@@ -118,16 +116,6 @@ class SalesViewModel(
         _uiState.update { it.copy(searchQuery = "", searchResults = emptyList()) }
     }
 
-    fun onBarcodeScanned(barcode: String) {
-        viewModelScope.launch {
-            val productWithCategory = getProductByBarcodeUseCase(barcode)
-            if (productWithCategory != null) {
-                addToCart(productWithCategory.dish)
-            } else {
-                _uiState.update { it.copy(error = "Product not found") }
-            }
-        }
-    }
 
     private fun addToCart(product: DishEntity) {
         cartRepository.addToCart(product, 1)

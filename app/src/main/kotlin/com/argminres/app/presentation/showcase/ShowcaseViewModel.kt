@@ -66,7 +66,7 @@ class ShowcaseViewModel(
         if (query.isBlank()) return products
         return products.filter {
             it.dish.name.contains(query, ignoreCase = true) ||
-            it.dish.barcode.contains(query, ignoreCase = true) ||
+            it.dish.id.toString().contains(query) ||
             (it.category?.name?.contains(query, ignoreCase = true) == true)
         }
     }

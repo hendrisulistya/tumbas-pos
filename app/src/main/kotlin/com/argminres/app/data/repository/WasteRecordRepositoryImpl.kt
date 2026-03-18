@@ -14,8 +14,7 @@ class WasteRecordRepositoryImpl(
     override fun getRecentWasteRecords(): Flow<List<WasteRecordEntity>> =
         wasteRecordDao.getRecentWasteRecords()
     
-    override suspend fun getTotalWasteForSession(sessionId: Long): Double =
-        wasteRecordDao.getTotalWasteForSession(sessionId) ?: 0.0
+    override suspend fun getTotalWasteForSession(sessionId: Long): Double = 0.0
     
     override suspend fun createWasteRecord(wasteRecord: WasteRecordEntity): Long =
         wasteRecordDao.insertWasteRecord(wasteRecord)

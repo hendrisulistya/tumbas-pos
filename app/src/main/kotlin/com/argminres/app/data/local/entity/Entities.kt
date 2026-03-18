@@ -36,8 +36,6 @@ data class WasteRecordEntity(
     val dishId: Long,
     val dishName: String, // Store name for historical record
     val quantity: Int,
-    val costPrice: Double, // Cost per dish
-    val totalLoss: Double, // quantity * costPrice
     val reason: String = "UNSOLD", // UNSOLD, DAMAGED, EXPIRED
     val recordedBy: Long?, // Employer ID
     val createdAt: Long = System.currentTimeMillis()
@@ -60,14 +58,12 @@ data class IngredientUsageEntity(
 @Entity(tableName = "dishes")
 @Serializable
 data class DishEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val barcode: String,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0, // Simple ID (1, 2, 3...)
     val name: String,
     val description: String,
     val price: Double,
-    val costPrice: Double,
     val stock: Int,
-    val categoryId: Long,
+    val category: String, // "Makanan", "Minuman", "Paket"
     val image: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()

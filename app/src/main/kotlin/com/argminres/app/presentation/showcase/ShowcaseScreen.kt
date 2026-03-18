@@ -122,7 +122,7 @@ fun ProductItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(product.name, style = MaterialTheme.typography.titleMedium)
-                    Text(product.barcode, style = MaterialTheme.typography.bodySmall)
+                    Text("ID: ${product.id}", style = MaterialTheme.typography.bodySmall)
                 }
                 Text(
                     "Stock: ${product.stock}",

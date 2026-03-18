@@ -99,9 +99,8 @@ class DishMasterViewModel(
 
     fun onSaveDish(
         name: String,
-        categoryId: Long,
-        price: Double,
-        barcode: String
+        category: String,
+        price: Double
     ) {
         viewModelScope.launch {
             try {
@@ -112,9 +111,8 @@ class DishMasterViewModel(
                     dishRepository.updateDish(
                         dish.copy(
                             name = name,
-                            categoryId = categoryId,
+                            category = category,
                             price = price,
-                            barcode = barcode,
                             updatedAt = System.currentTimeMillis()
                         )
                     )
@@ -124,11 +122,9 @@ class DishMasterViewModel(
                         DishEntity(
                             name = name,
                             description = "",
-                            categoryId = categoryId,
+                            category = category,
                             price = price,
-                            barcode = barcode,
-                            stock = 0,
-                            costPrice = 0.0
+                            stock = 0
                         )
                     )
                 }

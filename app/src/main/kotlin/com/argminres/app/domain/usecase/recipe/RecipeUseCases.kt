@@ -62,7 +62,7 @@ class ManageRecipeUseCase(
 }
 
 /**
- * Get all package dishes (category = Paket, categoryId = 4)
+ * Get all package dishes (category = Paket)
  */
 class GetPackageDishesUseCase(
     private val dishRepository: DishRepository

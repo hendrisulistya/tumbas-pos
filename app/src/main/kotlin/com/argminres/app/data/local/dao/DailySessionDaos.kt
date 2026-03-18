@@ -37,8 +37,6 @@ interface WasteRecordDao {
     @Query("SELECT * FROM waste_records ORDER BY createdAt DESC LIMIT 100")
     fun getRecentWasteRecords(): Flow<List<WasteRecordEntity>>
 
-    @Query("SELECT SUM(totalLoss) FROM waste_records WHERE sessionId = :sessionId")
-    suspend fun getTotalWasteForSession(sessionId: Long): Double?
 
     @Insert
     suspend fun insertWasteRecord(wasteRecord: WasteRecordEntity): Long

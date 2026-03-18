@@ -36,7 +36,7 @@ class EndOfDayUseCase(
         val unsoldDishes = allDishes.filter { it.dish.stock > 0 }
         
         // Calculate totals
-        val totalWasteLoss = unsoldDishes.sumOf { it.dish.stock * it.dish.costPrice }
+        val totalWasteLoss = 0.0 // No longer calculating loss based on dish costPrice
         
         // Get total sales for the session
         // Note: This would need to be implemented based on your sales tracking
@@ -52,8 +52,6 @@ class EndOfDayUseCase(
                 dishId = dishWithCategory.dish.id,
                 dishName = dishWithCategory.dish.name,
                 quantity = dishWithCategory.dish.stock,
-                costPrice = dishWithCategory.dish.costPrice,
-                totalLoss = dishWithCategory.dish.stock * dishWithCategory.dish.costPrice,
                 reason = "UNSOLD",
                 recordedBy = recordedBy
             )

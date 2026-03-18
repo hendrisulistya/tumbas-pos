@@ -25,6 +25,10 @@ class DishComponentRepositoryImpl(
         return dishComponentDao.getComponentEntities(packageId)
     }
     
+    override fun getAllComponentEntities(): Flow<List<DishComponentEntity>> {
+        return dishComponentDao.getAllComponentEntities()
+    }
+    
     override suspend fun addComponent(packageId: Long, componentId: Long) {
         val component = DishComponentEntity(
             packageDishId = packageId,

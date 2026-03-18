@@ -172,12 +172,12 @@ fun DishMasterCard(
             ) {
                 Column {
                     Text(
-                        "Barcode",
+                        "ID",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        dish.barcode,
+                        dish.id.toString(),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )

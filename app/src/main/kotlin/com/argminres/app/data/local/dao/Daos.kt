@@ -19,11 +19,7 @@ interface DishDao {
     suspend fun getDishById(id: Long): DishWithCategory?
 
     @Transaction
-    @Query("SELECT * FROM dishes WHERE barcode = :barcode")
-    suspend fun getDishByBarcode(barcode: String): DishWithCategory?
-
-    @Transaction
-    @Query("SELECT * FROM dishes WHERE name LIKE '%' || :query || '%' OR barcode LIKE '%' || :query || '%'")
+    @Query("SELECT * FROM dishes WHERE name LIKE '%' || :query || '%' OR CAST(id AS TEXT) LIKE '%' || :query || '%'")
     fun searchDishes(query: String): Flow<List<DishWithCategory>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -45,8 +41,8 @@ interface DishDao {
 data class DishWithCategory(
     @Embedded val dish: DishEntity,
     @Relation(
-        parentColumn = "categoryId",
-        entityColumn = "id"
+        parentColumn = "category",
+        entityColumn = "name"
     )
     val category: CategoryEntity?
 )

@@ -35,8 +35,8 @@ class DatabaseInitializer(
         // Managers then add selected dishes to daily Etalase with stock
         insertProductsFromCsv()
         
-        // Insert dish components (package recipes) from CSV
-        insertDishComponentsFromCsv()
+        // Insert dish packages (package recipes) from JSON
+        insertDishPackagesFromJson()
         
         // Insert ingredient categories from CSV
         insertIngredientCategoriesFromCsv()
@@ -212,19 +212,18 @@ class DatabaseInitializer(
                 reader.readLine() // Skip header
                 reader.forEachLine { line ->
                     val tokens = parseCsvLine(line)
-                    // New format: barcode, name, description, price, costPrice, categoryId, image
-                    // Stock is always 0 for master data (set manually in Etalase)
-                    if (tokens.size >= 6) {
+                    // New simplified format: id, name, description, price, category, image
+                    // Stock is always 0 for master data
+                    if (tokens.size >= 5) {
                         products.add(
                             DishEntity(
-                                barcode = tokens[0],
+                                id = tokens[0].toLongOrNull() ?: 0L,
                                 name = tokens[1],
                                 description = tokens[2],
                                 price = tokens[3].toDoubleOrNull() ?: 0.0,
-                                costPrice = tokens[4].toDoubleOrNull() ?: 0.0,
-                                stock = 0, // Always 0 for master data
-                                categoryId = tokens[5].toLongOrNull() ?: 0L,
-                                image = if (tokens.size > 6 && tokens[6].isNotBlank()) tokens[6] else null
+                                stock = 0,
+                                category = tokens[4],
+                                image = if (tokens.size > 5 && tokens[5].isNotBlank()) tokens[5] else null
                             )
                         )
                     }
@@ -311,30 +310,51 @@ class DatabaseInitializer(
         }
     }
     
-    private suspend fun insertDishComponentsFromCsv() {
+    private suspend fun insertDishPackagesFromJson() {
         try {
             val components = mutableListOf<com.argminres.app.data.local.entity.DishComponentEntity>()
+            val packages = mutableListOf<DishEntity>()
             
-            context.assets.open("dish_components.csv").bufferedReader().use { reader ->
-                reader.readLine() // Skip header
-                reader.forEachLine { line ->
-                    if (line.isNotBlank()) {
-                        val parts = line.split(",")
-                        if (parts.size >= 2) {
-                            components.add(
-                                com.argminres.app.data.local.entity.DishComponentEntity(
-                                    packageDishId = parts[0].toLongOrNull() ?: 0,
-                                    componentDishId = parts[1].toLongOrNull() ?: 0,
-                                    quantity = 1
-                                )
-                            )
-                        }
-                    }
+            val jsonString = context.assets.open("dish_package.json").bufferedReader().use { it.readText() }
+            val jsonArray = org.json.JSONArray(jsonString)
+            
+            for (i in 0 until jsonArray.length()) {
+                val packageObj = jsonArray.getJSONObject(i)
+                val packageId = packageObj.getLong("package_id")
+                val packageName = packageObj.getString("package_name")
+                val description = packageObj.getString("description")
+                val price = packageObj.getDouble("price")
+                val componentsArray = packageObj.getJSONArray("components")
+                
+                packages.add(
+                    DishEntity(
+                        id = packageId,
+                        name = packageName,
+                        description = description,
+                        price = price,
+                        stock = 0,
+                        category = "Paket",
+                        image = null
+                    )
+                )
+                
+                for (j in 0 until componentsArray.length()) {
+                    val componentId = componentsArray.getLong(j)
+                    components.add(
+                        com.argminres.app.data.local.entity.DishComponentEntity(
+                            packageDishId = packageId,
+                            componentDishId = componentId,
+                            quantity = 1
+                        )
+                    )
                 }
+            }
+            if (packages.isNotEmpty()) {
+                productDao.insertAll(packages)
             }
             components.forEach { dishComponentDao.insertComponent(it) }
         } catch (e: Exception) {
-            android.util.Log.e("DatabaseInitializer", "Error inserting dish components", e)
+            android.util.Log.e("DatabaseInitializer", "Error inserting dish packages", e)
         }
     }
 }
