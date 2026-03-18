@@ -26,7 +26,8 @@ data class EndOfDayUiState(
     val isProcessing: Boolean = false,
     val isComplete: Boolean = false,
     val error: String? = null,
-    val hasActiveSession: Boolean = false
+    val hasActiveSession: Boolean = false,
+    val isManager: Boolean = false
 )
 
 class EndOfDayViewModel(
@@ -41,8 +42,14 @@ class EndOfDayViewModel(
     val uiState: StateFlow<EndOfDayUiState> = _uiState.asStateFlow()
 
     init {
+        checkManagerRole()
         checkActiveSession()
         loadIngredients()
+    }
+
+    private fun checkManagerRole() {
+        val currentEmployer = authManager.getCurrentEmployer()
+        _uiState.update { it.copy(isManager = currentEmployer?.role == "MANAGER") }
     }
     
     private fun loadIngredients() {

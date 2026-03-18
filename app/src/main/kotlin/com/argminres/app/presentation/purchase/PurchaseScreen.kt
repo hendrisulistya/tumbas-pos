@@ -49,11 +49,17 @@ fun PurchaseScreen(
             }
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .widthIn(max = 800.dp)
+            ) {
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
@@ -80,6 +86,7 @@ fun PurchaseScreen(
             }
         }
     }
+}
 
     if (uiState.isCreateOrderDialogOpen) {
         CreateOrderDialog(

@@ -70,10 +70,19 @@ fun ReportingScreen(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
-            when (uiState.selectedTab) {
-                0 -> DashboardContent(uiState, currencyFormatter)
-                1 -> SalesReportContent(uiState.salesSummary, currencyFormatter)
-                2 -> DailySessionsContent(uiState.unclosedSessions, onNavigateToEndOfDay)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Box(modifier = Modifier.widthIn(max = 800.dp)) {
+                    when (uiState.selectedTab) {
+                        0 -> DashboardContent(uiState, currencyFormatter)
+                        1 -> SalesReportContent(uiState.salesSummary, currencyFormatter)
+                        2 -> DailySessionsContent(uiState.unclosedSessions, onNavigateToEndOfDay)
+                    }
+                }
             }
         }
     }

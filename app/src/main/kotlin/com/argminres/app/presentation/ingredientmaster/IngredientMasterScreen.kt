@@ -44,12 +44,18 @@ fun IngredientMasterScreen(
             }
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
+                .padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .widthIn(max = 800.dp)
+                    .padding(16.dp)
+            ) {
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
@@ -107,6 +113,7 @@ fun IngredientMasterScreen(
             }
         }
     }
+}
 
     if (uiState.showAddEditDialog) {
         IngredientMasterDialog(

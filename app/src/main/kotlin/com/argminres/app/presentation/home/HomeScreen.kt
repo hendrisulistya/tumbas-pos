@@ -136,9 +136,9 @@ fun HomeScreen(
                         modifier = Modifier
                             .weight(0.80f)
                             .fillMaxHeight(),
-                        contentPadding = PaddingValues(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         gridItems(
                             items = uiState.dishes,
@@ -214,20 +214,21 @@ private fun CategoryItem(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(backgroundColor)
-            .padding(vertical = 10.dp, horizontal = 4.dp),
+            .padding(vertical = 14.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = category,
             tint = contentColor,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(36.dp)
         )
         Text(
             text = category,
-            style = MaterialTheme.typography.labelSmall,
-            fontSize = 10.sp,
+            style = MaterialTheme.typography.bodySmall,
+            fontSize = 13.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = contentColor,
             textAlign = TextAlign.Center,
             maxLines = 2,
@@ -236,9 +237,9 @@ private fun CategoryItem(
         if (isSelected) {
             Box(
                 modifier = Modifier
-                    .width(20.dp)
-                    .height(2.dp)
-                    .clip(RoundedCornerShape(1.dp))
+                    .width(32.dp)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
                     .background(MaterialTheme.colorScheme.primary)
             )
         }
@@ -258,10 +259,14 @@ fun ProductGridItem(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
             // Product Image
             Box(
                 modifier = Modifier

@@ -48,11 +48,17 @@ fun EmployerManagementScreen(
             }
         }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .widthIn(max = 800.dp)
+            ) {
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -77,6 +83,7 @@ fun EmployerManagementScreen(
             }
         }
     }
+}
     
     // Add/Edit Dialog
     if (uiState.isDialogOpen) {
