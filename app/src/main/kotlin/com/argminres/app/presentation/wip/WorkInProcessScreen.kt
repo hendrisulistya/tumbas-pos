@@ -26,6 +26,7 @@ fun WorkInProcessScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val dateFormatter = remember { SimpleDateFormat("EEEE, dd MMM yyyy", Locale("id", "ID")) }
+    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale("id", "ID")) }
 
     Scaffold(
         topBar = {
@@ -118,6 +119,7 @@ fun WorkInProcessScreen(
                                 SessionCard(
                                     session = session,
                                     dateFormatter = dateFormatter,
+                                    timeFormatter = timeFormatter,
                                     onCloseClick = onNavigateToEndOfDay
                                 )
                             }
@@ -133,6 +135,7 @@ fun WorkInProcessScreen(
 fun SessionCard(
     session: com.argminres.app.data.local.entity.DailySessionEntity,
     dateFormatter: SimpleDateFormat,
+    timeFormatter: SimpleDateFormat,
     onCloseClick: () -> Unit
 ) {
     Card(
@@ -148,7 +151,7 @@ fun SessionCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        dateFormatter.format(Date(session.sessionDate)),
+                        "${dateFormatter.format(Date(session.timestampStart))} (${timeFormatter.format(Date(session.timestampStart))})",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

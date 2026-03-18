@@ -9,7 +9,6 @@ import com.argminres.app.domain.repository.IngredientWasteRecordRepository
 import com.argminres.app.domain.repository.DishRepository
 import com.argminres.app.domain.repository.SalesOrderRepository
 import kotlinx.coroutines.flow.first
-import java.util.Calendar
 
 /**
  * Use case to handle end-of-day process
@@ -87,8 +86,9 @@ class EndOfDayUseCase(
             }
         }
         
-        // Get total sales for the session
-        val totalSales = reportingRepository.getTotalRevenue(activeSession.sessionDate, System.currentTimeMillis() + 86400000).first() ?: 0.0
+        // Get total sales for the session (between session start and now)
+        val closedAt = System.currentTimeMillis()
+        val totalSales = reportingRepository.getTotalRevenue(activeSession.timestampStart, closedAt).first() ?: 0.0
         
         // Calculate profit 
         val totalProfit = totalSales - totalIngredientCost
@@ -124,7 +124,7 @@ class EndOfDayUseCase(
         // Close the session
         dailySessionRepository.closeSession(
             sessionId = activeSession.id,
-            closedAt = System.currentTimeMillis(),
+            closedAt = closedAt,
             totalSales = totalSales,
             totalDishWasteValue = totalDishWasteValue,
             totalIngredientCost = totalIngredientCost,
@@ -179,15 +179,9 @@ class StartDailySessionUseCase(
             return activeSession.id
         }
         
-        // Create new session for today
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        
+        // Create new session starting now
         val newSession = DailySessionEntity(
-            sessionDate = calendar.timeInMillis,
+            timestampStart = System.currentTimeMillis(),
             startedBy = startedBy,
             status = "ACTIVE"
         )
@@ -205,15 +199,12 @@ class CheckAutoDailyCloseUseCase(
     suspend operator fun invoke(): Boolean {
         val activeSession = dailySessionRepository.getActiveSession() ?: return false
         
-        val now = Calendar.getInstance()
-        val sessionDate = Calendar.getInstance().apply {
-            timeInMillis = activeSession.sessionDate
-        }
+        val sessionStartTime = activeSession.timestampStart
+        val now = System.currentTimeMillis()
+        val twentyFourHoursInMillis = 24 * 60 * 60 * 1000L
         
-        // Check if it's 23:59 or later and still the same day
-        return now.get(Calendar.HOUR_OF_DAY) == 23 && 
-               now.get(Calendar.MINUTE) >= 59 &&
-               now.get(Calendar.DAY_OF_YEAR) == sessionDate.get(Calendar.DAY_OF_YEAR)
+        // Auto-close if session has been active for more than 24 hours
+        return (now - sessionStartTime) >= twentyFourHoursInMillis
     }
 }
 

@@ -229,6 +229,7 @@ fun DailySessionsContent(
     onNavigateToEndOfDay: () -> Unit
 ) {
     val dateFormatter = remember { SimpleDateFormat("EEEE, dd MMM yyyy", Locale("id", "ID")) }
+    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale("id", "ID")) }
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
     
     LazyColumn(
@@ -290,7 +291,7 @@ fun DailySessionsContent(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                dateFormatter.format(Date(session.sessionDate)),
+                                "${dateFormatter.format(Date(session.timestampStart))} (${timeFormatter.format(Date(session.timestampStart))})",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )

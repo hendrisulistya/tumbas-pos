@@ -19,7 +19,7 @@ data class EmployerEntity(
 @Entity(tableName = "daily_sessions")
 data class DailySessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val sessionDate: Long, // Start of day timestamp
+    val timestampStart: Long, // Actual session start time
     val startedBy: Long?, // Employer ID who started session
     val status: String, // ACTIVE, PENDING_CLOSE, CLOSED
     val totalSales: Double = 0.0,
@@ -28,7 +28,7 @@ data class DailySessionEntity(
     val totalIngredientWasteValue: Double = 0.0,
     val totalProfit: Double = 0.0,
     val createdAt: Long = System.currentTimeMillis(),
-    val closedAt: Long? = null
+    val timestampEnd: Long? = null
 )
 
 @Entity(tableName = "waste_records")

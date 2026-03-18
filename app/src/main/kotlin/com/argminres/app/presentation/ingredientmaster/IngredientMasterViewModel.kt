@@ -22,7 +22,9 @@ data class IngredientMasterUiState(
 )
 
 class IngredientMasterViewModel(
-    private val ingredientRepository: IngredientRepository
+    private val ingredientRepository: IngredientRepository,
+    private val ingredientHistoryRepository: com.argminres.app.domain.repository.IngredientHistoryRepository,
+    private val dailySessionRepository: com.argminres.app.domain.repository.DailySessionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(IngredientMasterUiState())
@@ -113,6 +115,24 @@ class IngredientMasterViewModel(
                 val ingredient = _uiState.value.selectedIngredient
                 if (ingredient != null) {
                     ingredientRepository.updateStock(ingredient.id, quantity)
+                    
+                    // Record in history
+                    val activeSession = dailySessionRepository.getActiveSession()
+                    val sessionId = activeSession?.id ?: 0L
+                    val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                    
+                    ingredientHistoryRepository.insertHistory(
+                        com.argminres.app.data.local.entity.IngredientHistoryEntity(
+                            sessionId = sessionId,
+                            ingredientId = ingredient.id,
+                            ingredientName = ingredient.name,
+                            stockAdded = quantity,
+                            unit = ingredient.unit,
+                            sessionDate = today,
+                            action = if (quantity > 0) "ADDED_STOCKED" else "REMOVED_STOCKED"
+                        )
+                    )
+                    
                     onDialogDismiss()
                 }
             } catch (e: Exception) {

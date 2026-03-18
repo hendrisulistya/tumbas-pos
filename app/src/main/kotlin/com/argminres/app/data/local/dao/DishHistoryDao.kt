@@ -11,6 +11,9 @@ interface DishHistoryDao {
     @Query("SELECT * FROM dish_history WHERE sessionDate = :date ORDER BY timestamp DESC")
     fun getHistoryForSession(date: String): Flow<List<DishHistoryEntity>>
     
+    @Query("SELECT * FROM dish_history WHERE sessionId = :sessionId ORDER BY timestamp DESC")
+    fun getHistoryForSessionId(sessionId: Long): Flow<List<DishHistoryEntity>>
+    
     @Query("SELECT * FROM dish_history WHERE dishId = :dishId ORDER BY timestamp DESC")
     fun getHistoryForDish(dishId: Long): Flow<List<DishHistoryEntity>>
     

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DailySessionDao {
-    @Query("SELECT * FROM daily_sessions ORDER BY sessionDate DESC")
+    @Query("SELECT * FROM daily_sessions ORDER BY timestampStart DESC")
     fun getAllSessions(): Flow<List<DailySessionEntity>>
 
     @Query("SELECT * FROM daily_sessions WHERE status = 'ACTIVE' LIMIT 1")
@@ -16,7 +16,7 @@ interface DailySessionDao {
     @Query("SELECT * FROM daily_sessions WHERE id = :id")
     suspend fun getSessionById(id: Long): DailySessionEntity?
 
-    @Query("SELECT * FROM daily_sessions WHERE sessionDate >= :startDate AND sessionDate <= :endDate ORDER BY sessionDate DESC")
+    @Query("SELECT * FROM daily_sessions WHERE timestampStart >= :startDate AND timestampStart <= :endDate ORDER BY timestampStart DESC")
     fun getSessionsByDateRange(startDate: Long, endDate: Long): Flow<List<DailySessionEntity>>
 
     @Insert
@@ -25,7 +25,7 @@ interface DailySessionDao {
     @Update
     suspend fun updateSession(session: DailySessionEntity)
 
-    @Query("UPDATE daily_sessions SET status = 'CLOSED', closedAt = :closedAt, totalSales = :totalSales, totalDishWasteValue = :totalDishWasteValue, totalIngredientCost = :totalIngredientCost, totalIngredientWasteValue = :totalIngredientWasteValue, totalProfit = :totalProfit WHERE id = :sessionId")
+    @Query("UPDATE daily_sessions SET status = 'CLOSED', timestampEnd = :closedAt, totalSales = :totalSales, totalDishWasteValue = :totalDishWasteValue, totalIngredientCost = :totalIngredientCost, totalIngredientWasteValue = :totalIngredientWasteValue, totalProfit = :totalProfit WHERE id = :sessionId")
     suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalDishWasteValue: Double, totalIngredientCost: Double, totalIngredientWasteValue: Double, totalProfit: Double)
 }
 

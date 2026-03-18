@@ -27,7 +27,8 @@ class ShowcaseViewModel(
     private val getInventoryUseCase: GetShowcaseInventoryUseCase,
     private val adjustStockUseCase: AdjustShowcaseStockUseCase,
     private val manageDishUseCase: ManageShowcaseDishUseCase,
-    private val dishHistoryRepository: com.argminres.app.domain.repository.DishHistoryRepository
+    private val dishHistoryRepository: com.argminres.app.domain.repository.DishHistoryRepository,
+    private val dailySessionRepository: com.argminres.app.domain.repository.DailySessionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ShowcaseUiState())
@@ -112,6 +113,9 @@ class ShowcaseViewModel(
     fun onConfirmAddDish(dishId: Long, initialStock: Int) {
         viewModelScope.launch {
             try {
+                val activeSession = dailySessionRepository.getActiveSession()
+                val sessionId = activeSession?.id ?: 0L
+                
                 // Add stock to dish
                 adjustStockUseCase(
                     dishId = dishId,
@@ -126,6 +130,7 @@ class ShowcaseViewModel(
                     val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
                     dishHistoryRepository.insertHistory(
                         com.argminres.app.data.local.entity.DishHistoryEntity(
+                            sessionId = sessionId,
                             dishId = dishId,
                             dishName = dish.dish.name,
                             stockAdded = initialStock,

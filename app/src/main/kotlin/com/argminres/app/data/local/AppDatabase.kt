@@ -29,7 +29,7 @@ import com.argminres.app.data.local.entity.*
         DishHistoryEntity::class,
         IngredientHistoryEntity::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

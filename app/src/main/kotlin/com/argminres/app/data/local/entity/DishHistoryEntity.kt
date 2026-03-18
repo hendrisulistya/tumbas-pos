@@ -15,11 +15,12 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("dishId"), Index("sessionDate")]
+    indices = [Index("dishId"), Index("sessionId"), Index("sessionDate")]
 )
 data class DishHistoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val sessionId: Long,
     val dishId: Long,
     val dishName: String,
     val stockAdded: Int,

@@ -15,11 +15,12 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("ingredientId"), Index("sessionDate")]
+    indices = [Index("ingredientId"), Index("sessionId"), Index("sessionDate")]
 )
 data class IngredientHistoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val sessionId: Long,
     val ingredientId: Long,
     val ingredientName: String,
     val stockAdded: Double,

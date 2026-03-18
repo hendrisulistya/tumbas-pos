@@ -22,7 +22,8 @@ data class IngredientManagementUiState(
 
 class IngredientManagementViewModel(
     private val ingredientRepository: IngredientRepository,
-    private val ingredientHistoryRepository: com.argminres.app.domain.repository.IngredientHistoryRepository
+    private val ingredientHistoryRepository: com.argminres.app.domain.repository.IngredientHistoryRepository,
+    private val dailySessionRepository: com.argminres.app.domain.repository.DailySessionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(IngredientManagementUiState())
@@ -135,9 +136,13 @@ class IngredientManagementViewModel(
                 
                 // Record in history (only for new additions with stock > 0)
                 if (stock > 0) {
+                    val activeSession = dailySessionRepository.getActiveSession()
+                    val sessionId = activeSession?.id ?: 0L
                     val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                    
                     ingredientHistoryRepository.insertHistory(
                         com.argminres.app.data.local.entity.IngredientHistoryEntity(
+                            sessionId = sessionId,
                             ingredientId = ingredient?.id ?: 0,
                             ingredientName = name,
                             stockAdded = stock,
