@@ -23,7 +23,9 @@ data class DailySessionEntity(
     val startedBy: Long?, // Employer ID who started session
     val status: String, // ACTIVE, PENDING_CLOSE, CLOSED
     val totalSales: Double = 0.0,
-    val totalWaste: Double = 0.0,
+    val totalIngredientCost: Double = 0.0,
+    val totalDishWasteValue: Double = 0.0,
+    val totalIngredientWasteValue: Double = 0.0,
     val totalProfit: Double = 0.0,
     val createdAt: Long = System.currentTimeMillis(),
     val closedAt: Long? = null
@@ -38,6 +40,19 @@ data class WasteRecordEntity(
     val quantity: Int,
     val reason: String = "UNSOLD", // UNSOLD, DAMAGED, EXPIRED
     val recordedBy: Long?, // Employer ID
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "ingredient_waste_records")
+data class IngredientWasteRecordEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val ingredientId: Long,
+    val ingredientName: String,
+    val quantity: Double,
+    val costValue: Double,
+    val reason: String = "SPOILED",
+    val recordedBy: Long?,
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -184,7 +199,6 @@ data class CategoryEntity(
 data class IngredientEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val categoryId: Long,
     val unit: String, // kg, liter, pcs, etc.
     val stock: Double = 0.0,
     val minimumStock: Double = 0.0,
@@ -193,14 +207,6 @@ data class IngredientEntity(
     val updatedAt: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "ingredient_categories")
-@Serializable
-data class IngredientCategoryEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val name: String,
-    val description: String = "",
-    val createdAt: Long = System.currentTimeMillis()
-)
 
 @Entity(tableName = "store_settings")
 @Serializable

@@ -2,7 +2,6 @@ package com.argminres.app.presentation.ingredient
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.argminres.app.data.local.dao.IngredientWithCategory
 import com.argminres.app.data.local.entity.IngredientEntity
 import com.argminres.app.domain.repository.IngredientRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,12 +11,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class IngredientManagementUiState(
-    val ingredients: List<IngredientWithCategory> = emptyList(),
-    val filteredIngredients: List<IngredientWithCategory> = emptyList(),
+    val ingredients: List<IngredientEntity> = emptyList(),
+    val filteredIngredients: List<IngredientEntity> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val showAddEditDialog: Boolean = false,
-    val selectedIngredient: IngredientWithCategory? = null,
+    val selectedIngredient: IngredientEntity? = null,
     val error: String? = null
 )
 
@@ -42,7 +41,7 @@ class IngredientManagementViewModel(
                     ingredients
                 } else {
                     ingredients.filter { 
-                        it.ingredient.name.contains(_uiState.value.searchQuery, ignoreCase = true)
+                        it.name.contains(_uiState.value.searchQuery, ignoreCase = true)
                     }
                 }
                 
@@ -64,7 +63,7 @@ class IngredientManagementViewModel(
             _uiState.value.ingredients
         } else {
             _uiState.value.ingredients.filter { 
-                it.ingredient.name.contains(query, ignoreCase = true)
+                it.name.contains(query, ignoreCase = true)
             }
         }
         
@@ -80,7 +79,7 @@ class IngredientManagementViewModel(
         }
     }
 
-    fun onEditIngredientClick(ingredient: IngredientWithCategory) {
+    fun onEditIngredientClick(ingredient: IngredientEntity) {
         _uiState.update {
             it.copy(
                 showAddEditDialog = true,
@@ -100,7 +99,6 @@ class IngredientManagementViewModel(
 
     fun onSaveIngredient(
         name: String,
-        categoryId: Long,
         unit: String,
         stock: Double,
         minimumStock: Double,
@@ -108,14 +106,13 @@ class IngredientManagementViewModel(
     ) {
         viewModelScope.launch {
             try {
-                val ingredient = _uiState.value.selectedIngredient?.ingredient
+                val ingredient = _uiState.value.selectedIngredient
                 
                 if (ingredient != null) {
                     // Update existing
                     ingredientRepository.updateIngredient(
                         ingredient.copy(
                             name = name,
-                            categoryId = categoryId,
                             unit = unit,
                             stock = stock,
                             minimumStock = minimumStock,
@@ -128,7 +125,6 @@ class IngredientManagementViewModel(
                     ingredientRepository.insertIngredient(
                         IngredientEntity(
                             name = name,
-                            categoryId = categoryId,
                             unit = unit,
                             stock = stock,
                             minimumStock = minimumStock,
@@ -161,7 +157,7 @@ class IngredientManagementViewModel(
     fun onDeleteIngredient(ingredientId: Long) {
         viewModelScope.launch {
             try {
-                val ingredient = _uiState.value.ingredients.find { it.ingredient.id == ingredientId }?.ingredient
+                val ingredient = _uiState.value.ingredients.find { it.id == ingredientId }
                 if (ingredient != null) {
                     ingredientRepository.deleteIngredient(ingredient)
                 }

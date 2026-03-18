@@ -2,7 +2,6 @@ package com.argminres.app.presentation.ingredientmaster
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.argminres.app.data.local.dao.IngredientWithCategory
 import com.argminres.app.data.local.entity.IngredientEntity
 import com.argminres.app.domain.repository.IngredientRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,12 +11,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class IngredientMasterUiState(
-    val ingredients: List<IngredientWithCategory> = emptyList(),
-    val filteredIngredients: List<IngredientWithCategory> = emptyList(),
+    val ingredients: List<IngredientEntity> = emptyList(),
+    val filteredIngredients: List<IngredientEntity> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val showAddEditDialog: Boolean = false,
-    val selectedIngredient: IngredientWithCategory? = null,
+    val showStockAdjustmentDialog: Boolean = false,
+    val selectedIngredient: IngredientEntity? = null,
     val error: String? = null
 )
 
@@ -41,7 +41,7 @@ class IngredientMasterViewModel(
                     ingredients
                 } else {
                     ingredients.filter { 
-                        it.ingredient.name.contains(_uiState.value.searchQuery, ignoreCase = true)
+                        it.name.contains(_uiState.value.searchQuery, ignoreCase = true)
                     }
                 }
                 
@@ -63,7 +63,7 @@ class IngredientMasterViewModel(
             _uiState.value.ingredients
         } else {
             _uiState.value.ingredients.filter { 
-                it.ingredient.name.contains(query, ignoreCase = true)
+                it.name.contains(query, ignoreCase = true)
             }
         }
         
@@ -79,7 +79,7 @@ class IngredientMasterViewModel(
         }
     }
 
-    fun onEditIngredientClick(ingredient: IngredientWithCategory) {
+    fun onEditIngredientClick(ingredient: IngredientEntity) {
         _uiState.update {
             it.copy(
                 showAddEditDialog = true,
@@ -92,27 +92,49 @@ class IngredientMasterViewModel(
         _uiState.update {
             it.copy(
                 showAddEditDialog = false,
+                showStockAdjustmentDialog = false,
                 selectedIngredient = null
             )
         }
     }
 
+    fun onAdjustStockClick(ingredient: IngredientEntity) {
+        _uiState.update {
+            it.copy(
+                showStockAdjustmentDialog = true,
+                selectedIngredient = ingredient
+            )
+        }
+    }
+
+    fun onConfirmStockAdjustment(quantity: Double) {
+        viewModelScope.launch {
+            try {
+                val ingredient = _uiState.value.selectedIngredient
+                if (ingredient != null) {
+                    ingredientRepository.updateStock(ingredient.id, quantity)
+                    onDialogDismiss()
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
+
     fun onSaveIngredient(
         name: String,
-        categoryId: Long,
         unit: String,
         costPerUnit: Double
     ) {
         viewModelScope.launch {
             try {
-                val ingredient = _uiState.value.selectedIngredient?.ingredient
+                val ingredient = _uiState.value.selectedIngredient
                 
                 if (ingredient != null) {
                     // Update existing
                     ingredientRepository.updateIngredient(
                         ingredient.copy(
                             name = name,
-                            categoryId = categoryId,
                             unit = unit,
                             costPerUnit = costPerUnit,
                             updatedAt = System.currentTimeMillis()
@@ -123,7 +145,6 @@ class IngredientMasterViewModel(
                     ingredientRepository.insertIngredient(
                         IngredientEntity(
                             name = name,
-                            categoryId = categoryId,
                             unit = unit,
                             stock = 0.0,
                             minimumStock = 0.0,
@@ -142,7 +163,7 @@ class IngredientMasterViewModel(
     fun onDeleteIngredient(ingredientId: Long) {
         viewModelScope.launch {
             try {
-                val ingredient = _uiState.value.ingredients.find { it.ingredient.id == ingredientId }?.ingredient
+                val ingredient = _uiState.value.ingredients.find { it.id == ingredientId }
                 if (ingredient != null) {
                     ingredientRepository.deleteIngredient(ingredient)
                 }

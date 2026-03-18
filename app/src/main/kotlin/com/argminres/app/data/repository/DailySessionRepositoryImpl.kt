@@ -21,6 +21,6 @@ class DailySessionRepositoryImpl(
     
     override suspend fun updateSession(session: DailySessionEntity) = dailySessionDao.updateSession(session)
     
-    override suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalWaste: Double, totalProfit: Double) =
-        dailySessionDao.closeSession(sessionId, closedAt, totalSales, totalWaste, totalProfit)
+    override suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalDishWasteValue: Double, totalIngredientCost: Double, totalIngredientWasteValue: Double, totalProfit: Double) =
+        dailySessionDao.closeSession(sessionId, closedAt, totalSales, totalDishWasteValue, totalIngredientCost, totalIngredientWasteValue, totalProfit)
 }

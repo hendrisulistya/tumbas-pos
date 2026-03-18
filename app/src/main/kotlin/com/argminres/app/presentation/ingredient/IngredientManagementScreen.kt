@@ -91,11 +91,11 @@ fun IngredientManagementScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.filteredIngredients) { ingredientWithCat ->
+                    items(uiState.filteredIngredients) { ingredient ->
                         IngredientCard(
-                            ingredientWithCategory = ingredientWithCat,
+                            ingredient = ingredient,
                             currencyFormatter = currencyFormatter,
-                            onEditClick = { viewModel.onEditIngredientClick(ingredientWithCat) }
+                            onEditClick = { viewModel.onEditIngredientClick(ingredient) }
                         )
                     }
                 }
@@ -114,13 +114,10 @@ fun IngredientManagementScreen(
 
 @Composable
 fun IngredientCard(
-    ingredientWithCategory: com.argminres.app.data.local.dao.IngredientWithCategory,
+    ingredient: com.argminres.app.data.local.entity.IngredientEntity,
     currencyFormatter: NumberFormat,
     onEditClick: () -> Unit
 ) {
-    val ingredient = ingredientWithCategory.ingredient
-    val categoryName = ingredientWithCategory.category?.name ?: "Uncategorized"
-    
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -135,11 +132,6 @@ fun IngredientCard(
                         ingredient.name,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        categoryName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 

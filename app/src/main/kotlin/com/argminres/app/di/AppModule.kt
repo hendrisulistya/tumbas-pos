@@ -35,11 +35,11 @@ val appModule = module {
     single { get<AppDatabase>().employerDao() }
     single { get<AppDatabase>().auditLogDao() }
     single { get<AppDatabase>().ingredientDao() }
-    single { get<AppDatabase>().ingredientCategoryDao() }
     single { get<AppDatabase>().ingredientStockDao() }
     single { get<AppDatabase>().dailySessionDao() }
     single { get<AppDatabase>().wasteRecordDao() }
     single { get<AppDatabase>().ingredientUsageDao() }
+    single { get<AppDatabase>().ingredientWasteRecordDao() }
     single { get<AppDatabase>().dishComponentDao() }
     single { get<AppDatabase>().dishHistoryDao() }
     single { get<AppDatabase>().ingredientHistoryDao() }
@@ -67,6 +67,10 @@ val appModule = module {
         com.argminres.app.data.repository.IngredientUsageRepositoryImpl(get())
     }
     
+    single<com.argminres.app.domain.repository.IngredientWasteRecordRepository> {
+        com.argminres.app.data.repository.IngredientWasteRecordRepositoryImpl(get())
+    }
+    
     single<com.argminres.app.domain.repository.StockRepository> {
         com.argminres.app.data.repository.StockRepositoryImpl(get())
     }
@@ -80,7 +84,7 @@ val appModule = module {
         com.argminres.app.data.repository.DishComponentRepositoryImpl(get(), get())
     }
     single<com.argminres.app.domain.repository.IngredientRepository> {
-        com.argminres.app.data.repository.IngredientRepositoryImpl(get(), get())
+        com.argminres.app.data.repository.IngredientRepositoryImpl(get())
     }
     single<com.argminres.app.domain.repository.DishHistoryRepository> {
         com.argminres.app.data.repository.DishHistoryRepositoryImpl(get())
@@ -133,7 +137,7 @@ val appModule = module {
     factory { com.argminres.app.domain.usecase.ingredient.GetIngredientsUseCase(get()) }
     
     // Session Use Cases
-    factory { com.argminres.app.domain.usecase.session.EndOfDayUseCase(get(), get(), get(), get(), get()) }
+    factory { com.argminres.app.domain.usecase.session.EndOfDayUseCase(get(), get(), get(), get(), get(), get()) }
     factory { com.argminres.app.domain.usecase.session.StartDailySessionUseCase(get()) }
     factory { com.argminres.app.domain.usecase.session.CheckAutoDailyCloseUseCase(get()) }
     factory { com.argminres.app.domain.usecase.session.SessionCheckUseCase(get()) }
@@ -175,7 +179,6 @@ val appModule = module {
             get<DishDao>(),
             get<CustomerDao>(),
             get<com.argminres.app.data.local.dao.CategoryDao>(),
-            get<com.argminres.app.data.local.dao.IngredientCategoryDao>(),
             get<com.argminres.app.data.local.dao.IngredientDao>(),
             get<com.argminres.app.data.local.dao.DishComponentDao>(),
             get<SettingsRepository>(),

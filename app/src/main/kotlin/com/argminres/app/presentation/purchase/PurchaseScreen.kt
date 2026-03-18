@@ -205,7 +205,7 @@ fun CreateOrderDialog(
     onDismiss: () -> Unit,
     onSelectSupplier: (SupplierEntity) -> Unit,
     onSearchIngredient: (String) -> Unit,
-    onAddIngredient: (com.argminres.app.data.local.dao.IngredientWithCategory) -> Unit,
+    onAddIngredient: (com.argminres.app.data.local.entity.IngredientEntity) -> Unit,
     onUpdateQuantity: (com.argminres.app.data.local.entity.IngredientEntity, Double) -> Unit,
     onSubmit: () -> Unit,
     currencyFormatter: NumberFormat
@@ -243,12 +243,12 @@ fun CreateOrderDialog(
                     
                     if (uiState.searchResults.isNotEmpty()) {
                         LazyColumn(modifier = Modifier.height(100.dp)) {
-                            items(uiState.searchResults) { ingredientWithCategory ->
+                            items(uiState.searchResults) { ingredient ->
                                 TextButton(
-                                    onClick = { onAddIngredient(ingredientWithCategory) },
+                                    onClick = { onAddIngredient(ingredient) },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("${ingredientWithCategory.ingredient.name} (${ingredientWithCategory.ingredient.unit})")
+                                    Text("${ingredient.name} (${ingredient.unit})")
                                 }
                             }
                         }

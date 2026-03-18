@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.argminres.app.domain.usecase.session.RemainingIngredient
+import com.argminres.app.domain.usecase.session.EndOfDayIngredientInput
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -21,8 +21,8 @@ import java.util.Locale
 fun EndOfDayIngredientInputScreen(
     isProcessing: Boolean,
     error: String?,
-    ingredients: List<RemainingIngredient>,
-    onConfirm: (List<RemainingIngredient>) -> Unit,
+    ingredients: List<EndOfDayIngredientInput>,
+    onConfirm: (List<EndOfDayIngredientInput>) -> Unit,
     onCancel: () -> Unit
 ) {
     // Mutable state for ingredient quantities
@@ -70,7 +70,7 @@ fun EndOfDayIngredientInputScreen(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    "Usage = Starting - Remaining",
+                    "Usage = Starting - Remaining - Wasted",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
@@ -131,6 +131,11 @@ fun EndOfDayIngredientInputScreen(
                         onPriceChange = { newPrice ->
                             ingredientInputs = ingredientInputs.toMutableList().apply {
                                 this[index] = this[index].copy(costPerUnit = newPrice)
+                            }
+                        },
+                        onWastedChange = { newWasted ->
+                            ingredientInputs = ingredientInputs.toMutableList().apply {
+                                this[index] = this[index].copy(wastedQuantity = newWasted)
                             }
                         }
                     )
@@ -218,12 +223,16 @@ fun EndOfDayIngredientInputScreen(
 
 @Composable
 fun IngredientInputCard(
-    ingredient: RemainingIngredient,
+    ingredient: EndOfDayIngredientInput,
     onQuantityChange: (Double) -> Unit,
-    onPriceChange: (Double) -> Unit
+    onPriceChange: (Double) -> Unit,
+    onWastedChange: (Double) -> Unit
 ) {
     var quantityText by remember(ingredient.remainingQuantity) {
         mutableStateOf(ingredient.remainingQuantity.toString())
+    }
+    var wastedText by remember(ingredient.wastedQuantity) {
+        mutableStateOf(ingredient.wastedQuantity.toString())
     }
     var priceText by remember(ingredient.costPerUnit) {
         mutableStateOf(ingredient.costPerUnit.toString())
@@ -278,6 +287,24 @@ fun IngredientInputCard(
                     singleLine = true
                 )
                 
+                // Wasted Quantity Input
+                OutlinedTextField(
+                    value = wastedText,
+                    onValueChange = { newValue ->
+                        wastedText = newValue
+                        newValue.toDoubleOrNull()?.let { qty ->
+                            if (qty >= 0) {
+                                onWastedChange(qty)
+                            }
+                        }
+                    },
+                    label = { Text("Wasted") },
+                    suffix = { Text(ingredient.unit) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                
                 // Actual Price Input
                 OutlinedTextField(
                     value = priceText,
@@ -298,7 +325,7 @@ fun IngredientInputCard(
             }
             
             // Show calculated usage
-            val usage = ingredient.startingQuantity - ingredient.remainingQuantity
+            val usage = ingredient.startingQuantity - ingredient.remainingQuantity - ingredient.wastedQuantity
             if (usage > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(

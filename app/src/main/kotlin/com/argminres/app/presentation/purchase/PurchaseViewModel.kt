@@ -3,7 +3,7 @@ package com.argminres.app.presentation.purchase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.argminres.app.data.local.dao.PurchaseOrderWithItems
-import com.argminres.app.data.local.dao.IngredientWithCategory
+
 import com.argminres.app.data.local.entity.IngredientEntity
 import com.argminres.app.data.local.entity.PurchaseOrderEntity
 import com.argminres.app.data.local.entity.PurchaseOrderItemEntity
@@ -21,7 +21,7 @@ import com.argminres.app.data.local.entity.EmployerEntity
 data class PurchaseUiState(
     val orders: List<PurchaseOrderWithItems> = emptyList(),
     val suppliers: List<SupplierEntity> = emptyList(),
-    val searchResults: List<IngredientWithCategory> = emptyList(),
+    val searchResults: List<IngredientEntity> = emptyList(),
     val isLoading: Boolean = false,
     val isCreateOrderDialogOpen: Boolean = false,
     val isSupplierDialogOpen: Boolean = false,
@@ -149,8 +149,7 @@ class PurchaseViewModel(
         }
     }
 
-    fun onAddIngredientToOrder(ingredientWithCategory: IngredientWithCategory) {
-        val ingredient = ingredientWithCategory.ingredient
+    fun onAddIngredientToOrder(ingredient: IngredientEntity) {
         val currentItems = _uiState.value.newOrderItems
         
         // Check if ingredient already exists in order

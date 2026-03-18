@@ -11,7 +11,7 @@ interface DailySessionRepository {
     fun getSessionsByDateRange(startDate: Long, endDate: Long): Flow<List<DailySessionEntity>>
     suspend fun createSession(session: DailySessionEntity): Long
     suspend fun updateSession(session: DailySessionEntity)
-    suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalWaste: Double, totalProfit: Double)
+    suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalDishWasteValue: Double, totalIngredientCost: Double, totalIngredientWasteValue: Double, totalProfit: Double)
 }
 
 interface WasteRecordRepository {

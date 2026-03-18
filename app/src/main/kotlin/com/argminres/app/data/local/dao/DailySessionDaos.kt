@@ -25,8 +25,8 @@ interface DailySessionDao {
     @Update
     suspend fun updateSession(session: DailySessionEntity)
 
-    @Query("UPDATE daily_sessions SET status = 'CLOSED', closedAt = :closedAt, totalSales = :totalSales, totalWaste = :totalWaste, totalProfit = :totalProfit WHERE id = :sessionId")
-    suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalWaste: Double, totalProfit: Double)
+    @Query("UPDATE daily_sessions SET status = 'CLOSED', closedAt = :closedAt, totalSales = :totalSales, totalDishWasteValue = :totalDishWasteValue, totalIngredientCost = :totalIngredientCost, totalIngredientWasteValue = :totalIngredientWasteValue, totalProfit = :totalProfit WHERE id = :sessionId")
+    suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalDishWasteValue: Double, totalIngredientCost: Double, totalIngredientWasteValue: Double, totalProfit: Double)
 }
 
 @Dao

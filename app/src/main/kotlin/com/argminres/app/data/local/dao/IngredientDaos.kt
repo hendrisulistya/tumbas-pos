@@ -6,21 +6,17 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface IngredientDao {
-    @Transaction
     @Query("SELECT * FROM ingredients ORDER BY name ASC")
-    fun getAllIngredients(): Flow<List<IngredientWithCategory>>
+    fun getAllIngredients(): Flow<List<IngredientEntity>>
     
-    @Transaction
     @Query("SELECT * FROM ingredients WHERE stock > 0 ORDER BY name ASC")
-    fun getIngredientsWithStock(): Flow<List<IngredientWithCategory>>
+    fun getIngredientsWithStock(): Flow<List<IngredientEntity>>
 
-    @Transaction
     @Query("SELECT * FROM ingredients WHERE id = :id")
-    suspend fun getIngredientById(id: Long): IngredientWithCategory?
+    suspend fun getIngredientById(id: Long): IngredientEntity?
 
-    @Transaction
     @Query("SELECT * FROM ingredients WHERE name LIKE '%' || :query || '%'")
-    fun searchIngredients(query: String): Flow<List<IngredientWithCategory>>
+    fun searchIngredients(query: String): Flow<List<IngredientEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIngredient(ingredient: IngredientEntity): Long
@@ -36,36 +32,6 @@ interface IngredientDao {
 
     @Query("UPDATE ingredients SET stock = stock + :quantity WHERE id = :ingredientId")
     suspend fun updateStock(ingredientId: Long, quantity: Double)
-}
-
-data class IngredientWithCategory(
-    @Embedded val ingredient: IngredientEntity,
-    @Relation(
-        parentColumn = "categoryId",
-        entityColumn = "id"
-    )
-    val category: IngredientCategoryEntity?
-)
-
-@Dao
-interface IngredientCategoryDao {
-    @Query("SELECT * FROM ingredient_categories ORDER BY name ASC")
-    fun getAllCategories(): Flow<List<IngredientCategoryEntity>>
-
-    @Query("SELECT * FROM ingredient_categories WHERE id = :id")
-    suspend fun getCategoryById(id: Long): IngredientCategoryEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCategory(category: IngredientCategoryEntity): Long
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(categories: List<IngredientCategoryEntity>)
-
-    @Update
-    suspend fun updateCategory(category: IngredientCategoryEntity)
-
-    @Delete
-    suspend fun deleteCategory(category: IngredientCategoryEntity)
 }
 
 @Dao

@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.argminres.app.domain.model.LowStockProduct
@@ -100,11 +101,36 @@ fun DashboardContent(
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Total Revenue (This Month)", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        currencyFormatter.format(uiState.totalRevenue),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        "Monthly Summary",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    SummaryRow(
+                        label = "Total Revenue",
+                        value = currencyFormatter.format(uiState.totalRevenue)
+                    )
+                    SummaryRow(
+                        label = "Ingredient Cost",
+                        value = "- ${currencyFormatter.format(uiState.totalCost)}",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    SummaryRow(
+                        label = "Waste Value",
+                        value = "- ${currencyFormatter.format(uiState.totalWaste)}",
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    val netProfit = uiState.totalRevenue - uiState.totalCost - uiState.totalWaste
+                    SummaryRow(
+                        label = "Net Profit",
+                        value = currencyFormatter.format(netProfit),
+                        isTotal = true,
+                        color = if (netProfit >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                     )
                 }
             }
@@ -295,7 +321,7 @@ fun DailySessionsContent(
                         }
                     }
                     
-                    if (session.totalSales > 0 || session.totalWaste > 0) {
+                    if (session.totalSales > 0 || (session.totalDishWasteValue + session.totalIngredientWasteValue) > 0) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Divider()
                         Spacer(modifier = Modifier.height(12.dp))
@@ -316,7 +342,7 @@ fun DailySessionsContent(
                             Column {
                                 Text("Waste", style = MaterialTheme.typography.bodySmall)
                                 Text(
-                                    currencyFormatter.format(session.totalWaste),
+                                    currencyFormatter.format(session.totalDishWasteValue + session.totalIngredientWasteValue),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.error
@@ -354,5 +380,31 @@ fun DailySessionsContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SummaryRow(
+    label: String,
+    value: String,
+    isTotal: Boolean = false,
+    color: Color = MaterialTheme.colorScheme.onSurface
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            label,
+            style = if (isTotal) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+            fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Normal,
+            color = color
+        )
+        Text(
+            value,
+            style = if (isTotal) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+            fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Normal,
+            color = color
+        )
     }
 }

@@ -176,7 +176,7 @@ fun SessionCard(
                 }
             }
             
-            if (session.totalSales > 0 || session.totalWaste > 0) {
+            if (session.totalSales > 0 || (session.totalDishWasteValue + session.totalIngredientWasteValue) > 0) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Divider()
                 Spacer(modifier = Modifier.height(12.dp))
@@ -203,7 +203,7 @@ fun SessionCard(
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            NumberFormat.getCurrencyInstance(Locale("id", "ID")).format(session.totalWaste),
+                            NumberFormat.getCurrencyInstance(Locale("id", "ID")).format(session.totalDishWasteValue + session.totalIngredientWasteValue),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.error

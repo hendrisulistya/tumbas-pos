@@ -79,7 +79,7 @@ fun EndOfDayScreen(
                     EndOfDayCompleteScreen(
                         wasteRecords = uiState.wasteRecords,
                         ingredientUsage = uiState.ingredientUsage,
-                        totalWaste = uiState.totalWaste,
+                        totalWaste = uiState.totalDishWasteValue,
                         totalIngredientCost = uiState.totalIngredientCost,
                         totalSales = uiState.totalSales,
                         totalProfit = uiState.totalProfit,

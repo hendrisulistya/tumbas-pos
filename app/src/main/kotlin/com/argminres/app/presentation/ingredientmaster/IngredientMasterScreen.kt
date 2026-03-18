@@ -104,9 +104,10 @@ fun IngredientMasterScreen(
                 ) {
                     items(uiState.filteredIngredients) { ingredientWithCat ->
                         IngredientMasterCard(
-                            ingredientWithCategory = ingredientWithCat,
+                            ingredient = ingredientWithCat,
                             currencyFormatter = currencyFormatter,
-                            onEditClick = { viewModel.onEditIngredientClick(ingredientWithCat) }
+                            onEditClick = { viewModel.onEditIngredientClick(ingredientWithCat) },
+                            onAdjustStockClick = { viewModel.onAdjustStockClick(ingredientWithCat) }
                         )
                     }
                 }
@@ -122,16 +123,22 @@ fun IngredientMasterScreen(
             onSave = viewModel::onSaveIngredient
         )
     }
+    if (uiState.showStockAdjustmentDialog && uiState.selectedIngredient != null) {
+        IngredientStockAdjustmentDialog(
+            ingredient = uiState.selectedIngredient!!,
+            onDismiss = viewModel::onDialogDismiss,
+            onConfirm = viewModel::onConfirmStockAdjustment
+        )
+    }
 }
 
 @Composable
 fun IngredientMasterCard(
-    ingredientWithCategory: com.argminres.app.data.local.dao.IngredientWithCategory,
+    ingredient: com.argminres.app.data.local.entity.IngredientEntity,
     currencyFormatter: NumberFormat,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onAdjustStockClick: () -> Unit
 ) {
-    val ingredient = ingredientWithCategory.ingredient
-    val categoryName = ingredientWithCategory.category?.name ?: "Uncategorized"
     
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -148,15 +155,15 @@ fun IngredientMasterCard(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        categoryName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
                 
-                IconButton(onClick = onEditClick) {
-                    Icon(Icons.Default.Edit, "Edit")
+                Row {
+                    IconButton(onClick = onAdjustStockClick) {
+                        Icon(Icons.Default.Inventory, "Adjust Stock")
+                    }
+                    IconButton(onClick = onEditClick) {
+                        Icon(Icons.Default.Edit, "Edit")
+                    }
                 }
             }
             

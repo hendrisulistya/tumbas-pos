@@ -18,8 +18,9 @@ data class EndOfDayUiState(
     val isLoading: Boolean = false,
     val wasteRecords: List<WasteRecordEntity> = emptyList(),
     val ingredientUsage: List<com.argminres.app.data.local.entity.IngredientUsageEntity> = emptyList(),
-    val remainingIngredients: List<com.argminres.app.domain.usecase.session.RemainingIngredient> = emptyList(),
-    val totalWaste: Double = 0.0,
+    val remainingIngredients: List<com.argminres.app.domain.usecase.session.EndOfDayIngredientInput> = emptyList(),
+    val totalDishWasteValue: Double = 0.0,
+    val totalIngredientWasteValue: Double = 0.0,
     val totalIngredientCost: Double = 0.0,
     val totalSales: Double = 0.0,
     val totalProfit: Double = 0.0,
@@ -56,14 +57,15 @@ class EndOfDayViewModel(
         viewModelScope.launch {
             ingredientRepository.getAllIngredients().collect { ingredients ->
                 // Convert to RemainingIngredient format with starting quantities
-                val remainingList = ingredients.map { ingredientWithCat ->
-                    com.argminres.app.domain.usecase.session.RemainingIngredient(
-                        ingredientId = ingredientWithCat.ingredient.id,
-                        ingredientName = ingredientWithCat.ingredient.name,
-                        startingQuantity = ingredientWithCat.ingredient.stock,
-                        remainingQuantity = ingredientWithCat.ingredient.stock,
-                        unit = ingredientWithCat.ingredient.unit,
-                        costPerUnit = ingredientWithCat.ingredient.costPerUnit
+                val remainingList = ingredients.map { ingredient ->
+                    com.argminres.app.domain.usecase.session.EndOfDayIngredientInput(
+                        ingredientId = ingredient.id,
+                        ingredientName = ingredient.name,
+                        startingQuantity = ingredient.stock,
+                        remainingQuantity = ingredient.stock,
+                        wastedQuantity = 0.0,
+                        unit = ingredient.unit,
+                        costPerUnit = ingredient.costPerUnit
                     )
                 }
                 _uiState.update { it.copy(remainingIngredients = remainingList) }
@@ -84,7 +86,7 @@ class EndOfDayViewModel(
         }
     }
 
-    fun processEndOfDay(remainingIngredients: List<com.argminres.app.domain.usecase.session.RemainingIngredient> = emptyList()) {
+    fun processEndOfDay(remainingIngredients: List<com.argminres.app.domain.usecase.session.EndOfDayIngredientInput> = emptyList()) {
         viewModelScope.launch {
             _uiState.update { it.copy(isProcessing = true, error = null) }
             
@@ -99,7 +101,8 @@ class EndOfDayViewModel(
                             isComplete = true,
                             wasteRecords = result.wasteRecords,
                             ingredientUsage = result.ingredientUsageRecords,
-                            totalWaste = result.totalWaste,
+                            totalDishWasteValue = result.totalDishWasteValue,
+                            totalIngredientWasteValue = result.totalIngredientWasteValue,
                             totalIngredientCost = result.totalIngredientCost,
                             totalSales = result.totalSales,
                             totalProfit = result.totalProfit,

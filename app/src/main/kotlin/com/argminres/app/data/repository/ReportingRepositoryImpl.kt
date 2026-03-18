@@ -26,4 +26,12 @@ class ReportingRepositoryImpl(
     override fun getTotalRevenue(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double> {
         return reportingDao.getTotalRevenue(startDate, endDate, cashierId).map { it ?: 0.0 }
     }
+
+    override fun getTotalIngredientCost(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double> {
+        return reportingDao.getTotalIngredientCost(startDate, endDate, cashierId).map { it ?: 0.0 }
+    }
+
+    override fun getTotalWasteValue(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double> {
+        return reportingDao.getTotalWasteValue(startDate, endDate, cashierId).map { it ?: 0.0 }
+    }
 }

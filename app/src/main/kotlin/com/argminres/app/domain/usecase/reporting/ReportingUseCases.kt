@@ -8,7 +8,9 @@ data class DashboardData(
     val salesSummary: Flow<List<com.argminres.app.domain.model.SalesSummary>>,
     val topProducts: Flow<List<com.argminres.app.domain.model.TopProduct>>,
     val lowStock: Flow<List<com.argminres.app.domain.model.LowStockProduct>>,
-    val totalRevenue: Flow<Double>
+    val totalRevenue: Flow<Double>,
+    val totalCost: Flow<Double>,
+    val totalWaste: Flow<Double>
 )
 
 class GetDashboardDataUseCase(
@@ -29,7 +31,9 @@ class GetDashboardDataUseCase(
             salesSummary = getDailySalesSummary(startDate, endDate, cashierId),
             topProducts = getTopSellingDishes(startDate, endDate, 5, cashierId),
             lowStock = getLowStockDishes(10),
-            totalRevenue = getTotalRevenue(startDate, endDate, cashierId)
+            totalRevenue = getTotalRevenue(startDate, endDate, cashierId),
+            totalCost = getTotalIngredientCost(startDate, endDate, cashierId),
+            totalWaste = getTotalWasteValue(startDate, endDate, cashierId)
         )
     }
 }

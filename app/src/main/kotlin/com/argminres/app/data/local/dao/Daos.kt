@@ -196,6 +196,22 @@ interface ReportingDao {
           AND (:cashierId IS NULL OR cashierId = :cashierId)
     """)
     fun getTotalRevenue(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double?>
+
+    @Query("""
+        SELECT SUM(totalIngredientCost)
+        FROM daily_sessions
+        WHERE sessionDate >= :startDate AND sessionDate <= :endDate
+          AND (:cashierId IS NULL OR startedBy = :cashierId)
+    """)
+    fun getTotalIngredientCost(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double?>
+
+    @Query("""
+        SELECT SUM(totalDishWasteValue + totalIngredientWasteValue)
+        FROM daily_sessions
+        WHERE sessionDate >= :startDate AND sessionDate <= :endDate
+          AND (:cashierId IS NULL OR startedBy = :cashierId)
+    """)
+    fun getTotalWasteValue(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double?>
 }
 
 // Relations

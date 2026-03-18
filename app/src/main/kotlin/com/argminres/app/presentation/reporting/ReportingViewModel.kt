@@ -20,6 +20,8 @@ data class ReportingUiState(
     val salesSummary: List<SalesSummary> = emptyList(),
     val topProducts: List<TopProduct> = emptyList(),
     val totalRevenue: Double = 0.0,
+    val totalCost: Double = 0.0,
+    val totalWaste: Double = 0.0,
     val unclosedSessions: List<com.argminres.app.data.local.entity.DailySessionEntity> = emptyList(),
     val selectedTab: Int = 0 // 0: Dashboard, 1: Sales, 2: Daily Sessions
 )
@@ -74,6 +76,16 @@ class ReportingViewModel(
             launch {
                 data.totalRevenue.collect { revenue ->
                     _uiState.update { it.copy(totalRevenue = revenue) }
+                }
+            }
+            launch {
+                data.totalCost.collect { cost ->
+                    _uiState.update { it.copy(totalCost = cost) }
+                }
+            }
+            launch {
+                data.totalWaste.collect { waste ->
+                    _uiState.update { it.copy(totalWaste = waste) }
                 }
             }
             _uiState.update { it.copy(isLoading = false) }

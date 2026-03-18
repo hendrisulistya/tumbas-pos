@@ -14,7 +14,6 @@ class DatabaseInitializer(
     private val productDao: DishDao,
     private val customerDao: CustomerDao,
     private val categoryDao: com.argminres.app.data.local.dao.CategoryDao,
-    private val ingredientCategoryDao: com.argminres.app.data.local.dao.IngredientCategoryDao,
     private val ingredientDao: com.argminres.app.data.local.dao.IngredientDao,
     private val dishComponentDao: com.argminres.app.data.local.dao.DishComponentDao,
     private val settingsRepository: SettingsRepository,
@@ -37,9 +36,6 @@ class DatabaseInitializer(
         
         // Insert dish packages (package recipes) from JSON
         insertDishPackagesFromJson()
-        
-        // Insert ingredient categories from CSV
-        insertIngredientCategoriesFromCsv()
         
         // Insert ingredients from CSV
         insertIngredientsFromCsv()
@@ -253,31 +249,6 @@ class DatabaseInitializer(
         return tokens
     }
     
-    private suspend fun insertIngredientCategoriesFromCsv() {
-        try {
-            val categories = mutableListOf<com.argminres.app.data.local.entity.IngredientCategoryEntity>()
-            context.assets.open("ingredient_categories.csv").bufferedReader().use { reader ->
-                reader.readLine() // Skip header
-                reader.forEachLine { line ->
-                    val parts = line.split(",")
-                    if (parts.size >= 3) {
-                        categories.add(
-                            com.argminres.app.data.local.entity.IngredientCategoryEntity(
-                                id = parts[0].toLongOrNull() ?: 0,
-                                name = parts[1],
-                                description = parts[2],
-                                createdAt = System.currentTimeMillis()
-                            )
-                        )
-                    }
-                }
-            }
-            categories.forEach { ingredientCategoryDao.insertCategory(it) }
-        } catch (e: Exception) {
-            android.util.Log.e("DatabaseInitializer", "Error inserting ingredient categories", e)
-        }
-    }
-    
     private suspend fun insertIngredientsFromCsv() {
         try {
             val ingredients = mutableListOf<com.argminres.app.data.local.entity.IngredientEntity>()
@@ -285,18 +256,17 @@ class DatabaseInitializer(
                 reader.readLine() // Skip header
                 reader.forEachLine { line ->
                     val parts = line.split(",")
-                    // New format: id,name,categoryId,unit,costPerUnit
+                    // New format: id,name,unit,costPerUnit
                     // Stock and minimumStock are always 0 for master data
-                    if (parts.size >= 5) {
+                    if (parts.size >= 4) {
                         ingredients.add(
                             com.argminres.app.data.local.entity.IngredientEntity(
                                 id = parts[0].toLongOrNull() ?: 0,
                                 name = parts[1],
-                                categoryId = parts[2].toLongOrNull() ?: 0,
-                                unit = parts[3],
+                                unit = parts[2],
                                 stock = 0.0, // Always 0 for master data
                                 minimumStock = 0.0, // Not used for master data
-                                costPerUnit = parts[4].toDoubleOrNull() ?: 0.0,
+                                costPerUnit = parts[3].toDoubleOrNull() ?: 0.0,
                                 createdAt = System.currentTimeMillis(),
                                 updatedAt = System.currentTimeMillis()
                             )

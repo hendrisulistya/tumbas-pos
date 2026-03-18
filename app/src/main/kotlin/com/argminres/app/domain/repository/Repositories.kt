@@ -53,6 +53,8 @@ interface ReportingRepository {
     fun getTopSellingDishes(startDate: Long, endDate: Long, limit: Int, cashierId: Long? = null): Flow<List<com.argminres.app.domain.model.TopProduct>>
     fun getLowStockDishes(threshold: Int): Flow<List<com.argminres.app.domain.model.LowStockProduct>>
     fun getTotalRevenue(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
+    fun getTotalIngredientCost(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
+    fun getTotalWasteValue(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
 }
 
 interface BackupRepository {

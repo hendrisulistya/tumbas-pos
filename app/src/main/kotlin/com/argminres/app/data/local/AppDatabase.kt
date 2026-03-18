@@ -20,16 +20,16 @@ import com.argminres.app.data.local.entity.*
         EmployerEntity::class,
         com.argminres.app.data.local.entity.AuditLogEntity::class,
         IngredientEntity::class,
-        IngredientCategoryEntity::class,
         IngredientStockMovementEntity::class,
         DailySessionEntity::class,
         WasteRecordEntity::class,
+        IngredientWasteRecordEntity::class,
         IngredientUsageEntity::class,
         DishComponentEntity::class,
         DishHistoryEntity::class,
         IngredientHistoryEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -45,11 +45,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun employerDao(): EmployerDao
     abstract fun auditLogDao(): com.argminres.app.data.local.dao.AuditLogDao
     abstract fun ingredientDao(): com.argminres.app.data.local.dao.IngredientDao
-    abstract fun ingredientCategoryDao(): com.argminres.app.data.local.dao.IngredientCategoryDao
     abstract fun ingredientStockDao(): com.argminres.app.data.local.dao.IngredientStockDao
     abstract fun dailySessionDao(): com.argminres.app.data.local.dao.DailySessionDao
     abstract fun wasteRecordDao(): com.argminres.app.data.local.dao.WasteRecordDao
     abstract fun ingredientUsageDao(): com.argminres.app.data.local.dao.IngredientUsageDao
+    abstract fun ingredientWasteRecordDao(): com.argminres.app.data.local.dao.IngredientWasteRecordDao
     abstract fun dishComponentDao(): DishComponentDao
     abstract fun dishHistoryDao(): DishHistoryDao
     abstract fun ingredientHistoryDao(): IngredientHistoryDao

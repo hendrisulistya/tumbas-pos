@@ -7,23 +7,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.argminres.app.data.local.dao.IngredientWithCategory
+import com.argminres.app.data.local.entity.IngredientEntity
 import org.koin.compose.koinInject
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IngredientMasterDialog(
-    ingredient: IngredientWithCategory?,
+    ingredient: IngredientEntity?,
     onDismiss: () -> Unit,
-    onSave: (String, Long, String, Double) -> Unit
+    onSave: (String, String, Double) -> Unit
 ) {
-    val ingredientRepository: com.argminres.app.domain.repository.IngredientRepository = koinInject()
-    val categories by ingredientRepository.getAllCategories().collectAsState(initial = emptyList())
-    
-    var name by remember { mutableStateOf(ingredient?.ingredient?.name ?: "") }
-    var selectedCategoryId by remember { mutableStateOf(ingredient?.ingredient?.categoryId ?: (categories.firstOrNull()?.id ?: 1L)) }
-    var unit by remember { mutableStateOf(ingredient?.ingredient?.unit ?: "kg") }
-    var costPerUnit by remember { mutableStateOf(ingredient?.ingredient?.costPerUnit?.toString() ?: "0") }
-    var expandedCategory by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf(ingredient?.name ?: "") }
+    var unit by remember { mutableStateOf(ingredient?.unit ?: "kg") }
+    var costPerUnit by remember { mutableStateOf(ingredient?.costPerUnit?.toString() ?: "0") }
     var expandedUnit by remember { mutableStateOf(false) }
     
     val units = listOf("kg", "liter", "pcs", "gram", "ml")
@@ -42,37 +38,6 @@ fun IngredientMasterDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
-                // Category Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = expandedCategory,
-                    onExpandedChange = { expandedCategory = it }
-                ) {
-                    OutlinedTextField(
-                        value = categories.find { it.id == selectedCategoryId }?.name ?: "Select Category",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expandedCategory,
-                        onDismissRequest = { expandedCategory = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category.name) },
-                                onClick = {
-                                    selectedCategoryId = category.id
-                                    expandedCategory = false
-                                }
-                            )
-                        }
-                    }
-                }
                 
                 // Unit Dropdown
                 ExposedDropdownMenuBox(
@@ -121,7 +86,6 @@ fun IngredientMasterDialog(
                 onClick = {
                     onSave(
                         name,
-                        selectedCategoryId,
                         unit,
                         costPerUnit.toDoubleOrNull() ?: 0.0
                     )
