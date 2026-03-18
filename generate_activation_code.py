@@ -40,17 +40,13 @@ def generate_qr(app_id, code):
         qr.add_data(code)
         qr.make(fit=True)
 
-        img = qr.make_image(fill_color="black", back_color="white")
-        filename = f"activation_qr_{app_id.replace(':', '_')}.png"
-        img.save(filename)
-        
-        # Also print to terminal
+        # Only print to terminal, no PNG file
         print("\nScan this QR code to activate:")
         qr.print_ascii()
         
-        return filename
+        return True
     except ImportError:
-        return None
+        return False
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -62,9 +58,7 @@ if __name__ == "__main__":
     code = generate_code(app_id, secret)
     print(f"Activation Code for App ID '{app_id}': {code}")
     
-    qr_file = generate_qr(app_id, code)
-    if qr_file:
-        print(f"QR Code generated: {qr_file}")
-    else:
+    qr_success = generate_qr(app_id, code)
+    if not qr_success:
         print("\nNote: 'qrcode' library not found. To generate QR codes, install it via:")
         print("pip install qrcode[pil]")

@@ -38,12 +38,16 @@ class LoginViewModel(
     private fun loadEmployers() {
         viewModelScope.launch {
             val employers = employerRepository.getAll().first()
-            _uiState.update { it.copy(employers = employers, selectedEmployer = employers.firstOrNull()) }
+            _uiState.update { it.copy(employers = employers, selectedEmployer = null) }
         }
     }
     
     fun onEmployerSelected(employer: EmployerEntity) {
         _uiState.update { it.copy(selectedEmployer = employer, pin = "", error = null) }
+    }
+
+    fun onBackToSelection() {
+        _uiState.update { it.copy(selectedEmployer = null, pin = "", error = null) }
     }
     
     fun onPinChange(pin: String) {

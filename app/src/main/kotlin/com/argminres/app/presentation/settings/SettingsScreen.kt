@@ -3,36 +3,29 @@ package com.argminres.app.presentation.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Pending
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Print
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Store
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Warehouse
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.argminres.app.data.repository.SettingsRepository
-import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 
@@ -69,11 +62,6 @@ fun SettingsItem(
             }
         )
     }
-}
-
-@Composable
-fun HorizontalDivider() {
-    Divider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -278,18 +266,18 @@ fun SettingsScreen(
                 )
             }
             
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Management",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-            }
-            
-            // Only show for managers
+            // --- Manager Only: Management ---
             if (isManager) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Management",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+
                 item {
                     SettingsItem(
                         icon = Icons.Default.Person,
@@ -298,7 +286,7 @@ fun SettingsScreen(
                         onClick = onNavigateToEmployers
                     )
                 }
-                
+
                 item {
                     SettingsItem(
                         icon = Icons.Default.History,
@@ -306,14 +294,14 @@ fun SettingsScreen(
                         subtitle = "View system activity",
                         onClick = onNavigateToAuditLog
                     )
-                    
+
                     SettingsItem(
                         icon = Icons.Default.Pending,
                         title = "Work in Process",
                         subtitle = "View unclosed sessions",
                         onClick = onNavigateToWorkInProcess
                     )
-                    
+
                     SettingsItem(
                         icon = Icons.Default.EventNote,
                         title = "End of Day",
@@ -321,10 +309,71 @@ fun SettingsScreen(
                         onClick = onNavigateToEndOfDay
                     )
                 }
+
+                // --- Manager Only: Master Data ---
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Master Data",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.ShoppingBag,
+                        title = "Kelola Bahan",
+                        subtitle = "Manage ingredient catalog",
+                        onClick = onNavigateToIngredientMaster
+                    )
+                }
+
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Warehouse,
+                        title = "Kelola Etalase",
+                        subtitle = "Manage dish catalog",
+                        onClick = onNavigateToDishMaster
+                    )
+                }
+
+                // --- Manager Only: Daily Operations ---
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Daily Operations",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Warehouse,
+                        title = "Etalase",
+                        subtitle = "Kelola inventori",
+                        onClick = onNavigateToShowcase
+                    )
+                }
+
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.ShoppingBag,
+                        title = "Bahan",
+                        subtitle = "Kelola bahan baku",
+                        onClick = onNavigateToIngredient
+                    )
+                }
             }
-            
+
+            // --- General Sections (All Users) ---
+
             // Account Section
             item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     "Account",
                     style = MaterialTheme.typography.titleSmall,
@@ -332,7 +381,7 @@ fun SettingsScreen(
                     modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
                 )
             }
-            
+
             item {
                 SettingsItem(
                     icon = Icons.Default.Lock,
@@ -341,8 +390,6 @@ fun SettingsScreen(
                     onClick = onChangePinClick
                 )
             }
-
-
 
             item {
                 SettingsItem(
@@ -353,66 +400,15 @@ fun SettingsScreen(
                 )
             }
 
-            // Manager Only: Master Data
-            if (isManager) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Master Data",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                }
-                
-                item {
-                    SettingsItem(
-                        icon = Icons.Default.ShoppingBag,
-                        title = "Kelola Bahan",
-                        subtitle = "Manage ingredient catalog",
-                        onClick = onNavigateToIngredientMaster
-                    )
-                }
-                
-                item {
-                    SettingsItem(
-                        icon = Icons.Default.Warehouse,
-                        title = "Kelola Etalase",
-                        subtitle = "Manage dish catalog",
-                        onClick = onNavigateToDishMaster
-                    )
-                }
-                
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Daily Operations",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                }
-            }
-
-            // Manager Only: Etalase (Dish Management)
-            if (isManager) {
-                item {
-                    SettingsItem(
-                        icon = Icons.Default.Warehouse,
-                        title = "Etalase",
-                        subtitle = "Kelola inventori",
-                        onClick = onNavigateToShowcase
-                    )
-                }
-                
-                item {
-                    SettingsItem(
-                        icon = Icons.Default.ShoppingBag,
-                        title = "Bahan",
-                        subtitle = "Kelola bahan baku",
-                        onClick = onNavigateToIngredient
-                    )
-                }
+            // Reporting & Hardware
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Reporting & Hardware",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                )
             }
 
             item {
@@ -432,27 +428,41 @@ fun SettingsScreen(
                     onClick = onNavigateToPrinter
                 )
             }
-            
-            item {
-                SettingsItem(
-                    icon = Icons.Default.ShoppingBag,
-                    title = "Store Settings",
-                    subtitle = "Configure store information",
-                    onClick = onNavigateToStoreSettings
-                )
-            }
-            
-            item {
-                SettingsItem(
-                    icon = Icons.Default.Backup,
-                    title = "Backup & Restore",
-                    subtitle = "Manage data backups",
-                    onClick = onNavigateToBackup
-                )
+
+            // --- Manager Only: Advanced ---
+            if (isManager) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Advanced",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                    )
+                }
+
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.ShoppingBag,
+                        title = "Store Settings",
+                        subtitle = "Configure store information",
+                        onClick = onNavigateToStoreSettings
+                    )
+                }
+
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Backup,
+                        title = "Backup & Restore",
+                        subtitle = "Manage data backups",
+                        onClick = onNavigateToBackup
+                    )
+                }
             }
 
+            // Information Section
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     "Information",
                     style = MaterialTheme.typography.titleSmall,
