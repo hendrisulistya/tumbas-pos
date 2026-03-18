@@ -158,14 +158,25 @@ fun App() {
                                 }
                             )
                         }
-                        !uiState.isManager && !uiState.hasActiveSession -> {
-                            com.argminres.app.presentation.startday.NoSessionWarning(
-                                onLogout = {
+                        // Non-manager: no active session → show restriction message
+                        // Also handles: manager who dismissed the dialog → redirect to login
+                        else -> {
+                            if (uiState.isManager) {
+                                // Manager dismissed dialog — go back to login
+                                LaunchedEffect(Unit) {
                                     navController.navigate(Screen.Login.route) {
                                         popUpTo(Screen.SessionCheck.route) { inclusive = true }
                                     }
                                 }
-                            )
+                            } else {
+                                com.argminres.app.presentation.startday.NoSessionWarning(
+                                    onLogout = {
+                                        navController.navigate(Screen.Login.route) {
+                                            popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 }

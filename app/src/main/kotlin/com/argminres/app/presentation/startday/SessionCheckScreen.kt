@@ -3,6 +3,7 @@ package com.argminres.app.presentation.startday
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -107,45 +108,57 @@ fun NoSessionWarning(
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            Icons.Default.Warning,
+            Icons.Default.Lock,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.error
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Text(
-            "No Active Session",
+            "Session Not Started",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Text(
-            "The day session has not been started yet.",
+            "Only MANAGER can start a new day session.",
             style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.error
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
-            "Please contact your manager to start the day session before you can begin operations.",
+            "Please ask your Manager to log in and start the day session before operations can begin.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            "Please login with MANAGER first for initializing session.",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         OutlinedButton(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth(0.6f)
         ) {
-            Text("Logout")
+            Text("Switch Account")
         }
     }
 }

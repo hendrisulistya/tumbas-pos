@@ -132,7 +132,7 @@ fun HomeScreen(
                     }
                 } else {
                     LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
+                        columns = GridCells.Adaptive(minSize = 200.dp),
                         modifier = Modifier
                             .weight(0.80f)
                             .fillMaxHeight(),

@@ -153,29 +153,14 @@ class DatabaseInitializer(
     }
     
     private suspend fun insertCategoriesFromCsv() {
-        try {
-            val categories = mutableListOf<com.argminres.app.data.local.entity.CategoryEntity>()
-            context.assets.open("dish_categories.csv").bufferedReader().use { reader ->
-                reader.readLine() // Skip header
-                reader.forEachLine { line ->
-                    val tokens = parseCsvLine(line)
-                    if (tokens.size >= 1) {
-                        categories.add(
-                            com.argminres.app.data.local.entity.CategoryEntity(
-                                id = tokens[0].toLongOrNull() ?: 0L,
-                                name = if (tokens.size > 1) tokens[1] else "Unknown",
-                                description = if (tokens.size > 2) tokens[2] else ""
-                            )
-                        )
-                    }
-                }
-            }
-            if (categories.isNotEmpty()) {
-                categoryDao.insertAll(categories)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        // Categories are now static (matches HomeScreen hardcoded categories)
+        val categories = listOf(
+            com.argminres.app.data.local.entity.CategoryEntity(id = 1L, name = "Paket", description = "Paket makanan"),
+            com.argminres.app.data.local.entity.CategoryEntity(id = 2L, name = "Makanan", description = "Makanan"),
+            com.argminres.app.data.local.entity.CategoryEntity(id = 3L, name = "Minuman", description = "Minuman"),
+            com.argminres.app.data.local.entity.CategoryEntity(id = 4L, name = "Lain-lain", description = "Lain-lain")
+        )
+        categoryDao.insertAll(categories)
     }
     
     private suspend fun insertCustomersFromCsv() {

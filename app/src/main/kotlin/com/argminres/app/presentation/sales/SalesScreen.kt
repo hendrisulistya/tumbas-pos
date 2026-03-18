@@ -75,168 +75,176 @@ fun SalesScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
 
-        Column(
+        // Tablet landscape: two-column split
+        Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Cart Items
-            if (uiState.cart.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+            // ── Left: Cart Items (60%) ─────────────────────────────────
+            Column(
+                modifier = Modifier
+                    .weight(0.6f)
+                    .fillMaxHeight()
+            ) {
+                if (uiState.cart.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.ShoppingCart,
-                            contentDescription = null,
-                            modifier = Modifier.size(80.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                        Text(
-                            "Your cart is empty",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            "Add products from the Home screen",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        FilledTonalButton(onClick = onNavigateBack) {
-                            Text("Browse Products")
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                modifier = Modifier.size(80.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                            Text(
+                                "Your cart is empty",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "Add products from the Home screen",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            FilledTonalButton(onClick = onNavigateBack) {
+                                Text("Browse Products")
+                            }
                         }
                     }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(uiState.cart) { item ->
-                        CartItemRow(
-                            item = item,
-                            onIncrease = { viewModel.updateQuantity(item.product.id, item.quantity + 1) },
-                            onDecrease = { viewModel.updateQuantity(item.product.id, item.quantity - 1) },
-                            currencyFormatter = currencyFormatter
-                        )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.cart) { item ->
+                            CartItemRow(
+                                item = item,
+                                onIncrease = { viewModel.updateQuantity(item.product.id, item.quantity + 1) },
+                                onDecrease = { viewModel.updateQuantity(item.product.id, item.quantity - 1) },
+                                currencyFormatter = currencyFormatter
+                            )
+                        }
                     }
                 }
             }
 
-            // Bottom Summary Section
-            if (uiState.cart.isNotEmpty()) {
-                var showCustomerDialog by remember { mutableStateOf(false) }
-                
-                // Customer Selection Dialog
-                if (showCustomerDialog) {
-                    CustomerSelectionDialog(
-                        customers = uiState.customers,
-                        selectedCustomer = uiState.selectedCustomer,
-                        onDismiss = { showCustomerDialog = false },
-                        onCustomerSelected = { customer ->
-                            viewModel.selectCustomer(customer)
-                            showCustomerDialog = false
+            VerticalDivider()
+
+            // ── Right: Payment Panel (40%) ─────────────────────────────
+            var showCustomerDialog by remember { mutableStateOf(false) }
+
+            if (showCustomerDialog) {
+                CustomerSelectionDialog(
+                    customers = uiState.customers,
+                    selectedCustomer = uiState.selectedCustomer,
+                    onDismiss = { showCustomerDialog = false },
+                    onCustomerSelected = { customer ->
+                        viewModel.selectCustomer(customer)
+                        showCustomerDialog = false
+                    }
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(0.4f)
+                    .fillMaxHeight()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    "Order Summary",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                HorizontalDivider()
+
+                // Customer Selection Field
+                OutlinedCard(
+                    onClick = { showCustomerDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Column {
+                                Text(
+                                    "Customer",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    uiState.selectedCustomer?.name ?: "Select Customer",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Change Customer",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                HorizontalDivider()
+
+                // Total
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Total", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        currencyFormatter.format(uiState.totalAmount),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Customer Selection Field (Clickable)
-                        OutlinedCard(
-                            onClick = { showCustomerDialog = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Person,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                    Column {
-                                        Text(
-                                            "Customer",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            uiState.selectedCustomer?.name ?: "Select Customer",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                                Icon(
-                                    Icons.Default.Edit,
-                                    contentDescription = "Change Customer",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        
-                        HorizontalDivider()
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Total",
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Text(
-                                currencyFormatter.format(uiState.totalAmount),
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
 
-                        Button(
-                            onClick = { viewModel.checkout() },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            enabled = uiState.cart.isNotEmpty() && !uiState.isLoading && uiState.selectedCustomer != null
-                        ) {
-                            if (uiState.isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            } else {
-                                Text("Checkout", style = MaterialTheme.typography.titleMedium)
-                            }
-                        }
+                Button(
+                    onClick = { viewModel.checkout() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = uiState.cart.isNotEmpty() && !uiState.isLoading && uiState.selectedCustomer != null
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text("Checkout", style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }

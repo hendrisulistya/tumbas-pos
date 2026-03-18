@@ -1,11 +1,9 @@
 package com.argminres.app.presentation.auth
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -29,51 +28,86 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     LaunchedEffect(uiState.isAuthenticated) {
-        if (uiState.isAuthenticated) {
-            onLoginSuccess()
-        }
+        if (uiState.isAuthenticated) onLoginSuccess()
     }
-    
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
+
+    // Tablet landscape: two-column split
+    Row(modifier = Modifier.fillMaxSize()) {
+
+        // ── Left: Branding Panel (40%) ────────────────────────────────────
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .weight(0.4f)
+                .fillMaxHeight()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(32.dp)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                    modifier = Modifier.size(100.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(52.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Padang POS",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Text(
+                    text = "Point of Sale System",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // ── Right: Login Form Panel (60%) ─────────────────────────────────
+        Box(
+            modifier = Modifier
+                .weight(0.6f)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
+                    .widthIn(max = 480.dp)
+                    .padding(horizontal = 40.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                // Header
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = "Login",
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "Padang POS",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                
-                Crossfade(targetState = uiState.selectedEmployer != null) { isSelected ->
+                // Intercept system back press: when on PIN step, go back to selection
+        // Without this, system back would pop the Login screen (root) and crash.
+        BackHandler(enabled = uiState.selectedEmployer != null) {
+            viewModel.onBackToSelection()
+        }
+
+        Crossfade(targetState = uiState.selectedEmployer != null) { isSelected ->
                     if (!isSelected) {
                         EmployeeSelectionView(
                             employers = uiState.employers,
@@ -101,18 +135,26 @@ fun EmployeeSelectionView(
     onEmployeeSelected: (EmployerEntity) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "Select Employee",
-            style = MaterialTheme.typography.titleLarge,
+            text = "Welcome Back",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
-        
+        Text(
+            text = "Select your account to continue",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = it },
@@ -128,22 +170,21 @@ fun EmployeeSelectionView(
                     .fillMaxWidth()
                     .menuAnchor(),
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                prefix = {
+                leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                        contentDescription = null
                     )
                 }
             )
-            
+
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
                 employers.forEach { employer ->
                     DropdownMenuItem(
-                        text = { 
+                        text = {
                             Column {
                                 Text(
                                     text = employer.fullName,
@@ -166,8 +207,6 @@ fun EmployeeSelectionView(
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -192,64 +231,52 @@ fun PinInputView(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Enter PIN",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f)
-            )
+            Column {
+                Text(
+                    text = "Enter PIN",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = employer.fullName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
-        
-        Text(
-            text = employer.fullName,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
-        )
-        
-        Text(
-            text = "Enter your 4-digit PIN to continue",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Visual PIN dots
         PinDots(pinLength = pin.length)
-        
+
         if (error != null) {
             Text(
                 text = error,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp)
+                textAlign = TextAlign.Center
             )
         }
-        
+
         if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(32.dp)
-            )
+            CircularProgressIndicator(modifier = Modifier.size(32.dp))
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         // Custom Numeric Keypad
         NumericKeypad(
             onDigitClick = { digit ->
-                if (pin.length < 4) {
-                    onPinChange(pin + digit)
-                }
+                if (pin.length < 4) onPinChange(pin + digit)
             },
             onDeleteClick = {
-                if (pin.isNotEmpty()) {
-                    onPinChange(pin.dropLast(1))
-                }
+                if (pin.isNotEmpty()) onPinChange(pin.dropLast(1))
             },
             enabled = !isLoading
         )
-        
+
         TextButton(onClick = onBack) {
             Text("Not ${employer.fullName}? Change User")
         }
@@ -259,16 +286,19 @@ fun PinInputView(
 @Composable
 fun PinDots(pinLength: Int) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
         modifier = Modifier.padding(vertical = 16.dp)
     ) {
         repeat(4) { index ->
             val isFilled = index < pinLength
             Surface(
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(20.dp),
                 shape = androidx.compose.foundation.shape.CircleShape,
                 color = if (isFilled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                border = if (!isFilled) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outline) else null
+                border = if (!isFilled) androidx.compose.foundation.BorderStroke(
+                    2.dp,
+                    MaterialTheme.colorScheme.outline
+                ) else null
             ) {}
         }
     }
@@ -281,10 +311,10 @@ fun NumericKeypad(
     enabled: Boolean = true
 ) {
     val digits = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "delete")
-    
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.width(300.dp)
+        modifier = Modifier.widthIn(max = 340.dp).fillMaxWidth()
     ) {
         for (i in 0 until 4) {
             Row(
@@ -303,7 +333,10 @@ fun NumericKeypad(
                                 },
                                 modifier = Modifier.weight(1f),
                                 enabled = enabled,
-                                color = if (digit == "delete") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer
+                                color = if (digit == "delete")
+                                    MaterialTheme.colorScheme.errorContainer
+                                else
+                                    MaterialTheme.colorScheme.secondaryContainer
                             )
                         } else {
                             Spacer(modifier = Modifier.weight(1f))
@@ -330,9 +363,9 @@ fun KeypadButton(
         shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.buttonColors(
             containerColor = color,
-            contentColor = if (color == MaterialTheme.colorScheme.errorContainer) 
-                MaterialTheme.colorScheme.onErrorContainer 
-            else 
+            contentColor = if (color == MaterialTheme.colorScheme.errorContainer)
+                MaterialTheme.colorScheme.onErrorContainer
+            else
                 MaterialTheme.colorScheme.onSecondaryContainer
         ),
         contentPadding = PaddingValues(0.dp)
