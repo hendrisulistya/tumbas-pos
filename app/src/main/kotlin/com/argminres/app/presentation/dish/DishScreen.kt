@@ -371,7 +371,11 @@ fun ProductImageDisplay(image: String, modifier: Modifier = Modifier) {
                 null
             }
         } else {
-            image // Use URL directly
+            if (image.startsWith("http") || image.startsWith("content://") || image.startsWith("file://")) {
+                image
+            } else {
+                "file:///android_asset/$image"
+            }
         }
     }
 

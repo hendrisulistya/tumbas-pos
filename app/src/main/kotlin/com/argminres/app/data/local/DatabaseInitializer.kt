@@ -22,8 +22,11 @@ class DatabaseInitializer(
 ) {
     suspend fun initializeIfNeeded() = withContext(Dispatchers.IO) {
         if (settingsRepository.isDatabaseInitialized()) {
+            android.util.Log.d("DatabaseInitializer", "Database already initialized, skipping.")
             return@withContext
         }
+
+        android.util.Log.d("DatabaseInitializer", "Starting database initialization...")
 
 
         // Insert categories from CSV
@@ -51,6 +54,7 @@ class DatabaseInitializer(
         
         // Mark as initialized
         settingsRepository.setDatabaseInitialized(true)
+        android.util.Log.d("DatabaseInitializer", "Database initialization completed successfully.")
     }
     
     private suspend fun insertDefaultStoreSettings() {
@@ -149,6 +153,7 @@ class DatabaseInitializer(
     }
     
     private suspend fun insertCategoriesFromCsv() {
+        android.util.Log.d("DatabaseInitializer", "Inserting categories...")
         // Categories are now static (matches HomeScreen hardcoded categories)
         val categories = listOf(
             com.argminres.app.data.local.entity.CategoryEntity(id = 1L, name = "Paket", description = "Paket makanan"),
@@ -157,6 +162,7 @@ class DatabaseInitializer(
             com.argminres.app.data.local.entity.CategoryEntity(id = 4L, name = "Lain-lain", description = "Lain-lain")
         )
         categoryDao.insertAll(categories)
+        android.util.Log.d("DatabaseInitializer", "Inserted ${categories.size} categories.")
     }
     
     private suspend fun insertCustomersFromCsv() {
@@ -227,8 +233,12 @@ class DatabaseInitializer(
             }
             if (products.isNotEmpty()) {
                 productDao.insertAll(products)
+                android.util.Log.d("DatabaseInitializer", "Inserted ${products.size} products from dishes.csv.")
+            } else {
+                android.util.Log.w("DatabaseInitializer", "No products found in dishes.csv!")
             }
         } catch (e: Exception) {
+            android.util.Log.e("DatabaseInitializer", "Error inserting products from CSV", e)
             e.printStackTrace()
         }
     }

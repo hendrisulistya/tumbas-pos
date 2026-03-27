@@ -100,7 +100,8 @@ class DishMasterViewModel(
     fun onSaveDish(
         name: String,
         category: String,
-        price: Double
+        price: Double,
+        image: String? = null
     ) {
         viewModelScope.launch {
             try {
@@ -113,6 +114,7 @@ class DishMasterViewModel(
                             name = name,
                             category = category,
                             price = price,
+                            image = image,
                             updatedAt = System.currentTimeMillis()
                         )
                     )
@@ -124,7 +126,8 @@ class DishMasterViewModel(
                             description = "",
                             category = category,
                             price = price,
-                            stock = 0
+                            stock = 0,
+                            image = image
                         )
                     )
                 }

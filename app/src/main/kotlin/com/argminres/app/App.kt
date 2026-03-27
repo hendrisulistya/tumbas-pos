@@ -79,15 +79,20 @@ fun App() {
             val authManager: com.argminres.app.domain.manager.AuthenticationManager = koinInject()
             val isAuthenticated by authManager.currentEmployer.collectAsState()
             
+            var isInitializing by remember { mutableStateOf(settingsRepository.isActivated() && !settingsRepository.isDatabaseInitialized()) }
+            
             // Restore session on app start
             LaunchedEffect(Unit) {
                 // Auto-activate & Initialize on app start for debug builds
                 if (com.argminres.app.BuildConfig.DEBUG) {
-                    // Check if already truly activated to avoid unnecessary work
-                    // but calling saveStoreId and setActivated is idempotent
-                    settingsRepository.saveStoreId(settingsRepository.getAppId())
-                    settingsRepository.setActivated(true)
-                    databaseInitializer.initializeIfNeeded()
+                    isInitializing = true
+                    try {
+                        settingsRepository.saveStoreId(settingsRepository.getAppId())
+                        settingsRepository.setActivated(true)
+                        databaseInitializer.initializeIfNeeded()
+                    } finally {
+                        isInitializing = false
+                    }
                 }
                 authManager.restoreSession()
             }
@@ -97,6 +102,13 @@ fun App() {
                 Screen.Activation.route
             } else {
                 Screen.Login.route
+            }
+
+            if (isInitializing) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                return@PadangPOSTheme
             }
             
             // Redirect to login if user becomes unauthenticated
