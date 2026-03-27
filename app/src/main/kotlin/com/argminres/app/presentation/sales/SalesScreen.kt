@@ -1,10 +1,14 @@
 package com.argminres.app.presentation.sales
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,8 +17,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,6 +32,11 @@ import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.util.Locale
+
+private val Blue600 = Color(0xFF1976D2)
+private val Blue50  = Color(0xFFE3F2FD)
+private val Blue100 = Color(0xFFBBDEFB)
+private val glass   = Color(0xFF_E3F2FD.toInt()) // unused, kept for compat
 
 @Composable
 fun SalesScreen(
@@ -60,15 +72,24 @@ fun SalesScreen(
         )
     }
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Sales") },
+                title = { Text("Sales", color = Color.White, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Blue600
+                ),
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         },
@@ -100,12 +121,12 @@ fun SalesScreen(
                                 Icons.Default.ShoppingCart,
                                 contentDescription = null,
                                 modifier = Modifier.size(80.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                tint = Blue100
                             )
                             Text(
                                 "Your cart is empty",
                                 style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color(0xFF9E9E9E)
                             )
                             Text(
                                 "Add products from the Home screen",
@@ -137,7 +158,7 @@ fun SalesScreen(
                 }
             }
 
-            VerticalDivider()
+            VerticalDivider(color = Color(0xFF2A2A4A))
 
             // ── Right: Payment Panel (40%) ─────────────────────────────
             var showCustomerDialog by remember { mutableStateOf(false) }
@@ -164,20 +185,24 @@ fun SalesScreen(
                 Text(
                     "Order Summary",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
 
-                HorizontalDivider()
+                HorizontalDivider(color = Color(0xFFE0E0E0))
 
                 // Customer Selection Field
-                OutlinedCard(
-                    onClick = { showCustomerDialog = true },
-                    modifier = Modifier.fillMaxWidth()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Blue50)
+                        .border(1.dp, Blue100, RoundedCornerShape(12.dp))
+                        .then(Modifier.clickable { showCustomerDialog = true })
+                        .padding(16.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -186,35 +211,28 @@ fun SalesScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Icon(Icons.Default.Person, null, tint = Blue600)
                             Column {
                                 Text(
                                     "Customer",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color(0xFF616161)
                                 )
                                 Text(
                                     uiState.selectedCustomer?.name ?: "Select Customer",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (uiState.selectedCustomer != null) Color.Black else Color(0xFF9E9E9E)
                                 )
                             }
                         }
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Change Customer",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Icon(Icons.Default.Edit, null, tint = Color(0xFF9E9E9E))
                     }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                HorizontalDivider()
+                HorizontalDivider(color = Color(0xFFE0E0E0))
 
                 // Total
                 Row(
@@ -222,34 +240,43 @@ fun SalesScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Total", style = MaterialTheme.typography.titleLarge)
+                    Text("Total", style = MaterialTheme.typography.titleLarge, color = Color.Black)
                     Text(
                         currencyFormatter.format(uiState.totalAmount),
                         style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = Blue600,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                Button(
-                    onClick = { viewModel.checkout() },
+                // Gradient Checkout Button
+                val canCheckout = uiState.cart.isNotEmpty() && !uiState.isLoading && uiState.selectedCustomer != null
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
-                    enabled = uiState.cart.isNotEmpty() && !uiState.isLoading && uiState.selectedCustomer != null
+                        .height(54.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (canCheckout) Blue600 else Color(0xFFE0E0E0)
+                        )
+                        .then(if (canCheckout) Modifier.clickable { viewModel.checkout() } else Modifier),
+                    contentAlignment = Alignment.Center
                 ) {
                     if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                     } else {
-                        Text("Checkout", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Checkout",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (canCheckout) Color.White else Color(0xFF9E9E9E)
+                        )
                     }
                 }
             }
         }
     }
+    } // close aurora Box
 }
 
 @Composable
@@ -553,8 +580,12 @@ fun CartItemRow(
     onDecrease: () -> Unit,
     currencyFormatter: NumberFormat
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Blue50)
+            .border(1.dp, Blue100, RoundedCornerShape(14.dp))
     ) {
         Row(
             modifier = Modifier
@@ -570,62 +601,60 @@ fun CartItemRow(
                 Text(
                     item.product.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     currencyFormatter.format(item.product.price),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFF8080B0)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     currencyFormatter.format(item.subtotal),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Blue600
                 )
             }
             
-            // Quantity Controls in unified container
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 1.dp
+            // Quantity Controls
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .background(Blue50, RoundedCornerShape(10.dp))
+                    .padding(4.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.padding(4.dp)
+                IconButton(
+                    onClick = onDecrease,
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    IconButton(
-                        onClick = onDecrease,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Remove, 
-                            "Decrease",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    
-                    Text(
-                        item.quantity.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                    Icon(
+                        Icons.Default.Remove, 
+                        "Decrease",
+                        modifier = Modifier.size(18.dp),
+                        tint = Color(0xFF424242)
                     )
-                    
-                    IconButton(
-                        onClick = onIncrease,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Add, 
-                            "Increase",
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                }
+                Text(
+                    item.quantity.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    color = Color.Black
+                )
+                IconButton(
+                    onClick = onIncrease,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add, 
+                        "Increase",
+                        modifier = Modifier.size(18.dp),
+                        tint = Blue600
+                    )
                 }
             }
         }

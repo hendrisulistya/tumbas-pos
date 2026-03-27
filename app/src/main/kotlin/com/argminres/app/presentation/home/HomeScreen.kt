@@ -1,6 +1,7 @@
 package com.argminres.app.presentation.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.WindowInsets
@@ -8,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,14 +29,17 @@ import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
-// Map category names to icons
+private val Blue600 = Color(0xFF1976D2)
+private val Blue50  = Color(0xFFE3F2FD)
+private val Blue100 = Color(0xFFBBDEFB)
+
 private fun categoryIcon(name: String): ImageVector = when {
-    name.contains("Paket", ignoreCase = true) -> Icons.Default.LocalOffer
+    name.contains("Paket", ignoreCase = true)   -> Icons.Default.LocalOffer
     name.contains("Makanan", ignoreCase = true) -> Icons.Default.Restaurant
     name.contains("Minuman", ignoreCase = true) -> Icons.Default.LocalDrink
-    name.contains("Lain", ignoreCase = true) -> Icons.Default.MoreHoriz
-    name == "All" -> Icons.Default.GridView
-    else -> Icons.Default.Category
+    name.contains("Lain", ignoreCase = true)    -> Icons.Default.MoreHoriz
+    name == "All"                               -> Icons.Default.GridView
+    else                                        -> Icons.Default.Category
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,17 +54,38 @@ fun HomeScreen(
     val showFab by remember { derivedStateOf { uiState.cartItemCount > 0 } }
 
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
-                title = { Text("PadangPOS") },
+                title = {
+                    Text(
+                        "PadangPOS",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White
+                    )
+                },
                 actions = {
+                    if (uiState.cartItemCount > 0) {
+                        BadgedBox(
+                            badge = {
+                                Badge(containerColor = Color.White) {
+                                    Text(uiState.cartItemCount.toString(), color = Blue600)
+                                }
+                            },
+                            modifier = Modifier.padding(end = 4.dp)
+                        ) {
+                            IconButton(onClick = onNavigateToCart) {
+                                Icon(Icons.Default.ShoppingCart, "Cart", tint = Color.White)
+                            }
+                        }
+                    }
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, "Settings", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = Blue600
                 ),
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
@@ -67,16 +94,10 @@ fun HomeScreen(
             if (showFab) {
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToCart,
-                    icon = {
-                        BadgedBox(
-                            badge = {
-                                Badge { Text(uiState.cartItemCount.toString()) }
-                            }
-                        ) {
-                            Icon(Icons.Default.ShoppingCart, "Cart")
-                        }
-                    },
-                    text = { Text("View Cart") },
+                    icon = { Icon(Icons.Default.ShoppingCart, "Cart") },
+                    text = { Text("View Cart (${uiState.cartItemCount})", fontWeight = FontWeight.SemiBold) },
+                    containerColor = Blue600,
+                    contentColor = Color.White,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
@@ -87,15 +108,16 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Blue600)
             }
         } else {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .background(Color.White)
             ) {
-                // ---- Category Sidebar (20%) ----
+                // ── Category Sidebar ──────────────────────────────────────
                 CategorySidebar(
                     categories = uiState.categories,
                     selectedCategory = uiState.selectedCategory,
@@ -105,7 +127,7 @@ fun HomeScreen(
                         .weight(0.20f)
                 )
 
-                // ---- Dish Grid (80%) ----
+                // ── Dish Grid ─────────────────────────────────────────────
                 if (uiState.dishes.isEmpty()) {
                     Box(
                         modifier = Modifier
@@ -121,12 +143,12 @@ fun HomeScreen(
                                 Icons.Default.Inventory,
                                 contentDescription = null,
                                 modifier = Modifier.size(56.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = Color(0xFFBBDEFB)
                             )
                             Text(
                                 "No dishes available",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color(0xFF9E9E9E)
                             )
                         }
                     }
@@ -136,9 +158,9 @@ fun HomeScreen(
                         modifier = Modifier
                             .weight(0.80f)
                             .fillMaxHeight(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        contentPadding = PaddingValues(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         gridItems(
                             items = uiState.dishes,
@@ -171,8 +193,8 @@ private fun CategorySidebar(
 ) {
     Surface(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 2.dp
+        color = Blue50,
+        tonalElevation = 0.dp
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -199,21 +221,11 @@ private fun CategoryItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected)
-        MaterialTheme.colorScheme.primaryContainer
-    else
-        MaterialTheme.colorScheme.surfaceVariant
-
-    val contentColor = if (isSelected)
-        MaterialTheme.colorScheme.onPrimaryContainer
-    else
-        MaterialTheme.colorScheme.onSurfaceVariant
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .background(backgroundColor)
+            .background(if (isSelected) Blue100 else Color.Transparent)
             .padding(vertical = 14.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -221,15 +233,15 @@ private fun CategoryItem(
         Icon(
             imageVector = icon,
             contentDescription = category,
-            tint = contentColor,
-            modifier = Modifier.size(36.dp)
+            tint = if (isSelected) Blue600 else Color(0xFF9E9E9E),
+            modifier = Modifier.size(28.dp)
         )
         Text(
             text = category,
             style = MaterialTheme.typography.bodySmall,
-            fontSize = 13.sp,
+            fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = contentColor,
+            color = if (isSelected) Blue600 else Color(0xFF616161),
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -237,10 +249,10 @@ private fun CategoryItem(
         if (isSelected) {
             Box(
                 modifier = Modifier
-                    .width(32.dp)
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.primary)
+                    .width(24.dp)
+                    .height(2.dp)
+                    .clip(RoundedCornerShape(1.dp))
+                    .background(Blue600)
             )
         }
     }
@@ -256,23 +268,27 @@ fun ProductGridItem(
     onDecrease: () -> Unit
 ) {
     val product = productWithCategory.dish
+    val isInCart = cartQuantity > 0
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isInCart) Blue50 else Color.White
+        ),
+        border = if (isInCart)
+            androidx.compose.foundation.BorderStroke(1.5.dp, Blue600)
+        else null
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             // Product Image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .height(110.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                    .background(Blue50),
                 contentAlignment = Alignment.Center
             ) {
                 if (product.image != null) {
@@ -282,11 +298,47 @@ fun ProductGridItem(
                     )
                 } else {
                     Icon(
-                        Icons.Default.Image,
+                        Icons.Default.Restaurant,
                         contentDescription = null,
-                        modifier = Modifier.size(36.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        modifier = Modifier.size(40.dp),
+                        tint = Blue100
                     )
+                }
+
+                // Habis overlay
+                if (product.stock <= 0) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xAAFFFFFF)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Habis",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFC62828)
+                        )
+                    }
+                }
+
+                // Cart badge
+                if (isInCart) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(24.dp)
+                            .background(Blue600, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            cartQuantity.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
 
@@ -294,14 +346,15 @@ fun ProductGridItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 Text(
                     product.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    color = Color.Black,
                     lineHeight = 16.sp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
@@ -309,59 +362,66 @@ fun ProductGridItem(
                     currencyFormatter.format(product.price),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Blue600
                 )
-                if (product.stock <= 0) {
-                    Text(
-                        "Habis",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
             }
 
             // Add / Quantity Controls
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                    .padding(horizontal = 10.dp)
+                    .padding(bottom = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (cartQuantity == 0) {
                     Button(
                         onClick = onAddToCart,
-                        modifier = Modifier.fillMaxWidth().height(36.dp),
+                        modifier = Modifier.fillMaxWidth().height(34.dp),
                         enabled = product.stock > 0,
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(0.dp)
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Blue600,
+                            disabledContainerColor = Color(0xFFE0E0E0)
+                        )
                     ) {
-                        Icon(Icons.Default.Add, "Add", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Add, "Add", modifier = Modifier.size(16.dp), tint = Color.White)
                         Spacer(Modifier.width(4.dp))
-                        Text("Tambah", style = MaterialTheme.typography.labelMedium)
+                        Text("Tambah", style = MaterialTheme.typography.labelMedium, color = Color.White)
                     }
                 } else {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        FilledIconButton(
+                        IconButton(
                             onClick = onDecrease,
-                            modifier = Modifier.size(30.dp)
+                            modifier = Modifier
+                                .size(30.dp)
+                                .background(Blue50, RoundedCornerShape(8.dp))
+                                .border(1.dp, Blue100, RoundedCornerShape(8.dp))
                         ) {
-                            Icon(Icons.Default.Remove, "Decrease", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Remove, "Decrease", modifier = Modifier.size(16.dp), tint = Blue600)
                         }
                         Text(
                             cartQuantity.toString(),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
                         )
-                        FilledIconButton(
+                        IconButton(
                             onClick = onIncrease,
-                            modifier = Modifier.size(30.dp),
+                            modifier = Modifier
+                                .size(30.dp)
+                                .background(
+                                    if (cartQuantity < product.stock) Blue600 else Color(0xFFE0E0E0),
+                                    RoundedCornerShape(8.dp)
+                                ),
                             enabled = cartQuantity < product.stock
                         ) {
-                            Icon(Icons.Default.Add, "Increase", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Add, "Increase", modifier = Modifier.size(16.dp), tint = Color.White)
                         }
                     }
                 }

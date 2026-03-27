@@ -30,12 +30,15 @@ fun EndOfDayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("End of Day") },
+                title = { Text("End of Day", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
+                )
             )
         }
     ) { paddingValues ->
@@ -226,7 +229,9 @@ fun EndOfDayCompleteScreen(
         
         // Summary Card
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -270,7 +275,10 @@ fun EndOfDayCompleteScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(wasteRecords) { record ->
-                    Card {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -318,7 +326,10 @@ fun EndOfDayCompleteScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(ingredientUsage) { usage ->
-                    Card {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

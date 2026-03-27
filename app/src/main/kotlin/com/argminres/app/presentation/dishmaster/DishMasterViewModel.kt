@@ -18,11 +18,14 @@ data class DishMasterUiState(
     val isLoading: Boolean = false,
     val showAddEditDialog: Boolean = false,
     val selectedDish: DishWithCategory? = null,
+    val isUploadingImage: Boolean = false,
     val error: String? = null
 )
 
 class DishMasterViewModel(
-    private val dishRepository: DishRepository
+    private val dishRepository: DishRepository,
+    private val manageProductImageUseCase: com.argminres.app.domain.usecase.dish.ManageDishImageUseCase,
+    private val auditLogger: com.argminres.app.domain.manager.AuditLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DishMasterUiState())
@@ -144,11 +147,58 @@ class DishMasterViewModel(
             try {
                 val dish = _uiState.value.dishes.find { it.dish.id == dishId }?.dish
                 if (dish != null) {
+                    // Delete image if exists
+                    dish.image?.let { image ->
+                        manageProductImageUseCase.deleteImage(image)
+                    }
                     dishRepository.deleteDish(dish)
+                    
+                    auditLogger.logAsync {
+                        auditLogger.logDelete("DISH", dishId, "Name: ${dish.name}")
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
         }
+    }
+
+    suspend fun uploadProductImage(imageData: ByteArray): Result<String> {
+        _uiState.update { it.copy(isUploadingImage = true) }
+        return try {
+            val compressedData = compressImageIfNeeded(imageData, maxSizeKb = 500)
+            manageProductImageUseCase.uploadImage(compressedData).also {
+                _uiState.update { state -> state.copy(isUploadingImage = false) }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isUploadingImage = false) }
+            Result.failure(e)
+        }
+    }
+
+    private fun compressImageIfNeeded(imageData: ByteArray, maxSizeKb: Int): ByteArray {
+        val maxSizeBytes = maxSizeKb * 1024
+        if (imageData.size <= maxSizeBytes) return imageData
+
+        val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
+            ?: return imageData
+
+        val scaleFactor = kotlin.math.sqrt(maxSizeBytes.toDouble() / imageData.size)
+        val newWidth = (bitmap.width * scaleFactor).toInt()
+        val newHeight = (bitmap.height * scaleFactor).toInt()
+
+        val scaledBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+        val outputStream = java.io.ByteArrayOutputStream()
+        var quality = 85
+
+        do {
+            outputStream.reset()
+            scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, outputStream)
+            quality -= 5
+        } while (outputStream.size() > maxSizeBytes && quality > 10)
+
+        bitmap.recycle()
+        scaledBitmap.recycle()
+        return outputStream.toByteArray()
     }
 }

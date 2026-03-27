@@ -26,15 +26,14 @@ fun EmployerManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Manage Employees") },
+                title = { Text("Manage Employees", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
                 ),
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
@@ -42,7 +41,8 @@ fun EmployerManagementScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = viewModel::onAddEmployerClick,
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2),
+                contentColor = androidx.compose.ui.graphics.Color.White
             ) {
                 Icon(Icons.Default.Add, "Add Employee")
             }
@@ -107,7 +107,11 @@ fun EmployerCard(
     
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         ListItem(
             headlineContent = { 

@@ -50,7 +50,7 @@ fun ActivationScreen(
                         imageVector = Icons.Default.Lock,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = androidx.compose.ui.graphics.Color(0xFF1976D2)
                     )
                     
                     Text(
@@ -104,7 +104,11 @@ fun ActivationScreen(
                     Button(
                         onClick = viewModel::onActivateClick,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isInitializing
+                        enabled = !uiState.isInitializing,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2),
+                            contentColor = androidx.compose.ui.graphics.Color.White
+                        )
                     ) {
                         if (uiState.isInitializing) {
                             CircularProgressIndicator(

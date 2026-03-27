@@ -51,12 +51,16 @@ fun StoreSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Store Settings") },
+                title = { Text("Store Settings", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
+                ),
+                windowInsets = androidx.compose.foundation.layout.WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         }
     ) { paddingValues ->

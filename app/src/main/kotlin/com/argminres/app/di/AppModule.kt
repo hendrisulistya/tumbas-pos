@@ -218,7 +218,7 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.startday.SessionCheckViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.ingredientmaster.IngredientMasterViewModel(get(), get(), get()) }
-    viewModel { com.argminres.app.presentation.dishmaster.DishMasterViewModel(get()) }
+    viewModel { com.argminres.app.presentation.dishmaster.DishMasterViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderViewModel(get(), get(), get(), get()) }

@@ -32,7 +32,7 @@ fun StartDayDialog(
                 Icons.Default.CalendarToday,
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = androidx.compose.ui.graphics.Color(0xFF1976D2)
             )
         },
         title = {
@@ -73,7 +73,11 @@ fun StartDayDialog(
         confirmButton = {
             Button(
                 onClick = onStartDay,
-                enabled = !isStarting
+                enabled = !isStarting,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2),
+                    contentColor = androidx.compose.ui.graphics.Color.White
+                )
             ) {
                 if (isStarting) {
                     CircularProgressIndicator(
@@ -149,7 +153,7 @@ fun NoSessionWarning(
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary
+            color = androidx.compose.ui.graphics.Color(0xFF1976D2)
         )
 
         Spacer(modifier = Modifier.height(32.dp))

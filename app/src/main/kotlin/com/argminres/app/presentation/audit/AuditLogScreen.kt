@@ -27,22 +27,26 @@ fun AuditLogScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Audit Log") },
+                title = { Text("Audit Log", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 actions = {
                     IconButton(onClick = { showFilterDialog = true }) {
-                        Icon(Icons.Default.FilterList, "Filter")
+                        Icon(Icons.Default.FilterList, "Filter", tint = androidx.compose.ui.graphics.Color.White)
                     }
                     if (uiState.selectedEmployerId != null || uiState.selectedAction != null) {
                         IconButton(onClick = { viewModel.clearFilters() }) {
-                            Icon(Icons.Default.Clear, "Clear Filters")
+                            Icon(Icons.Default.Clear, "Clear Filters", tint = androidx.compose.ui.graphics.Color.White)
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
+                ),
+                windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         }
     ) { padding ->
@@ -114,7 +118,11 @@ fun AuditLogScreen(
 @Composable
 fun AuditLogItem(log: AuditLogEntity) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
     ) {
         Column(
             modifier = Modifier.padding(16.dp)

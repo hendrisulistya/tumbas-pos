@@ -9,6 +9,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.argminres.app.data.local.dao.DishWithCategory
 import org.koin.compose.koinInject
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.material.icons.Icons
@@ -22,6 +27,8 @@ import com.argminres.app.presentation.dish.ProductImageDisplay
 @Composable
 fun DishMasterDialog(
     dish: DishWithCategory?,
+    isUploadingImage: Boolean,
+    onUploadImage: suspend (ByteArray) -> Result<String>,
     onDismiss: () -> Unit,
     onSave: (String, String, Double, String?) -> Unit
 ) {
@@ -33,6 +40,26 @@ fun DishMasterDialog(
     var price by remember { mutableStateOf(dish?.dish?.price?.toString() ?: "0") }
     var image by remember { mutableStateOf(dish?.dish?.image ?: "") }
     var expandedCategory by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            coroutineScope.launch {
+                val inputStream = context.contentResolver.openInputStream(it)
+                val bytes = inputStream?.readBytes()
+                inputStream?.close()
+                if (bytes != null) {
+                    onUploadImage(bytes).onSuccess { imageUrl ->
+                        image = imageUrl
+                    }
+                }
+            }
+        }
+    }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -105,14 +132,36 @@ fun DishMasterDialog(
                     singleLine = true
                 )
 
-                OutlinedTextField(
-                    value = image,
-                    onValueChange = { image = it },
-                    label = { Text("Image Path/URL/Base64") },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text("e.g. dish_image/1001.png") }
-                )
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = image,
+                        onValueChange = { image = it },
+                        label = { Text("Image Path/URL") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        placeholder = { Text("e.g. dish_image/1001.png") }
+                    )
+                    
+                    Button(
+                        onClick = { 
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        enabled = !isUploadingImage,
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        if (isUploadingImage) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Icon(Icons.Default.Image, contentDescription = "Pick Image")
+                        }
+                    }
+                }
             }
         },
         confirmButton = {

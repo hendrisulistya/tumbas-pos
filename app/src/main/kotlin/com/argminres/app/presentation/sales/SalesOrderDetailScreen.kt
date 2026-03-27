@@ -63,20 +63,19 @@ fun SalesOrderDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Order Details") },
+                title = { Text("Order Details", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
+                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.showPreview() }) {
-                        Icon(Icons.Default.Print, "Print Receipt")
+                        Icon(Icons.Default.Print, "Print Receipt", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
                 ),
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
@@ -104,7 +103,8 @@ fun SalesOrderDetailScreen(
                         // Order Header
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
@@ -152,7 +152,10 @@ fun SalesOrderDetailScreen(
                         // Totals
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                            colors = CardDefaults.cardColors(
+                                containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2),
+                                contentColor = androidx.compose.ui.graphics.Color.White
+                            )
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
