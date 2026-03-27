@@ -37,7 +37,9 @@ fun PrinterSettingsScreen(
             Manifest.permission.BLUETOOTH,
             Manifest.permission.BLUETOOTH_ADMIN,
             Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_SCAN
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         )
     )
 
@@ -215,22 +217,61 @@ fun PrinterSettingsScreen(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Row(
+            FilterChip(
+                selected = uiState.printerPaperSize == 58,
+                onClick = { viewModel.updatePaperSize(58) },
+                label = { Text("58mm (Default)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Scale Adjustment
+            Text(
+                text = "Penyesuaian Ukuran Cetak",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
-                FilterChip(
-                    selected = uiState.printerPaperSize == 58,
-                    onClick = { viewModel.updatePaperSize(58) },
-                    label = { Text("58mm") },
-                    modifier = Modifier.weight(1f)
-                )
-                FilterChip(
-                    selected = uiState.printerPaperSize == 80,
-                    onClick = { viewModel.updatePaperSize(80) },
-                    label = { Text("80mm") },
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Scale Factor", style = MaterialTheme.typography.labelMedium)
+                        Text(
+                            text = "${"%.1f".format(uiState.printerScale)}x",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        FilledIconButton(
+                            onClick = { viewModel.updatePrinterScale(uiState.printerScale - 0.1f) },
+                            enabled = uiState.printerScale > 0.55f, // Tolerance for float comparison
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("-", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        FilledIconButton(
+                            onClick = { viewModel.updatePrinterScale(uiState.printerScale + 0.1f) },
+                            enabled = uiState.printerScale < 1.95f,
+                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("+", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+                        }
+                    }
+                }
             }
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -248,7 +289,13 @@ fun PrinterSettingsScreen(
                     color = Color.Gray
                 )
                 Button(
-                    onClick = { viewModel.startScan() },
+                    onClick = { 
+                        if (bluetoothPermissionsState.allPermissionsGranted) {
+                            viewModel.startScan()
+                        } else {
+                            bluetoothPermissionsState.launchMultiplePermissionRequest()
+                        }
+                    },
                     modifier = Modifier.padding(top = 8.dp),
                     enabled = !uiState.isConnecting && !uiState.isScanning
                 ) {
@@ -299,7 +346,13 @@ fun PrinterSettingsScreen(
                                 )
                             } else {
                                 TextButton(
-                                    onClick = { viewModel.startScan() },
+                                    onClick = { 
+                                        if (bluetoothPermissionsState.allPermissionsGranted) {
+                                            viewModel.startScan()
+                                        } else {
+                                            bluetoothPermissionsState.launchMultiplePermissionRequest()
+                                        }
+                                    },
                                     enabled = !uiState.isConnecting
                                 ) {
                                     Text("Scan")

@@ -28,9 +28,10 @@ object ThermalReceiptPdfGenerator {
         context: Context,
         receiptText: String,
         orderNumber: String,
-        logoBase64: String? = null
+        logoBase64: String? = null,
+        scale: Float = 1.0f
     ): String? {
-        return generatePdfInternal(context, receiptText, orderNumber, logoBase64, isTemp = true)
+        return generatePdfInternal(context, receiptText, orderNumber, logoBase64, isTemp = true, scale = scale)
     }
     
     /**
@@ -41,9 +42,10 @@ object ThermalReceiptPdfGenerator {
         context: Context,
         receiptText: String,
         orderNumber: String,
-        logoBase64: String? = null
+        logoBase64: String? = null,
+        scale: Float = 1.0f
     ): String? {
-        return generatePdfInternal(context, receiptText, orderNumber, logoBase64, isTemp = false)
+        return generatePdfInternal(context, receiptText, orderNumber, logoBase64, isTemp = false, scale = scale)
     }
     
     /**
@@ -54,7 +56,8 @@ object ThermalReceiptPdfGenerator {
         receiptText: String,
         orderNumber: String,
         logoBase64: String?,
-        isTemp: Boolean
+        isTemp: Boolean,
+        scale: Float = 1.0f
     ): String? {
         return try {
             // Create PDF document
@@ -66,12 +69,15 @@ object ThermalReceiptPdfGenerator {
             // Setup paint for text
             val paint = Paint().apply {
                 typeface = Typeface.MONOSPACE
-                textSize = 10f
+                textSize = 10f * scale
                 isAntiAlias = true
                 color = android.graphics.Color.BLACK
             }
 
-            var currentContentHeight = MARGIN * 2f // Initial margin top and bottom
+            val scaledMargin = MARGIN * scale
+            val scaledLineHeight = LINE_HEIGHT * scale
+
+            var currentContentHeight = scaledMargin * 2f // Initial margin top and bottom
             var logoRenderedHeight = 0f
 
             if (!logoBase64.isNullOrBlank()) {
@@ -94,14 +100,14 @@ object ThermalReceiptPdfGenerator {
                 }
             }
             currentContentHeight += logoRenderedHeight
-            currentContentHeight += lines.size * LINE_HEIGHT
+            currentContentHeight += lines.size * scaledLineHeight
             
             // Create page with exact content height (no minimum)
             val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, currentContentHeight.toInt(), 1).create()
             val page = pdfDocument.startPage(pageInfo)
             val canvas = page.canvas
             
-            var yPosition = MARGIN
+            var yPosition = scaledMargin
             
             // Draw logo if available
             if (!logoBase64.isNullOrBlank()) {
@@ -110,15 +116,16 @@ object ThermalReceiptPdfGenerator {
                     val logoBitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                     
                     if (logoBitmap != null) {
-                        // Scale logo to fit width (max 180 points, centered)
-                        val maxLogoWidth = 180f
+                        // Scale logo to fit width (max 180 points, centered) - also affect by scale?
+                        // Usually logos shouldn't grow beyond paper width
+                        val maxLogoWidth = 180f * scale.coerceAtMost(1.2f) // Don't allow logo to grow too much
                         val scaleFactor = if (logoBitmap.width > maxLogoWidth) {
                             maxLogoWidth / logoBitmap.width
                         } else {
-                            1f
+                            1f * scale.coerceAtMost(1.2f)
                         }
                         
-                        val scaledWidth = (logoBitmap.width * scaleFactor).toInt()
+                        val scaledWidth = (logoBitmap.width * scaleFactor).toInt().coerceAtMost(PAGE_WIDTH - 20)
                         val scaledHeight = (logoBitmap.height * scaleFactor).toInt()
                         
                         val scaledLogo = android.graphics.Bitmap.createScaledBitmap(
@@ -132,7 +139,7 @@ object ThermalReceiptPdfGenerator {
                         val logoX = (PAGE_WIDTH - scaledWidth) / 2f
                         canvas.drawBitmap(scaledLogo, logoX, yPosition, null)
                         
-                        yPosition += scaledHeight + 10f // Add spacing after logo
+                        yPosition += scaledHeight + (10f * scale) // Add spacing after logo
                         
                         scaledLogo.recycle()
                         logoBitmap.recycle()
@@ -144,8 +151,8 @@ object ThermalReceiptPdfGenerator {
             
             // Draw text lines
             lines.forEach { line ->
-                canvas.drawText(line, MARGIN, yPosition, paint)
-                yPosition += LINE_HEIGHT
+                canvas.drawText(line, scaledMargin, yPosition, paint)
+                yPosition += scaledLineHeight
             }
             
             pdfDocument.finishPage(page)

@@ -8,6 +8,7 @@ import com.argminres.app.domain.repository.DishRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -18,6 +19,8 @@ data class DishMasterUiState(
     val isLoading: Boolean = false,
     val showAddEditDialog: Boolean = false,
     val selectedDish: DishWithCategory? = null,
+    val selectedPackageComponents: List<Long> = emptyList(),
+    val selectedTab: Int = 0, // 0 = Hidangan, 1 = Paket
     val isUploadingImage: Boolean = false,
     val error: String? = null
 )
@@ -25,7 +28,8 @@ data class DishMasterUiState(
 class DishMasterViewModel(
     private val dishRepository: DishRepository,
     private val manageProductImageUseCase: com.argminres.app.domain.usecase.dish.ManageDishImageUseCase,
-    private val auditLogger: com.argminres.app.domain.manager.AuditLogger
+    private val auditLogger: com.argminres.app.domain.manager.AuditLogger,
+    private val dishComponentRepository: com.argminres.app.domain.repository.DishComponentRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DishMasterUiState())
@@ -40,37 +44,40 @@ class DishMasterViewModel(
             _uiState.update { it.copy(isLoading = true) }
             
             dishRepository.getAllDishes().collect { dishes ->
-                val filtered = if (_uiState.value.searchQuery.isBlank()) {
-                    dishes
-                } else {
-                    dishes.filter { 
-                        it.dish.name.contains(_uiState.value.searchQuery, ignoreCase = true)
-                    }
-                }
-                
-                _uiState.update {
-                    it.copy(
-                        dishes = dishes,
-                        filteredDishes = filtered,
-                        isLoading = false
-                    )
-                }
+                updateFilteredDishes(dishes, _uiState.value.searchQuery, _uiState.value.selectedTab)
             }
         }
     }
 
-    fun onSearchQueryChange(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
-        
-        val filtered = if (query.isBlank()) {
-            _uiState.value.dishes
-        } else {
-            _uiState.value.dishes.filter { 
-                it.dish.name.contains(query, ignoreCase = true)
+    private fun updateFilteredDishes(dishes: List<DishWithCategory>, query: String, tab: Int) {
+        val filtered = dishes.filter { 
+            val matchesQuery = it.dish.name.contains(query, ignoreCase = true) || 
+                               it.dish.id.toString().contains(query)
+            val matchesTab = if (tab == 0) {
+                it.dish.category != "Paket"
+            } else {
+                it.dish.category == "Paket"
             }
+            matchesQuery && matchesTab
         }
         
-        _uiState.update { it.copy(filteredDishes = filtered) }
+        _uiState.update {
+            it.copy(
+                dishes = dishes,
+                filteredDishes = filtered,
+                isLoading = false
+            )
+        }
+    }
+
+    fun onTabSelected(index: Int) {
+        _uiState.update { it.copy(selectedTab = index) }
+        updateFilteredDishes(_uiState.value.dishes, _uiState.value.searchQuery, index)
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        updateFilteredDishes(_uiState.value.dishes, query, _uiState.value.selectedTab)
     }
 
     fun onAddDishClick() {
@@ -83,11 +90,20 @@ class DishMasterViewModel(
     }
 
     fun onEditDishClick(dish: DishWithCategory) {
-        _uiState.update {
-            it.copy(
-                showAddEditDialog = true,
-                selectedDish = dish
-            )
+        viewModelScope.launch {
+            val components = if (dish.dish.category == "Paket") {
+                dishComponentRepository.getComponentEntities(dish.dish.id).first().map { it.componentDishId }
+            } else {
+                emptyList<Long>()
+            }
+            
+            _uiState.update {
+                it.copy(
+                    showAddEditDialog = true,
+                    selectedDish = dish,
+                    selectedPackageComponents = components
+                )
+            }
         }
     }
 
@@ -95,7 +111,8 @@ class DishMasterViewModel(
         _uiState.update {
             it.copy(
                 showAddEditDialog = false,
-                selectedDish = null
+                selectedDish = null,
+                selectedPackageComponents = emptyList()
             )
         }
     }
@@ -104,16 +121,18 @@ class DishMasterViewModel(
         name: String,
         category: String,
         price: Double,
-        image: String? = null
+        image: String? = null,
+        components: List<Long> = emptyList()
     ) {
         viewModelScope.launch {
             try {
-                val dish = _uiState.value.selectedDish?.dish
+                val existingDish = _uiState.value.selectedDish?.dish
+                val savedId: Long
                 
-                if (dish != null) {
-                    // Update existing
+                if (existingDish != null) {
+                    savedId = existingDish.id
                     dishRepository.updateDish(
-                        dish.copy(
+                        existingDish.copy(
                             name = name,
                             category = category,
                             price = price,
@@ -122,8 +141,7 @@ class DishMasterViewModel(
                         )
                     )
                 } else {
-                    // Add new - start with 0 stock (will be set daily)
-                    dishRepository.insertDish(
+                    savedId = dishRepository.insertDish(
                         DishEntity(
                             name = name,
                             description = "",
@@ -134,8 +152,21 @@ class DishMasterViewModel(
                         )
                     )
                 }
+
+                // Sync components if it's a Paket
+                if (category == "Paket") {
+                    dishComponentRepository.removeAllComponents(savedId)
+                    components.forEach { compId ->
+                        dishComponentRepository.addComponent(savedId, compId)
+                    }
+                }
                 
                 onDialogDismiss()
+                
+                auditLogger.logAsync {
+                    if (existingDish != null) auditLogger.logUpdate("DISH", savedId, "Name: $name")
+                    else auditLogger.logCreate("DISH", savedId, "Name: $name")
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
@@ -150,6 +181,10 @@ class DishMasterViewModel(
                     // Delete image if exists
                     dish.image?.let { image ->
                         manageProductImageUseCase.deleteImage(image)
+                    }
+                    // Clean up components if it's a Paket
+                    if (dish.category == "Paket") {
+                        dishComponentRepository.removeAllComponents(dish.id)
                     }
                     dishRepository.deleteDish(dish)
                     

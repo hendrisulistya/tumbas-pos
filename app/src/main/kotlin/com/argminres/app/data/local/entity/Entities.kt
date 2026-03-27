@@ -221,5 +221,6 @@ data class StoreSettingsEntity(
     val printerPaperSize: Int = 58,
     val printerCharCount: Int = 32,
     val printerWidthMM: Float = 48f,
-    val printerDPI: Int = 203
+    val printerDPI: Int = 203,
+    val printerScale: Float = 1.0f
 )

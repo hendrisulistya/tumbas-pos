@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.TabPosition
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,10 +64,30 @@ fun DishMasterScreen(
                     .widthIn(max = 800.dp)
                     .padding(16.dp)
             ) {
+            TabRow(
+                selectedTabIndex = uiState.selectedTab,
+                containerColor = androidx.compose.ui.graphics.Color.White,
+                contentColor = androidx.compose.ui.graphics.Color(0xFF1976D2),
+                divider = { HorizontalDivider() }
+            ) {
+                Tab(
+                    selected = uiState.selectedTab == 0,
+                    onClick = { viewModel.onTabSelected(0) },
+                    text = { Text("Kelola Hidangan") }
+                )
+                Tab(
+                    selected = uiState.selectedTab == 1,
+                    onClick = { viewModel.onTabSelected(1) },
+                    text = { Text("Kelola Paket") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
-                label = { Text("Cari Hidangan") },
+                label = { Text("Cari ${if (uiState.selectedTab == 0) "Hidangan" else "Paket"}") },
                 modifier = Modifier.fillMaxWidth(),
                 leadingIcon = { Icon(Icons.Default.Search, null) }
             )
@@ -129,6 +151,8 @@ fun DishMasterScreen(
         DishMasterDialog(
             dish = uiState.selectedDish,
             isUploadingImage = uiState.isUploadingImage,
+            initialComponents = uiState.selectedPackageComponents,
+            allDishes = uiState.dishes,
             onUploadImage = viewModel::uploadProductImage,
             onDismiss = viewModel::onDialogDismiss,
             onSave = viewModel::onSaveDish

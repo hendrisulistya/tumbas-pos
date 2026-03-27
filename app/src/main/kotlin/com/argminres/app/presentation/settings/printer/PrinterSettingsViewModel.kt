@@ -31,6 +31,7 @@ data class PrinterSettingsUiState(
     val printerCharCount: Int = 32,
     val printerWidthMM: Float = 48f,
     val printerDPI: Int = 203,
+    val printerScale: Float = 1.0f,
     val error: String? = null,
     val successMessage: String? = null
 )
@@ -71,7 +72,8 @@ class PrinterSettingsViewModel(
                     printerPaperSize = settings?.printerPaperSize ?: 58,
                     printerCharCount = settings?.printerCharCount ?: 32,
                     printerWidthMM = settings?.printerWidthMM ?: 48f,
-                    printerDPI = settings?.printerDPI ?: 203
+                    printerDPI = settings?.printerDPI ?: 203,
+                    printerScale = settings?.printerScale ?: 1.0f
                 ) }
             }
         }
@@ -217,26 +219,41 @@ class PrinterSettingsViewModel(
     }
     
     fun updatePaperSize(size: Int) {
+        if (size != 58) return // Only support 58mm as per user request
+        
         viewModelScope.launch {
             try {
-                val defaultChars = if (size == 80) 48 else 42
-                val defaultWidth = if (size == 80) 72f else 48f
-                val defaultDPI = 203
-                
                 val currentSettings = storeSettingsRepository.getStoreSettings().firstOrNull()
                     ?: com.argminres.app.data.local.entity.StoreSettingsEntity()
                     
                 storeSettingsRepository.saveStoreSettings(
                     currentSettings.copy(
-                        printerPaperSize = size,
-                        printerCharCount = if (size == 80) 48 else 42,
-                        printerWidthMM = if (size == 80) 72f else 58f,
+                        printerPaperSize = 58,
+                        printerCharCount = 32,
+                        printerWidthMM = 48f,
                         printerDPI = 203
                     )
                 )
-                _uiState.update { it.copy(successMessage = "Paper size updated to ${size}mm") }
+                _uiState.update { it.copy(successMessage = "Printer set to 58mm") }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = "Failed to update paper size: ${e.message}") }
+                _uiState.update { it.copy(error = "Failed to update printer settings: ${e.message}") }
+            }
+        }
+    }
+
+    fun updatePrinterScale(scale: Float) {
+        val clampedScale = scale.coerceIn(0.5f, 2.0f)
+        viewModelScope.launch {
+            try {
+                val currentSettings = storeSettingsRepository.getStoreSettings().firstOrNull()
+                    ?: com.argminres.app.data.local.entity.StoreSettingsEntity()
+                    
+                storeSettingsRepository.saveStoreSettings(
+                    currentSettings.copy(printerScale = clampedScale)
+                )
+                _uiState.update { it.copy(successMessage = "Print scale updated to ${String.format("%.1f", clampedScale)}x") }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Failed to update scale: ${e.message}") }
             }
         }
     }

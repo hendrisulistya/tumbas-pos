@@ -1,6 +1,9 @@
 package com.argminres.app.presentation.dishmaster
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,18 +31,21 @@ import com.argminres.app.presentation.dish.ProductImageDisplay
 fun DishMasterDialog(
     dish: DishWithCategory?,
     isUploadingImage: Boolean,
+    initialComponents: List<Long>,
+    allDishes: List<DishWithCategory>,
     onUploadImage: suspend (ByteArray) -> Result<String>,
     onDismiss: () -> Unit,
-    onSave: (String, String, Double, String?) -> Unit
+    onSave: (String, String, Double, String?, List<Long>) -> Unit
 ) {
     val dishRepository: com.argminres.app.domain.repository.DishRepository = koinInject()
     val categories by dishRepository.getAllCategories().collectAsState(initial = emptyList())
     
     var name by remember { mutableStateOf(dish?.dish?.name ?: "") }
-    var selectedCategory by remember { mutableStateOf(dish?.dish?.category ?: (categories.firstOrNull()?.name ?: "")) }
+    var selectedCategory by remember { mutableStateOf(dish?.dish?.category ?: (categories.find { it.name == "Paket" && dish?.dish?.category == "Paket" }?.name ?: categories.firstOrNull()?.name ?: "")) }
     var price by remember { mutableStateOf(dish?.dish?.price?.toString() ?: "0") }
     var image by remember { mutableStateOf(dish?.dish?.image ?: "") }
     var expandedCategory by remember { mutableStateOf(false) }
+    var selectedComponents by remember { mutableStateOf(initialComponents) }
     
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -133,18 +139,24 @@ fun DishMasterDialog(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedTextField(
-                        value = image,
-                        onValueChange = { image = it },
-                        label = { Text("Image Path/URL") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        placeholder = { Text("e.g. dish_image/1001.png") }
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Foto Hidangan", style = MaterialTheme.typography.labelLarge)
+                        if (image.isNotBlank()) {
+                            Text(
+                                text = image.substringAfterLast("/"),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        } else {
+                            Text("Belum ada foto", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                     
                     Button(
                         onClick = { 
@@ -153,12 +165,53 @@ fun DishMasterDialog(
                             )
                         },
                         enabled = !isUploadingImage,
-                        modifier = Modifier.padding(top = 8.dp)
+                        shape = RoundedCornerShape(8.dp)
                     ) {
                         if (isUploadingImage) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                         } else {
-                            Icon(Icons.Default.Image, contentDescription = "Pick Image")
+                            Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Pilih Foto")
+                        }
+                    }
+                }
+
+                // Package Components Section
+                if (selectedCategory == "Paket") {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Komponen Paket", style = MaterialTheme.typography.titleSmall)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp),
+                        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFF5F5F5))
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            items(allDishes.filter { it.dish.category != "Paket" }) { componentDish ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedComponents = if (selectedComponents.contains(componentDish.dish.id)) {
+                                                selectedComponents - componentDish.dish.id
+                                            } else {
+                                                selectedComponents + componentDish.dish.id
+                                            }
+                                        }
+                                        .padding(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = selectedComponents.contains(componentDish.dish.id),
+                                        onCheckedChange = null
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(componentDish.dish.name, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
                         }
                     }
                 }
@@ -171,7 +224,8 @@ fun DishMasterDialog(
                         name,
                         selectedCategory,
                         price.toDoubleOrNull() ?: 0.0,
-                        image.ifBlank { null }
+                        image.ifBlank { null },
+                        selectedComponents
                     )
                 },
                 enabled = name.isNotBlank() && selectedCategory.isNotBlank()

@@ -165,7 +165,8 @@ class SalesOrderDetailViewModel(
                             application,
                             invoiceText,
                             state.order.orderNumber,
-                            storeSettings?.logoImage // Pass logo for PDF rendering
+                            storeSettings?.logoImage, // Pass logo for PDF rendering
+                            scale = storeSettings?.printerScale ?: 1.0f
                         )
                     }
                     
@@ -209,13 +210,14 @@ class SalesOrderDetailViewModel(
                 try {
                     _uiState.update { it.copy(isLoading = true, error = null, successMessage = null) }
                     
-                    // Generate PERMANENT PDF (save to Downloads)
+                    val storeSettings = getStoreSettingsUseCase().firstOrNull()
                     val pdfPath = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         com.argminres.app.util.ThermalReceiptPdfGenerator.generatePdf(
                             application,
                             state.invoiceText,
                             state.order.orderNumber,
-                            null // No logo for now
+                            storeSettings?.logoImage,
+                            scale = storeSettings?.printerScale ?: 1.0f
                         )
                     }
                     

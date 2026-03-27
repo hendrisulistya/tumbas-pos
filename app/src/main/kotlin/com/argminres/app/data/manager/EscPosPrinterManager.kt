@@ -360,10 +360,15 @@ class EscPosPrinterManager(
     
     override suspend fun printToPdf(receiptText: String, orderNumber: String): String? {
         return withContext(Dispatchers.IO) {
+            val settings = storeSettingsRepository.getStoreSettings().firstOrNull()
+            val scale = settings?.printerScale ?: 1.0f
+            
             com.argminres.app.util.ThermalReceiptPdfGenerator.generatePdf(
                 context,
                 receiptText,
-                orderNumber
+                orderNumber,
+                logoBase64 = settings?.logoImage,
+                scale = scale
             )
         }
     }

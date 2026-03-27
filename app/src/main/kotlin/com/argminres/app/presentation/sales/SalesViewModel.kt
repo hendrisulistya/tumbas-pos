@@ -276,7 +276,8 @@ class SalesViewModel(
                             application,
                             invoiceText,
                             order.orderNumber,
-                            storeSettings?.logoImage // Pass actual logo for PDF rendering
+                            storeSettings?.logoImage, // Pass actual logo for PDF rendering
+                            scale = storeSettings?.printerScale ?: 1.0f
                         )
                         
                         if (tempPdfPath != null) {
@@ -312,7 +313,8 @@ class SalesViewModel(
                         application,
                         invoiceText,
                         order.orderNumber,
-                        storeSettings?.logoImage // Pass actual logo for PDF rendering
+                        storeSettings?.logoImage, // Pass actual logo for PDF rendering
+                        scale = storeSettings?.printerScale ?: 1.0f
                     )
                 }
                 
