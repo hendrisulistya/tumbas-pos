@@ -25,6 +25,7 @@ interface SalesOrderRepository {
     fun getSalesOrdersByDateRange(startDate: Long, endDate: Long): Flow<List<SalesOrderEntity>>
     suspend fun createSalesOrder(order: SalesOrderEntity, items: List<SalesOrderItemEntity>): Long
     suspend fun updateSalesOrder(order: SalesOrderEntity)
+    suspend fun getLastOrderByNumber(prefix: String): SalesOrderEntity?
 }
 
 interface StockRepository {

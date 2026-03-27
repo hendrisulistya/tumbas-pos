@@ -305,6 +305,7 @@ class DatabaseInitializer(
                 val description = packageObj.getString("description")
                 val price = packageObj.getDouble("price")
                 val componentsArray = packageObj.getJSONArray("components")
+                val image = if (packageObj.has("image")) packageObj.getString("image") else null
                 
                 packages.add(
                     DishEntity(
@@ -314,7 +315,7 @@ class DatabaseInitializer(
                         price = price,
                         stock = 0,
                         category = "Paket",
-                        image = null
+                        image = image
                     )
                 )
                 

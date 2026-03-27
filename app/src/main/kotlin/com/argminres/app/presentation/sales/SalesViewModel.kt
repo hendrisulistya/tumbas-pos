@@ -137,7 +137,21 @@ class SalesViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val orderNumber = "ORD-${System.currentTimeMillis()}"
+                // Generate Sequential Order Number (SO-YYYYMMDD-XXXX)
+                val dateFormat = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault())
+                val datePrefix = "SO-${dateFormat.format(java.util.Date())}-"
+                
+                val lastOrder = salesOrderRepository.getLastOrderByNumber(datePrefix)
+                val nextSequence = if (lastOrder != null) {
+                    val lastNumber = lastOrder.orderNumber
+                    val sequenceStr = lastNumber.substringAfterLast("-")
+                    (sequenceStr.toIntOrNull() ?: 0) + 1
+                } else {
+                    1
+                }
+                
+                val orderNumber = datePrefix + nextSequence.toString().padStart(4, '0')
+
                 val order = SalesOrderEntity(
                     orderNumber = orderNumber,
                     orderDate = System.currentTimeMillis(),
@@ -276,7 +290,7 @@ class SalesViewModel(
                             application,
                             invoiceText,
                             order.orderNumber,
-                            storeSettings?.logoImage, // Pass actual logo for PDF rendering
+                            logoBase64 = null, // Store logo removed from print
                             scale = storeSettings?.printerScale ?: 1.0f
                         )
                         
@@ -313,7 +327,7 @@ class SalesViewModel(
                         application,
                         invoiceText,
                         order.orderNumber,
-                        storeSettings?.logoImage, // Pass actual logo for PDF rendering
+                        logoBase64 = null, // Store logo removed from print
                         scale = storeSettings?.printerScale ?: 1.0f
                     )
                 }

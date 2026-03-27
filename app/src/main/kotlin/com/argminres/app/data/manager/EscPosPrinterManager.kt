@@ -321,12 +321,26 @@ class EscPosPrinterManager(
             val divider = "=".repeat(charCount)
             val dashDivider = "-".repeat(charCount)
             
+            val settings = storeSettingsRepository.getStoreSettings().firstOrNull()
+            
             val sb = StringBuilder()
-            sb.append("[C]<b><font size='big'>PadangPOS</font></b>\n")
+            val storeName = settings?.storeName ?: "PadangPOS"
+            sb.append("[C]<b><font size='big'>$storeName</font></b>\n")
+            
+            if (!settings?.storeAddress.isNullOrBlank()) {
+                sb.append("[C]${settings?.storeAddress}\n")
+            }
+            if (!settings?.storePhone.isNullOrBlank()) {
+                sb.append("[C]Phone: ${settings?.storePhone}\n")
+            }
+            if (!settings?.storeTaxId.isNullOrBlank()) {
+                sb.append("[C]NPWP: ${settings?.storeTaxId}\n")
+            }
+            
             sb.append("[C]$divider\n")
-            sb.append("[L]<b>Date:</b> $dateStr\n")
-            sb.append("[L]<b>Order ID:</b> ${order.orderNumber}\n")
-            sb.append("[L]<b>Customer:</b> ${order.customerId ?: "Guest"}\n")
+            sb.append("[L]<b>Tanggal:</b> $dateStr\n")
+            sb.append("[L]<b>No. Order:</b> ${order.orderNumber}\n")
+            sb.append("[L]<b>Pelanggan:</b> ${order.customerId ?: "Guest"}\n")
             sb.append("[C]$dashDivider\n")
             
             items.forEach { item ->
@@ -338,7 +352,7 @@ class EscPosPrinterManager(
             sb.append("[C]$dashDivider\n")
             sb.append("[L]<b>TOTAL</b>[R]<b>${formatCurrency(order.totalAmount)}</b>\n")
             sb.append("[C]$divider\n")
-            sb.append("[C]Thank you for your purchase!\n")
+            sb.append("[C]Terima Kasih Sudah Berbelanja!\n")
             
             p.printFormattedText(sb.toString())
         }
@@ -350,8 +364,11 @@ class EscPosPrinterManager(
             val charCount = p.printerNbrCharactersPerLine
             val divider = "=".repeat(charCount)
             
+            val settings = storeSettingsRepository.getStoreSettings().firstOrNull()
+            val storeName = settings?.storeName ?: "TestStorePOS"
+            
             p.printFormattedText(
-                "[C]<b><font size='big'>TestStorePOS</font></b>\n" +
+                "[C]<b><font size='big'>$storeName</font></b>\n" +
                 "[C]Printer Test Successful!\n" +
                 "[C]$divider\n"
             )

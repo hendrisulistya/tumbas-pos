@@ -165,7 +165,7 @@ class SalesOrderDetailViewModel(
                             application,
                             invoiceText,
                             state.order.orderNumber,
-                            storeSettings?.logoImage, // Pass logo for PDF rendering
+                            logoBase64 = null, // Store logo removed from print
                             scale = storeSettings?.printerScale ?: 1.0f
                         )
                     }
@@ -216,7 +216,7 @@ class SalesOrderDetailViewModel(
                             application,
                             state.invoiceText,
                             state.order.orderNumber,
-                            storeSettings?.logoImage,
+                            logoBase64 = null, // Store logo removed from print
                             scale = storeSettings?.printerScale ?: 1.0f
                         )
                     }

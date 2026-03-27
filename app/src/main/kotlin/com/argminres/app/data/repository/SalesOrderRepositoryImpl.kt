@@ -32,4 +32,8 @@ class SalesOrderRepositoryImpl(
     override suspend fun updateSalesOrder(order: SalesOrderEntity) {
         salesOrderDao.updateSalesOrder(order)
     }
+
+    override suspend fun getLastOrderByNumber(prefix: String): SalesOrderEntity? {
+        return salesOrderDao.getLastOrderByNumber(prefix)
+    }
 }

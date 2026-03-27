@@ -115,6 +115,9 @@ interface SalesOrderDao {
     @Query("SELECT * FROM sales_orders WHERE orderDate BETWEEN :startDate AND :endDate")
     fun getSalesOrdersByDateRange(startDate: Long, endDate: Long): Flow<List<SalesOrderEntity>>
 
+    @Query("SELECT * FROM sales_orders WHERE orderNumber LIKE :prefix || '%' ORDER BY orderNumber DESC LIMIT 1")
+    suspend fun getLastOrderByNumber(prefix: String): SalesOrderEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSalesOrder(order: SalesOrderEntity): Long
 
