@@ -101,295 +101,311 @@ fun PrinterSettingsScreen(
         }
     ) { padding ->
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp)
         ) {
-            // Status Bar at the top
+            // 1. Status Bar at the top (Optional Item)
             if (uiState.isConnecting) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = MaterialTheme.shapes.medium
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Connecting to printer...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Connecting to printer...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                     }
                 }
             }
             
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-            // Selected Printer Card (Always visible)
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (uiState.isConnected) 
-                        MaterialTheme.colorScheme.primaryContainer 
-                    else 
-                        MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Selected Printer",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            // 2. Selected Printer Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (uiState.isConnected) 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                if (uiState.isConnected) Icons.Default.BluetoothConnected else Icons.Default.Print,
-                                contentDescription = null,
-                                tint = if (uiState.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = if (uiState.isConnected) 
-                                        uiState.connectedDeviceName ?: "Unknown Device"
-                                    else 
-                                        "Virtual PDF Printer",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = if (uiState.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Selected Printer",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    if (uiState.isConnected) Icons.Default.BluetoothConnected else Icons.Default.Print,
+                                    contentDescription = null,
+                                    tint = if (uiState.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp)
                                 )
-                                Text(
-                                    text = if (uiState.isConnected) "Bluetooth Printer" else "Default (Saves to PDF)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = if (uiState.isConnected) 
+                                            uiState.connectedDeviceName ?: "Unknown Device"
+                                        else 
+                                            "Virtual PDF Printer",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = if (uiState.isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (uiState.isConnected) "Bluetooth Printer" else "Default (Saves to PDF)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            
+                            if (uiState.isConnected) {
+                                Button(
+                                    onClick = { viewModel.disconnect() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                ) {
+                                    Text("Disconnect")
+                                }
                             }
                         }
                         
                         if (uiState.isConnected) {
-                            Button(
-                                onClick = { viewModel.disconnect() },
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedButton(
+                                onClick = { viewModel.testPrint() },
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("Disconnect")
+                                Icon(Icons.Default.Print, null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Test Print")
                             }
                         }
                     }
-                    
-                    if (uiState.isConnected) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedButton(
-                            onClick = { viewModel.testPrint() },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Print, null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Test Print")
-                        }
-                    }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Paper Size Selection
-            Text(
-                text = "Paper Size",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FilterChip(
-                selected = uiState.printerPaperSize == 58,
-                onClick = { viewModel.updatePaperSize(58) },
-                label = { Text("58mm (Default)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Scale Adjustment
-            Text(
-                text = "Penyesuaian Ukuran Cetak",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Scale Factor", style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            text = "${"%.1f".format(uiState.printerScale)}x",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        FilledIconButton(
-                            onClick = { viewModel.updatePrinterScale(uiState.printerScale - 0.1f) },
-                            enabled = uiState.printerScale > 0.55f, // Tolerance for float comparison
-                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text("-", style = MaterialTheme.typography.headlineSmall, color = Color.White)
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        FilledIconButton(
-                            onClick = { viewModel.updatePrinterScale(uiState.printerScale + 0.1f) },
-                            enabled = uiState.printerScale < 1.95f,
-                            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text("+", style = MaterialTheme.typography.headlineSmall, color = Color.White)
-                        }
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            if (!bluetoothPermissionsState.allPermissionsGranted) {
-                Button(onClick = { bluetoothPermissionsState.launchMultiplePermissionRequest() }) {
-                    Text("Grant Bluetooth Permissions")
-                }
-            } else if (uiState.pairedDevices.isEmpty() && uiState.scannedDevices.isEmpty()) {
+            // 3. Paper Size Selection
+            item {
                 Text(
-                    text = "No paired devices found.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    text = "Paper Size",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Button(
-                    onClick = { 
-                        if (bluetoothPermissionsState.allPermissionsGranted) {
-                            viewModel.startScan()
-                        } else {
-                            bluetoothPermissionsState.launchMultiplePermissionRequest()
-                        }
-                    },
-                    modifier = Modifier.padding(top = 8.dp),
-                    enabled = !uiState.isConnecting && !uiState.isScanning
+                Spacer(modifier = Modifier.height(8.dp))
+                FilterChip(
+                    selected = uiState.printerPaperSize == 58,
+                    onClick = { viewModel.updatePaperSize(58) },
+                    label = { Text("58mm (Default)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+            
+            // 4. Scale Adjustment
+            item {
+                Text(
+                    text = "Penyesuaian Ukuran Cetak",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
-                    Text(if (uiState.isScanning) "Scanning..." else "Scan for Devices")
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(bottom = 80.dp)
-                ) {
-                    item {
-                        Text(
-                            text = "Paired Devices",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-                    items(uiState.pairedDevices) { device: android.bluetooth.BluetoothDevice ->
-                        BluetoothDeviceItem(
-                            device = device,
-                            isConnected = uiState.isConnected && uiState.connectedDeviceName == (device.name ?: device.address),
-                            isLoading = uiState.connectingDeviceAddress == device.address,
-                            onClick = { 
-                                if (!uiState.isConnecting) {
-                                    viewModel.connectBluetooth(device.address)
-                                }
-                            }
-                        )
-                    }
-                    
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Scale Factor", style = MaterialTheme.typography.labelMedium)
                             Text(
-                                text = "Available Devices",
-                                style = MaterialTheme.typography.titleSmall,
+                                text = "${"%.1f".format(uiState.printerScale)}x",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                            if (uiState.isScanning) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                TextButton(
-                                    onClick = { 
-                                        if (bluetoothPermissionsState.allPermissionsGranted) {
-                                            viewModel.startScan()
-                                        } else {
-                                            bluetoothPermissionsState.launchMultiplePermissionRequest()
-                                        }
-                                    },
-                                    enabled = !uiState.isConnecting
-                                ) {
-                                    Text("Scan")
-                                }
+                        }
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            FilledIconButton(
+                                onClick = { viewModel.updatePrinterScale(uiState.printerScale - 0.1f) },
+                                enabled = uiState.printerScale > 0.55f, // Tolerance for float comparison
+                                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text("-", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+                            }
+                            
+                            Spacer(modifier = Modifier.width(16.dp))
+                            
+                            FilledIconButton(
+                                onClick = { viewModel.updatePrinterScale(uiState.printerScale + 0.1f) },
+                                enabled = uiState.printerScale < 1.95f,
+                                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text("+", style = MaterialTheme.typography.headlineSmall, color = Color.White)
                             }
                         }
                     }
-                    
-                    if (uiState.scannedDevices.isEmpty() && !uiState.isScanning) {
-                        item {
-                            Text(
-                                text = "No devices found. Tap Scan to search.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+            
+            // 5. Bluetooth Permissions / Scanning / Device Lists
+            if (!bluetoothPermissionsState.allPermissionsGranted) {
+                item {
+                    Button(
+                        onClick = { bluetoothPermissionsState.launchMultiplePermissionRequest() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Grant Bluetooth Permissions")
                     }
-                    
-                    items(uiState.scannedDevices) { device: android.bluetooth.BluetoothDevice ->
-                        BluetoothDeviceItem(
-                            device = device,
-                            isConnected = false,
-                            isLoading = uiState.connectingDeviceAddress == device.address,
+                }
+            } else if (uiState.pairedDevices.isEmpty() && uiState.scannedDevices.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No paired devices found.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray
+                        )
+                        Button(
                             onClick = { 
-                                if (!uiState.isConnecting) {
-                                    viewModel.connectBluetooth(device.address)
+                                if (bluetoothPermissionsState.allPermissionsGranted) {
+                                    viewModel.startScan()
+                                } else {
+                                    bluetoothPermissionsState.launchMultiplePermissionRequest()
                                 }
+                            },
+                            modifier = Modifier.padding(top = 16.dp),
+                            enabled = !uiState.isConnecting && !uiState.isScanning
+                        ) {
+                            Text(if (uiState.isScanning) "Scanning..." else "Scan for Devices")
+                        }
+                    }
+                }
+            } else {
+                // Paired Devices Section
+                item {
+                    Text(
+                        text = "Paired Devices",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+                
+                items(uiState.pairedDevices) { device: android.bluetooth.BluetoothDevice ->
+                    BluetoothDeviceItem(
+                        device = device,
+                        isConnected = uiState.isConnected && uiState.connectedDeviceName == (device.name ?: device.address),
+                        isLoading = uiState.connectingDeviceAddress == device.address,
+                        onClick = { 
+                            if (!uiState.isConnecting) {
+                                viewModel.connectBluetooth(device.address)
                             }
+                        }
+                    )
+                }
+                
+                // Available Devices Section
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Available Devices",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        if (uiState.isScanning) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            TextButton(
+                                onClick = { 
+                                    if (bluetoothPermissionsState.allPermissionsGranted) {
+                                        viewModel.startScan()
+                                    } else {
+                                        bluetoothPermissionsState.launchMultiplePermissionRequest()
+                                    }
+                                },
+                                enabled = !uiState.isConnecting
+                            ) {
+                                Text("Scan")
+                            }
+                        }
+                    }
+                }
+                
+                if (uiState.scannedDevices.isEmpty() && !uiState.isScanning) {
+                    item {
+                        Text(
+                            text = "No devices found. Tap Scan to search.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(vertical = 16.dp)
                         )
                     }
-                    }
+                }
+                
+                items(uiState.scannedDevices) { device: android.bluetooth.BluetoothDevice ->
+                    BluetoothDeviceItem(
+                        device = device,
+                        isConnected = false,
+                        isLoading = uiState.connectingDeviceAddress == device.address,
+                        onClick = { 
+                            if (!uiState.isConnecting) {
+                                viewModel.connectBluetooth(device.address)
+                            }
+                        }
+                    )
+                }
+                
+                // Bottom spacing for comfortable scrolling
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
         }
     }
 }
+
 
 @SuppressLint("MissingPermission")
 @Composable

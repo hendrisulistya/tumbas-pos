@@ -310,6 +310,45 @@ class EscPosPrinterManager(
         return _isConnected.value
     }
 
+    @SuppressLint("MissingPermission")
+    override suspend fun smartConnect(): Boolean {
+        if (_isConnected.value) return true
+        
+        return withContext(Dispatchers.IO) {
+            try {
+                val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
+                val bluetoothAdapter = bluetoothManager?.adapter
+                
+                if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+                    return@withContext false
+                }
+                
+                // Get paired devices and filter only printers
+                val pairedPrinters = bluetoothAdapter.bondedDevices.filter { isPrinterDevice(it) }
+                
+                if (pairedPrinters.isEmpty()) {
+                    return@withContext false
+                }
+                
+                // Try to connect to the first paired printer found
+                val firstPrinter = pairedPrinters.first()
+                android.util.Log.d("PrinterManager", "Smart Connect: Attempting to connect to ${firstPrinter.name ?: firstPrinter.address}")
+                
+                try {
+                    connectBluetooth(firstPrinter.address)
+                    _isConnected.value
+                } catch (e: Exception) {
+                    android.util.Log.e("PrinterManager", "Smart Connect connection effort failed", e)
+                    false
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PrinterManager", "Smart Connect failed", e)
+                false
+            }
+        }
+    }
+    
+
     override suspend fun printReceipt(order: SalesOrderEntity, items: List<CartItem>) {
         withContext(Dispatchers.IO) {
             val p = printer ?: throw Exception("Printer not connected")

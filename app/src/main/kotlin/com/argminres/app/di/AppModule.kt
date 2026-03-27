@@ -202,7 +202,7 @@ val appModule = module {
     
     // ViewModels
     viewModel { com.argminres.app.presentation.auth.LoginViewModel(get(), get()) }
-    viewModel { com.argminres.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
+    viewModel { com.argminres.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
     viewModel { com.argminres.app.presentation.home.HomeViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.showcase.ShowcaseViewModel(get(), get(), get(), get(), get()) }
     viewModel { 

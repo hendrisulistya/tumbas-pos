@@ -50,6 +50,7 @@ data class SalesUiState(
 class SalesViewModel(
     private val createSalesOrderUseCase: CreateSalesOrderUseCase,
     private val searchProductsUseCase: SearchDishesUseCase,
+    private val getSalesOrdersUseCase: com.argminres.app.domain.usecase.sales.GetSalesOrdersUseCase,
     private val getStoreSettingsUseCase: GetStoreSettingsUseCase,
     private val cartRepository: com.argminres.app.domain.repository.CartRepository,
     private val customerRepository: com.argminres.app.domain.repository.CustomerRepository,
@@ -141,7 +142,7 @@ class SalesViewModel(
                 val dateFormat = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault())
                 val datePrefix = "SO-${dateFormat.format(java.util.Date())}-"
                 
-                val lastOrder = salesOrderRepository.getLastOrderByNumber(datePrefix)
+                val lastOrder = getSalesOrdersUseCase.getLastOrderByNumber(datePrefix)
                 val nextSequence = if (lastOrder != null) {
                     val lastNumber = lastOrder.orderNumber
                     val sequenceStr = lastNumber.substringAfterLast("-")
@@ -350,8 +351,11 @@ class SalesViewModel(
                 
                 android.util.Log.d("SalesViewModel", "Permanent PDF saved to: $pdfPath")
                 
-                // STEP 2: Check if Bluetooth printer is connected
-                val isBluetoothConnected = printerManager.isConnected()
+                // STEP 2: Check if Bluetooth printer is connected (Attempt smart connect)
+                var isBluetoothConnected = printerManager.isConnected()
+                if (!isBluetoothConnected) {
+                    isBluetoothConnected = printerManager.smartConnect()
+                }
                 
                 if (isBluetoothConnected) {
                     // STEP 3a: Print to Bluetooth printer

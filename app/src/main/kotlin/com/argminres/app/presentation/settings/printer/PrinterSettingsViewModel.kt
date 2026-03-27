@@ -78,6 +78,9 @@ class PrinterSettingsViewModel(
             }
         }
         loadPairedDevices()
+        viewModelScope.launch {
+            printerManager.smartConnect()
+        }
     }
 
     @SuppressLint("MissingPermission")

@@ -40,6 +40,7 @@ class GetSalesOrdersUseCase(
     private val salesOrderRepository: SalesOrderRepository
 ) {
     operator fun invoke() = salesOrderRepository.getAllSalesOrders()
+    suspend fun getLastOrderByNumber(prefix: String) = salesOrderRepository.getLastOrderByNumber(prefix)
 }
 
 
