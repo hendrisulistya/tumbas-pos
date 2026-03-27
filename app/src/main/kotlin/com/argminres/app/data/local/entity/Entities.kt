@@ -217,5 +217,9 @@ data class StoreSettingsEntity(
     val storeAddress: String = "",
     val storePhone: String = "",
     val storeTaxId: String = "",
-    val logoImage: String? = null // Base64 encoded image
+    val logoImage: String? = null, // Base64 encoded image
+    val printerPaperSize: Int = 58,
+    val printerCharCount: Int = 32,
+    val printerWidthMM: Float = 48f,
+    val printerDPI: Int = 203
 )

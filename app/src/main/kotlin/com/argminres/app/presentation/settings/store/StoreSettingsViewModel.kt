@@ -10,6 +10,7 @@ import com.argminres.app.domain.usecase.settings.SaveStoreSettingsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -19,6 +20,7 @@ data class StoreSettingsUiState(
     val storePhone: String = "",
     val storeTaxId: String = "",
     val logoImage: String? = null,
+    val printerPaperSize: Int = 58,
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
     val error: String? = null
@@ -47,7 +49,8 @@ class StoreSettingsViewModel(
                             storeAddress = settings.storeAddress,
                             storePhone = settings.storePhone,
                             storeTaxId = settings.storeTaxId,
-                            logoImage = settings.logoImage
+                            logoImage = settings.logoImage,
+                            printerPaperSize = settings.printerPaperSize
                         )
                     }
                 }
@@ -121,13 +124,14 @@ class StoreSettingsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val settings = StoreSettingsEntity(
-                    id = 1L,
+                val currentSettings = getStoreSettingsUseCase().firstOrNull() ?: StoreSettingsEntity()
+                val settings = currentSettings.copy(
                     storeName = _uiState.value.storeName,
                     storeAddress = _uiState.value.storeAddress,
                     storePhone = _uiState.value.storePhone,
                     storeTaxId = _uiState.value.storeTaxId,
-                    logoImage = _uiState.value.logoImage
+                    logoImage = _uiState.value.logoImage,
+                    printerPaperSize = _uiState.value.printerPaperSize
                 )
                 saveStoreSettingsUseCase(settings)
                 _uiState.update { 

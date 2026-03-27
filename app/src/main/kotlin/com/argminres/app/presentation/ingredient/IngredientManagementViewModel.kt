@@ -17,6 +17,8 @@ data class IngredientManagementUiState(
     val isLoading: Boolean = false,
     val showAddEditDialog: Boolean = false,
     val selectedIngredient: IngredientEntity? = null,
+    val masterIngredients: List<IngredientEntity> = emptyList(),
+    val successMessage: String? = null,
     val error: String? = null
 )
 
@@ -55,6 +57,12 @@ class IngredientManagementViewModel(
                 }
             }
         }
+        
+        viewModelScope.launch {
+            ingredientRepository.getAllIngredients().collect { master ->
+                _uiState.update { it.copy(masterIngredients = master) }
+            }
+        }
     }
 
     fun onSearchQueryChange(query: String) {
@@ -75,7 +83,8 @@ class IngredientManagementViewModel(
         _uiState.update { 
             it.copy(
                 showAddEditDialog = true,
-                selectedIngredient = null
+                selectedIngredient = null,
+                successMessage = null
             )
         }
     }
@@ -84,7 +93,8 @@ class IngredientManagementViewModel(
         _uiState.update {
             it.copy(
                 showAddEditDialog = true,
-                selectedIngredient = ingredient
+                selectedIngredient = ingredient,
+                successMessage = null
             )
         }
     }
@@ -152,7 +162,11 @@ class IngredientManagementViewModel(
                     )
                 }
                 
-                onDialogDismiss()
+                _uiState.update { it.copy(successMessage = if (ingredient == null) "Bahan berhasil ditambahkan" else "Bahan berhasil diperbarui") }
+                
+                if (ingredient != null) {
+                    onDialogDismiss()
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
@@ -165,10 +179,19 @@ class IngredientManagementViewModel(
                 val ingredient = _uiState.value.ingredients.find { it.id == ingredientId }
                 if (ingredient != null) {
                     ingredientRepository.deleteIngredient(ingredient)
+                    _uiState.update { it.copy(successMessage = "Bahan berhasil dihapus") }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
         }
+    }
+
+    fun clearSuccessMessage() {
+        _uiState.update { it.copy(successMessage = null) }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 }

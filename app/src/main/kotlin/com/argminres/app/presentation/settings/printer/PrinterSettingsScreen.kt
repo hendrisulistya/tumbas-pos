@@ -209,6 +209,35 @@ fun PrinterSettingsScreen(
             
             Spacer(modifier = Modifier.height(24.dp))
             
+            // Paper Size Selection
+            Text(
+                text = "Paper Size",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = uiState.printerPaperSize == 58,
+                    onClick = { viewModel.updatePaperSize(58) },
+                    label = { Text("58mm") },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = uiState.printerPaperSize == 80,
+                    onClick = { viewModel.updatePaperSize(80) },
+                    label = { Text("80mm") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
             if (!bluetoothPermissionsState.allPermissionsGranted) {
                 Button(onClick = { bluetoothPermissionsState.launchMultiplePermissionRequest() }) {
                     Text("Grant Bluetooth Permissions")

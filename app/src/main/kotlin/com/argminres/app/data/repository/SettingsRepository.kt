@@ -42,7 +42,7 @@ class SettingsRepository(private val context: Context) {
     }
     
     fun isActivated(): Boolean {
-        return prefs.getBoolean(KEY_ACTIVATED, false)
+        return com.argminres.app.BuildConfig.DEBUG || prefs.getBoolean(KEY_ACTIVATED, false)
     }
 
     fun isDatabaseInitialized(): Boolean {

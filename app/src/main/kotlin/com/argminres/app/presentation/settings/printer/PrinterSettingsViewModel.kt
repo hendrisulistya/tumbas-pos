@@ -10,10 +10,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.argminres.app.domain.manager.PrinterManager
 import com.argminres.app.domain.manager.PairingState
+import com.argminres.app.domain.repository.StoreSettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 data class PrinterSettingsUiState(
@@ -25,12 +27,17 @@ data class PrinterSettingsUiState(
     val isConnected: Boolean = false,
     val connectedDeviceName: String? = null,
     val pairingState: PairingState = PairingState.Idle,
+    val printerPaperSize: Int = 58,
+    val printerCharCount: Int = 32,
+    val printerWidthMM: Float = 48f,
+    val printerDPI: Int = 203,
     val error: String? = null,
     val successMessage: String? = null
 )
 
 class PrinterSettingsViewModel(
     private val printerManager: PrinterManager,
+    private val storeSettingsRepository: StoreSettingsRepository,
     private val context: Context
 ) : ViewModel() {
 
@@ -56,6 +63,16 @@ class PrinterSettingsViewModel(
         viewModelScope.launch {
             printerManager.pairingState.collect { pairingState ->
                 _uiState.update { it.copy(pairingState = pairingState) }
+            }
+        }
+        viewModelScope.launch {
+            storeSettingsRepository.getStoreSettings().collect { settings ->
+                _uiState.update { it.copy(
+                    printerPaperSize = settings?.printerPaperSize ?: 58,
+                    printerCharCount = settings?.printerCharCount ?: 32,
+                    printerWidthMM = settings?.printerWidthMM ?: 48f,
+                    printerDPI = settings?.printerDPI ?: 203
+                ) }
             }
         }
         loadPairedDevices()
@@ -196,6 +213,31 @@ class PrinterSettingsViewModel(
     fun cancelPairing() {
         viewModelScope.launch {
             printerManager.cancelPairing()
+        }
+    }
+    
+    fun updatePaperSize(size: Int) {
+        viewModelScope.launch {
+            try {
+                val defaultChars = if (size == 80) 48 else 42
+                val defaultWidth = if (size == 80) 72f else 48f
+                val defaultDPI = 203
+                
+                val currentSettings = storeSettingsRepository.getStoreSettings().firstOrNull()
+                    ?: com.argminres.app.data.local.entity.StoreSettingsEntity()
+                    
+                storeSettingsRepository.saveStoreSettings(
+                    currentSettings.copy(
+                        printerPaperSize = size,
+                        printerCharCount = if (size == 80) 48 else 42,
+                        printerWidthMM = if (size == 80) 72f else 58f,
+                        printerDPI = 203
+                    )
+                )
+                _uiState.update { it.copy(successMessage = "Paper size updated to ${size}mm") }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Failed to update paper size: ${e.message}") }
+            }
         }
     }
     

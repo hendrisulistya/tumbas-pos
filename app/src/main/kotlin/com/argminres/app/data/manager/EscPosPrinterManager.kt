@@ -15,6 +15,7 @@ import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnection
 import com.dantsu.escposprinter.connection.usb.UsbPrintersConnections
 import com.argminres.app.domain.manager.PrinterManager
 import com.argminres.app.domain.manager.PairingState
+import com.argminres.app.domain.repository.StoreSettingsRepository
 import com.argminres.app.data.local.entity.SalesOrderEntity
 import com.argminres.app.presentation.sales.CartItem
 import kotlinx.coroutines.Dispatchers
@@ -23,12 +24,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class EscPosPrinterManager(
-    private val context: Context
+    private val context: Context,
+    private val storeSettingsRepository: StoreSettingsRepository
 ) : PrinterManager {
 
     private val _isConnected = MutableStateFlow(false)
@@ -186,7 +189,15 @@ class EscPosPrinterManager(
                 // Now connect to the paired device
                 val printerConnection = com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection(device)
                 
-                printer = EscPosPrinter(printerConnection, 203, 48f, 32)
+                // Get printer settings
+                val settings = withContext(Dispatchers.IO) {
+                    storeSettingsRepository.getStoreSettings().firstOrNull()
+                }
+                val widthMM = settings?.printerWidthMM ?: 48f
+                val charCount = settings?.printerCharCount ?: 32
+                val printerDPI = settings?.printerDPI ?: 203
+                
+                printer = EscPosPrinter(printerConnection, printerDPI, widthMM, charCount)
                 _isConnected.value = true
                 _connectedDeviceName.value = deviceName
                 
@@ -306,13 +317,17 @@ class EscPosPrinterManager(
             val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
             val dateStr = dateFormat.format(Date(order.orderDate))
             
+            val charCount = p.printerNbrCharactersPerLine
+            val divider = "=".repeat(charCount)
+            val dashDivider = "-".repeat(charCount)
+            
             val sb = StringBuilder()
             sb.append("[C]<b><font size='big'>PadangPOS</font></b>\n")
-            sb.append("[C]================================\n")
+            sb.append("[C]$divider\n")
             sb.append("[L]<b>Date:</b> $dateStr\n")
             sb.append("[L]<b>Order ID:</b> ${order.orderNumber}\n")
             sb.append("[L]<b>Customer:</b> ${order.customerId ?: "Guest"}\n")
-            sb.append("[C]--------------------------------\n")
+            sb.append("[C]$dashDivider\n")
             
             items.forEach { item ->
                 val total = item.product.price * item.quantity
@@ -320,9 +335,9 @@ class EscPosPrinterManager(
                 sb.append("[L]  ${item.quantity} x ${formatCurrency(item.product.price)}[R]${formatCurrency(total)}\n")
             }
             
-            sb.append("[C]--------------------------------\n")
+            sb.append("[C]$dashDivider\n")
             sb.append("[L]<b>TOTAL</b>[R]<b>${formatCurrency(order.totalAmount)}</b>\n")
-            sb.append("[C]================================\n")
+            sb.append("[C]$divider\n")
             sb.append("[C]Thank you for your purchase!\n")
             
             p.printFormattedText(sb.toString())
@@ -332,10 +347,13 @@ class EscPosPrinterManager(
     override suspend fun testPrint() {
         withContext(Dispatchers.IO) {
             val p = printer ?: throw Exception("Printer not connected")
+            val charCount = p.printerNbrCharactersPerLine
+            val divider = "=".repeat(charCount)
+            
             p.printFormattedText(
                 "[C]<b><font size='big'>TestStorePOS</font></b>\n" +
                 "[C]Printer Test Successful!\n" +
-                "[C]================================\n"
+                "[C]$divider\n"
             )
         }
     }
@@ -430,8 +448,8 @@ class EscPosPrinterManager(
         val logoBitmap = base64ToBitmap(logoBase64)
         if (logoBitmap != null) {
             try {
-                // Resize logo to fit printer width (max 384 pixels for 58mm printer)
-                val maxWidth = 384
+                // Resize logo to fit printer width (standard 384 pixels for 58mm/203dpi printer)
+                val maxWidth = ((printer.printerDpi * printer.printerWidthMM) / 25.4f).toInt()
                 val scaleFactor = if (logoBitmap.width > maxWidth) {
                     maxWidth.toFloat() / logoBitmap.width
                 } else {

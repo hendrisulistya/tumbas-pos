@@ -72,6 +72,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
 fun App() {
     KoinContext {
         val settingsRepository: SettingsRepository = koinInject()
+        val databaseInitializer: com.argminres.app.data.local.DatabaseInitializer = koinInject()
+        
         com.argminres.app.ui.theme.PadangPOSTheme(settingsRepository = settingsRepository) {
             val navController = rememberNavController()
             val authManager: com.argminres.app.domain.manager.AuthenticationManager = koinInject()
@@ -79,6 +81,14 @@ fun App() {
             
             // Restore session on app start
             LaunchedEffect(Unit) {
+                // Auto-activate & Initialize on app start for debug builds
+                if (com.argminres.app.BuildConfig.DEBUG) {
+                    // Check if already truly activated to avoid unnecessary work
+                    // but calling saveStoreId and setActivated is idempotent
+                    settingsRepository.saveStoreId(settingsRepository.getAppId())
+                    settingsRepository.setActivated(true)
+                    databaseInitializer.initializeIfNeeded()
+                }
                 authManager.restoreSession()
             }
             

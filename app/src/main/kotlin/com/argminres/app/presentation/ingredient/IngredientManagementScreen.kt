@@ -24,6 +24,15 @@ fun IngredientManagementScreen(
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -36,6 +45,7 @@ fun IngredientManagementScreen(
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = viewModel::onAddIngredientClick
@@ -106,8 +116,11 @@ fun IngredientManagementScreen(
     if (uiState.showAddEditDialog) {
         AddEditIngredientDialog(
             ingredient = uiState.selectedIngredient,
+            masterIngredients = uiState.masterIngredients,
+            successMessage = uiState.successMessage,
             onDismiss = viewModel::onDialogDismiss,
-            onSave = viewModel::onSaveIngredient
+            onSave = viewModel::onSaveIngredient,
+            onClearSuccessMessage = viewModel::clearSuccessMessage
         )
     }
 }

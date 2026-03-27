@@ -198,7 +198,7 @@ val appModule = module {
     }
     single { com.argminres.app.domain.manager.AuditLogger(get(), inject(), kotlinx.coroutines.GlobalScope) }
     
-    single<com.argminres.app.domain.manager.PrinterManager> { com.argminres.app.data.manager.EscPosPrinterManager(androidContext()) }
+    single<com.argminres.app.domain.manager.PrinterManager> { com.argminres.app.data.manager.EscPosPrinterManager(androidContext(), get()) }
     
     // ViewModels
     viewModel { com.argminres.app.presentation.auth.LoginViewModel(get(), get()) }
@@ -222,7 +222,7 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderViewModel(get(), get(), get(), get()) }
-    viewModel { com.argminres.app.presentation.settings.printer.PrinterSettingsViewModel(get(), androidContext()) }
+    viewModel { com.argminres.app.presentation.settings.printer.PrinterSettingsViewModel(get(), get(), androidContext()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
     viewModel { com.argminres.app.presentation.employer.EmployerManagementViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.audit.AuditLogViewModel(get()) }
