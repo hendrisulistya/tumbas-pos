@@ -8,8 +8,9 @@ interface CartRepository {
     val cartItems: StateFlow<List<CartItem>>
     
     fun addToCart(product: DishEntity, quantity: Int)
-    fun updateQuantity(productId: Long, quantity: Int)
-    fun removeFromCart(productId: Long)
+    fun addPackageToCart(pkg: com.argminres.app.data.local.entity.PackageEntity, quantity: Int)
+    fun updateQuantity(productId: Long, isPackage: Boolean, quantity: Int)
+    fun removeFromCart(productId: Long, isPackage: Boolean)
     fun clearCart()
     fun getTotalAmount(): Double
 }

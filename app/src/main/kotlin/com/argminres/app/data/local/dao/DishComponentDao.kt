@@ -10,7 +10,7 @@ interface DishComponentDao {
     @Query("""
         SELECT componentDishId 
         FROM dish_components 
-        WHERE packageDishId = :packageId
+        WHERE packageId = :packageId
     """)
     fun getComponentDishIds(packageId: Long): Flow<List<Long>>
     
@@ -20,10 +20,10 @@ interface DishComponentDao {
     @Query("DELETE FROM dish_components WHERE id = :componentId")
     suspend fun deleteComponent(componentId: Long)
     
-    @Query("DELETE FROM dish_components WHERE packageDishId = :packageId")
+    @Query("DELETE FROM dish_components WHERE packageId = :packageId")
     suspend fun deleteAllComponentsForPackage(packageId: Long)
     
-    @Query("SELECT * FROM dish_components WHERE packageDishId = :packageId")
+    @Query("SELECT * FROM dish_components WHERE packageId = :packageId")
     fun getComponentEntities(packageId: Long): Flow<List<DishComponentEntity>>
     
     @Query("SELECT * FROM dish_components")

@@ -220,18 +220,18 @@ fun OrderDetailItemRow(item: CartItem) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = item.product.name,
+                text = item.name,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "${item.quantity} x ${formatCurrency(item.product.price)}",
+                text = "${item.quantity} x ${formatCurrency(item.price)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
         }
         Text(
-            text = formatCurrency(item.product.price * item.quantity),
+            text = formatCurrency(item.price * item.quantity),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold
         )

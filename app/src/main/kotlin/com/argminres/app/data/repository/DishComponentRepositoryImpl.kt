@@ -31,7 +31,7 @@ class DishComponentRepositoryImpl(
     
     override suspend fun addComponent(packageId: Long, componentId: Long) {
         val component = DishComponentEntity(
-            packageDishId = packageId,
+            packageId = packageId,
             componentDishId = componentId,
             quantity = 1
         )

@@ -8,9 +8,9 @@ import androidx.room.PrimaryKey
     tableName = "dish_components",
     foreignKeys = [
         ForeignKey(
-            entity = DishEntity::class,
+            entity = PackageEntity::class,
             parentColumns = ["id"],
-            childColumns = ["packageDishId"],
+            childColumns = ["packageId"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
@@ -23,7 +23,7 @@ import androidx.room.PrimaryKey
 )
 data class DishComponentEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val packageDishId: Long,      // The package dish (e.g., Paket Rendang)
-    val componentDishId: Long,    // Component dish (e.g., Nasi Putih)
+    val packageId: Long,          // The package (from packages table)
+    val componentDishId: Long,    // Component dish (from dishes table)
     val quantity: Int = 1         // Always 1 for simple system
 )

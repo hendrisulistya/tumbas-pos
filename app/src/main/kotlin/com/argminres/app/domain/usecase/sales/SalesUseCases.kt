@@ -18,15 +18,13 @@ class CreateSalesOrderUseCase(
         
         // 2. Update stock for each item
         items.forEach { item ->
-            // Check if this is a package with components
-            val components = componentRepository.getComponentsForPackage(item.dishId).first()
-            
-            if (components.isNotEmpty()) {
+            if (item.packageId != null) {
                 // It's a package, deduct stock from all components
+                val components = componentRepository.getComponentsForPackage(item.packageId).first()
                 components.forEach { component ->
                     productRepository.updateStock(component.dish.id, -item.quantity)
                 }
-            } else {
+            } else if (item.dishId != null) {
                 // Not a package, deduct stock from the dish itself
                 productRepository.updateStock(item.dishId, -item.quantity)
             }

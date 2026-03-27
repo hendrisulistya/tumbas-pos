@@ -14,32 +14,49 @@ class CartRepositoryImpl : CartRepository {
 
     override fun addToCart(product: DishEntity, quantity: Int) {
         _cartItems.update { currentItems ->
-            val existingItem = currentItems.find { it.product.id == product.id }
+            val existingItem = currentItems.find { it.dish?.id == product.id && !it.isPackage }
             if (existingItem != null) {
                 currentItems.map {
-                    if (it.product.id == product.id) it.copy(quantity = it.quantity + quantity) else it
+                    if (it.dish?.id == product.id && !it.isPackage) it.copy(quantity = it.quantity + quantity) else it
                 }
             } else {
-                currentItems + CartItem(product, quantity)
+                currentItems + CartItem(dish = product, quantity = quantity)
             }
         }
     }
 
-    override fun updateQuantity(productId: Long, quantity: Int) {
+    override fun addPackageToCart(pkg: com.argminres.app.data.local.entity.PackageEntity, quantity: Int) {
+        _cartItems.update { currentItems ->
+            val existingItem = currentItems.find { it.pkg?.id == pkg.id && it.isPackage }
+            if (existingItem != null) {
+                currentItems.map {
+                    if (it.pkg?.id == pkg.id && it.isPackage) it.copy(quantity = it.quantity + quantity) else it
+                }
+            } else {
+                currentItems + CartItem(pkg = pkg, quantity = quantity)
+            }
+        }
+    }
+
+    override fun updateQuantity(productId: Long, isPackage: Boolean, quantity: Int) {
         if (quantity <= 0) {
-            removeFromCart(productId)
+            removeFromCart(productId, isPackage)
             return
         }
         _cartItems.update { currentItems ->
             currentItems.map {
-                if (it.product.id == productId) it.copy(quantity = quantity) else it
+                val matches = if (isPackage) it.pkg?.id == productId else it.dish?.id == productId
+                if (matches && it.isPackage == isPackage) it.copy(quantity = quantity) else it
             }
         }
     }
 
-    override fun removeFromCart(productId: Long) {
+    override fun removeFromCart(productId: Long, isPackage: Boolean) {
         _cartItems.update { currentItems ->
-            currentItems.filter { it.product.id != productId }
+            currentItems.filter { 
+                val matches = if (isPackage) it.pkg?.id == productId else it.dish?.id == productId
+                !(matches && it.isPackage == isPackage)
+            }
         }
     }
 

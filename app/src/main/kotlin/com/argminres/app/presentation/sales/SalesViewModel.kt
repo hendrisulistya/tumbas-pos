@@ -21,19 +21,28 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.argminres.app.presentation.home.ProductItem
 import java.util.UUID
 
 data class CartItem(
-    val product: DishEntity,
+    val dish: DishEntity? = null,
+    val pkg: com.argminres.app.data.local.entity.PackageEntity? = null,
     val quantity: Int
 ) {
-    val subtotal: Double get() = product.price * quantity
+    val id: Long get() = dish?.id ?: pkg?.id ?: 0L
+    val name: String get() = dish?.name ?: pkg?.name ?: ""
+    val price: Double get() = dish?.price ?: pkg?.price ?: 0.0
+    val image: String? get() = dish?.image ?: pkg?.image
+    val subtotal: Double get() = price * quantity
+    val isPackage: Boolean get() = pkg != null
 }
 
 data class SalesUiState(
     val cart: List<CartItem> = emptyList(),
     val searchQuery: String = "",
-    val searchResults: List<com.argminres.app.data.local.dao.DishWithCategory> = emptyList(),
+    val searchResults: List<ProductItem> = emptyList<ProductItem>(),
+    val packages: List<com.argminres.app.data.local.entity.PackageEntity> = emptyList(),
+    val filteredPackages: List<com.argminres.app.data.local.entity.PackageEntity> = emptyList(),
     val totalAmount: Double = 0.0,
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -54,6 +63,7 @@ class SalesViewModel(
     private val getStoreSettingsUseCase: GetStoreSettingsUseCase,
     private val cartRepository: com.argminres.app.domain.repository.CartRepository,
     private val customerRepository: com.argminres.app.domain.repository.CustomerRepository,
+    private val packageRepository: com.argminres.app.domain.repository.PackageRepository,
     private val printerManager: PrinterManager,
     private val application: android.app.Application,
     private val authManager: com.argminres.app.domain.manager.AuthenticationManager,
@@ -66,6 +76,7 @@ class SalesViewModel(
     init {
         observeCart()
         loadCustomers()
+        loadPackages()
     }
 
     private fun observeCart() {
@@ -94,6 +105,19 @@ class SalesViewModel(
             }
         }
     }
+
+    private fun loadPackages() {
+        viewModelScope.launch {
+            packageRepository.getAllPackages().collect { packages ->
+                _uiState.update { 
+                    it.copy(
+                        packages = packages,
+                        filteredPackages = packages.filter { pkg -> pkg.name.contains(it.searchQuery, ignoreCase = true) }
+                    ) 
+                }
+            }
+        }
+    }
     
     fun selectCustomer(customer: CustomerEntity) {
         _uiState.update { it.copy(selectedCustomer = customer) }
@@ -103,31 +127,46 @@ class SalesViewModel(
         _uiState.update { it.copy(searchQuery = query) }
         if (query.isNotEmpty()) {
             viewModelScope.launch {
-                searchProductsUseCase(query).collect { dishes: List<com.argminres.app.data.local.dao.DishWithCategory> ->
-                    _uiState.update { it.copy(searchResults = dishes) }
+                val dishesFlow = searchProductsUseCase(query)
+                val packagesFlow = packageRepository.getAllPackages()
+                
+                combine(dishesFlow, packagesFlow) { dishes, packages ->
+                    val productItems = mutableListOf<ProductItem>()
+                    dishes.filter { it.dish.category != "Paket" }.forEach { 
+                        productItems.add(ProductItem.Dish(it))
+                    }
+                    packages.filter { it.name.contains(query, ignoreCase = true) }.forEach {
+                        productItems.add(ProductItem.Package(it, 0))
+                    }
+                    productItems
+                }.collect { results ->
+                    _uiState.update { it.copy(searchResults = results) }
                 }
             }
         } else {
-            _uiState.update { it.copy(searchResults = emptyList()) }
+            _uiState.update { it.copy(searchResults = emptyList<ProductItem>()) }
         }
     }
 
-    fun onProductSelected(productWithCategory: com.argminres.app.data.local.dao.DishWithCategory) {
-        addToCart(productWithCategory.dish)
-        _uiState.update { it.copy(searchQuery = "", searchResults = emptyList()) }
+    fun onProductSelected(item: ProductItem) {
+        when (item) {
+            is ProductItem.Dish -> cartRepository.addToCart(item.dishWithCategory.dish, 1)
+            is ProductItem.Package -> cartRepository.addPackageToCart(item.pkg, 1)
+        }
+        _uiState.update { it.copy(searchQuery = "", searchResults = emptyList<ProductItem>()) }
     }
 
-
-    private fun addToCart(product: DishEntity) {
-        cartRepository.addToCart(product, 1)
+    fun onPackageSelected(pkg: com.argminres.app.data.local.entity.PackageEntity) {
+        cartRepository.addPackageToCart(pkg, 1)
+        _uiState.update { it.copy(searchQuery = "", searchResults = emptyList<ProductItem>()) }
     }
 
-    fun updateQuantity(productId: Long, quantity: Int) {
-        cartRepository.updateQuantity(productId, quantity)
+    fun updateQuantity(productId: Long, isPackage: Boolean, quantity: Int) {
+        cartRepository.updateQuantity(productId, isPackage, quantity)
     }
 
-    fun removeFromCart(productId: Long) {
-        cartRepository.removeFromCart(productId)
+    fun removeFromCart(productId: Long, isPackage: Boolean) {
+        cartRepository.removeFromCart(productId, isPackage)
     }
 
     fun checkout() {
@@ -168,9 +207,10 @@ class SalesViewModel(
                 val items = state.cart.map {
                     SalesOrderItemEntity(
                         salesOrderId = 0, // Will be set by repo
-                        dishId = it.product.id,
+                        dishId = it.dish?.id,
+                        packageId = it.pkg?.id,
                         quantity = it.quantity,
-                        unitPrice = it.product.price,
+                        unitPrice = it.price,
                         subtotal = it.subtotal
                     )
                 }
@@ -237,18 +277,17 @@ class SalesViewModel(
                     appendLine("--------------------------------")
                     
                     // Items List
-                    items.forEach { item ->
-                        val product = state.cart.find { it.product.id == item.dishId }?.product
-                        val productName = product?.name ?: "Unknown"
+                    state.cart.forEach { cartItem ->
+                        val productName = cartItem.name
                         
                         // Product name (full text, wrapping allowed)
                         appendLine(productName)
                         
                         // Unit price x quantity = subtotal on one line
                         appendLine(String.format("  @ %s x %d = %s",
-                            indonesianFormat.format(item.unitPrice.toLong()),
-                            item.quantity,
-                            indonesianFormat.format(item.subtotal.toLong())
+                            indonesianFormat.format(cartItem.price.toLong()),
+                            cartItem.quantity,
+                            indonesianFormat.format(cartItem.subtotal.toLong())
                         ))
                         
                         appendLine() // Blank line between items

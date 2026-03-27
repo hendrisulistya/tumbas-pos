@@ -16,6 +16,7 @@ class DatabaseInitializer(
     private val categoryDao: com.argminres.app.data.local.dao.CategoryDao,
     private val ingredientDao: com.argminres.app.data.local.dao.IngredientDao,
     private val dishComponentDao: com.argminres.app.data.local.dao.DishComponentDao,
+    private val packageDao: com.argminres.app.data.local.dao.PackageDao,
     private val settingsRepository: SettingsRepository,
     private val storeSettingsDao: com.argminres.app.data.local.dao.StoreSettingsDao,
     private val employerRepository: com.argminres.app.domain.repository.EmployerRepository
@@ -289,14 +290,13 @@ class DatabaseInitializer(
             android.util.Log.e("DatabaseInitializer", "Error inserting ingredients", e)
         }
     }
-    
     private suspend fun insertDishPackagesFromJson() {
         try {
-            val components = mutableListOf<com.argminres.app.data.local.entity.DishComponentEntity>()
-            val packages = mutableListOf<DishEntity>()
-            
             val jsonString = context.assets.open("dish_package.json").bufferedReader().use { it.readText() }
             val jsonArray = org.json.JSONArray(jsonString)
+            
+            val components = mutableListOf<com.argminres.app.data.local.entity.DishComponentEntity>()
+            val packages = mutableListOf<com.argminres.app.data.local.entity.PackageEntity>()
             
             for (i in 0 until jsonArray.length()) {
                 val packageObj = jsonArray.getJSONObject(i)
@@ -308,34 +308,30 @@ class DatabaseInitializer(
                 val image = if (packageObj.has("image")) packageObj.getString("image") else null
                 
                 packages.add(
-                    DishEntity(
+                    com.argminres.app.data.local.entity.PackageEntity(
                         id = packageId,
                         name = packageName,
                         description = description,
                         price = price,
-                        stock = 0,
-                        category = "Paket",
                         image = image
                     )
                 )
-                
+
                 for (j in 0 until componentsArray.length()) {
-                    val componentId = componentsArray.getLong(j)
                     components.add(
                         com.argminres.app.data.local.entity.DishComponentEntity(
-                            packageDishId = packageId,
-                            componentDishId = componentId,
+                            packageId = packageId,
+                            componentDishId = componentsArray.getLong(j),
                             quantity = 1
                         )
                     )
                 }
             }
-            if (packages.isNotEmpty()) {
-                productDao.insertAll(packages)
-            }
+            
+            packages.forEach { packageDao.insertPackage(it) }
             components.forEach { dishComponentDao.insertComponent(it) }
         } catch (e: Exception) {
-            android.util.Log.e("DatabaseInitializer", "Error inserting dish packages", e)
+            android.util.Log.e("DatabaseInitializer", "Error inserting packages", e)
         }
     }
 }

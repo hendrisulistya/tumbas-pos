@@ -38,6 +38,27 @@ interface DishDao {
     suspend fun updateStock(dishId: Long, quantity: Int)
 }
 
+@Dao
+interface PackageDao {
+    @Query("SELECT * FROM packages ORDER BY name ASC")
+    fun getAllPackages(): Flow<List<PackageEntity>>
+
+    @Query("SELECT * FROM packages WHERE id = :id")
+    suspend fun getPackageById(id: Long): PackageEntity?
+
+    @Query("SELECT * FROM packages WHERE name LIKE '%' || :query || '%'")
+    fun searchPackages(query: String): Flow<List<PackageEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPackage(pkg: PackageEntity): Long
+
+    @Update
+    suspend fun updatePackage(pkg: PackageEntity)
+
+    @Delete
+    suspend fun deletePackage(pkg: PackageEntity)
+}
+
 data class DishWithCategory(
     @Embedded val dish: DishEntity,
     @Relation(
@@ -174,11 +195,29 @@ interface ReportingDao {
         INNER JOIN sales_orders so ON soi.salesOrderId = so.id
         WHERE so.orderDate >= :startDate AND so.orderDate <= :endDate
           AND (:cashierId IS NULL OR so.cashierId = :cashierId)
+          AND p.category != 'Paket'
         GROUP BY p.id
         ORDER BY quantitySold DESC
         LIMIT :limit
     """)
     fun getTopSellingDishes(startDate: Long, endDate: Long, limit: Int, cashierId: Long?): Flow<List<com.argminres.app.domain.model.TopProduct>>
+
+    @Query("""
+        SELECT 
+            p.id as dishId,
+            p.name as productName,
+            SUM(soi.quantity) as quantitySold,
+            SUM(soi.subtotal) as totalRevenue
+        FROM sales_order_items soi
+        INNER JOIN packages p ON soi.packageId = p.id
+        INNER JOIN sales_orders so ON soi.salesOrderId = so.id
+        WHERE so.orderDate >= :startDate AND so.orderDate <= :endDate
+          AND (:cashierId IS NULL OR so.cashierId = :cashierId)
+        GROUP BY p.id
+        ORDER BY quantitySold DESC
+        LIMIT :limit
+    """)
+    fun getTopSellingPackages(startDate: Long, endDate: Long, limit: Int, cashierId: Long?): Flow<List<com.argminres.app.domain.model.TopProduct>>
 
     @Query("""
         SELECT 

@@ -19,6 +19,10 @@ class ReportingRepositoryImpl(
         return reportingDao.getTopSellingDishes(startDate, endDate, limit, cashierId)
     }
 
+    override fun getTopSellingPackages(startDate: Long, endDate: Long, limit: Int, cashierId: Long?): Flow<List<TopProduct>> {
+        return reportingDao.getTopSellingPackages(startDate, endDate, limit, cashierId)
+    }
+
     override fun getLowStockDishes(threshold: Int): Flow<List<LowStockProduct>> {
         return reportingDao.getLowStockDishes(threshold)
     }

@@ -149,8 +149,8 @@ fun SalesScreen(
                         items(uiState.cart) { item ->
                             CartItemRow(
                                 item = item,
-                                onIncrease = { viewModel.updateQuantity(item.product.id, item.quantity + 1) },
-                                onDecrease = { viewModel.updateQuantity(item.product.id, item.quantity - 1) },
+                                onIncrease = { viewModel.updateQuantity(item.id, item.isPackage, item.quantity + 1) },
+                                onDecrease = { viewModel.updateQuantity(item.id, item.isPackage, item.quantity - 1) },
                                 currencyFormatter = currencyFormatter
                             )
                         }
@@ -599,14 +599,14 @@ fun CartItemRow(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    item.product.name,
+                    item.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    currencyFormatter.format(item.product.price),
+                    currencyFormatter.format(item.price),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFF8080B0)
                 )

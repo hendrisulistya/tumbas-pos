@@ -78,7 +78,19 @@ data class DishEntity(
     val description: String,
     val price: Double,
     val stock: Int,
-    val category: String, // "Makanan", "Minuman", "Paket"
+    val category: String, // "Makanan", "Minuman", etc.
+    val image: String? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "packages")
+@Serializable
+data class PackageEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val description: String = "",
+    val price: Double,
     val image: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
@@ -151,12 +163,35 @@ data class SalesOrderEntity(
     val updatedAt: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "sales_order_items")
+@Entity(
+    tableName = "sales_order_items",
+    foreignKeys = [
+        ForeignKey(
+            entity = SalesOrderEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["salesOrderId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = DishEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["dishId"],
+            onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = PackageEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["packageId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ]
+)
 @Serializable
 data class SalesOrderItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val salesOrderId: Long,
-    val dishId: Long,
+    val dishId: Long? = null,
+    val packageId: Long? = null,
     val quantity: Int,
     val unitPrice: Double,
     val subtotal: Double

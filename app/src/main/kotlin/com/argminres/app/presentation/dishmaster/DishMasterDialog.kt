@@ -30,20 +30,38 @@ import com.argminres.app.presentation.dish.ProductImageDisplay
 @Composable
 fun DishMasterDialog(
     dish: DishWithCategory?,
+    pkg: com.argminres.app.data.local.entity.PackageEntity? = null,
+    isPackage: Boolean,
     isUploadingImage: Boolean,
     initialComponents: List<Long>,
     allDishes: List<DishWithCategory>,
     onUploadImage: suspend (ByteArray) -> Result<String>,
     onDismiss: () -> Unit,
-    onSave: (String, String, Double, String?, List<Long>) -> Unit
+    onSave: (String, String, Double, String?, List<Long>, Boolean) -> Unit
 ) {
     val dishRepository: com.argminres.app.domain.repository.DishRepository = koinInject()
     val categories by dishRepository.getAllCategories().collectAsState(initial = emptyList())
     
-    var name by remember { mutableStateOf(dish?.dish?.name ?: "") }
-    var selectedCategory by remember { mutableStateOf(dish?.dish?.category ?: (categories.find { it.name == "Paket" && dish?.dish?.category == "Paket" }?.name ?: categories.firstOrNull()?.name ?: "")) }
-    var price by remember { mutableStateOf(dish?.dish?.price?.toString() ?: "0") }
-    var image by remember { mutableStateOf(dish?.dish?.image ?: "") }
+    var name by remember { mutableStateOf(dish?.dish?.name ?: pkg?.name ?: "") }
+    var selectedCategory by remember { 
+        mutableStateOf(
+            dish?.dish?.category ?: if (isPackage) "Paket" else ""
+        ) 
+    }
+    
+    // Ensure selectedCategory is set when categories are loaded
+    LaunchedEffect(categories, isPackage, dish, pkg) {
+        if (dish == null && pkg == null) {
+            if (isPackage) {
+                selectedCategory = "Paket"
+            } else if (selectedCategory.isBlank() || selectedCategory == "Paket") {
+                selectedCategory = categories.firstOrNull { it.name != "Paket" }?.name ?: ""
+            }
+        }
+    }
+
+    var price by remember { mutableStateOf(dish?.dish?.price?.toString() ?: pkg?.price?.toString() ?: "0") }
+    var image by remember { mutableStateOf(dish?.dish?.image ?: pkg?.image ?: "") }
     var expandedCategory by remember { mutableStateOf(false) }
     var selectedComponents by remember { mutableStateOf(initialComponents) }
     
@@ -69,7 +87,7 @@ fun DishMasterDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (dish == null) "Add Dish" else "Edit Dish") },
+        title = { Text(if (dish == null && pkg == null) (if (isPackage) "Tambah Paket" else "Tambah Hidangan") else (if (isPackage) "Edit Paket" else "Edit Hidangan")) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -99,32 +117,35 @@ fun DishMasterDialog(
                 )
                 
                 // Category Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = expandedCategory,
-                    onExpandedChange = { expandedCategory = it }
-                ) {
-                    OutlinedTextField(
-                        value = if (selectedCategory.isBlank()) "Select Category" else selectedCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    ExposedDropdownMenu(
+                if (!isPackage) {
+                    ExposedDropdownMenuBox(
                         expanded = expandedCategory,
-                        onDismissRequest = { expandedCategory = false }
+                        onExpandedChange = { expandedCategory = it }
                     ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category.name) },
-                                onClick = {
-                                    selectedCategory = category.name
-                                    expandedCategory = false
-                                }
-                            )
+                        OutlinedTextField(
+                            value = if (selectedCategory.isBlank()) "Select Category" else selectedCategory,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Category") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedCategory,
+                            onDismissRequest = { expandedCategory = false }
+                        ) {
+                            // Filter out "Paket" for regular dishes
+                            categories.filter { it.name != "Paket" }.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { Text(category.name) },
+                                    onClick = {
+                                        selectedCategory = category.name
+                                        expandedCategory = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -178,7 +199,7 @@ fun DishMasterDialog(
                 }
 
                 // Package Components Section
-                if (selectedCategory == "Paket") {
+                if (isPackage) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Komponen Paket", style = MaterialTheme.typography.titleSmall)
                     Card(
@@ -225,10 +246,11 @@ fun DishMasterDialog(
                         selectedCategory,
                         price.toDoubleOrNull() ?: 0.0,
                         image.ifBlank { null },
-                        selectedComponents
+                        selectedComponents,
+                        isPackage
                     )
                 },
-                enabled = name.isNotBlank() && selectedCategory.isNotBlank()
+                enabled = name.isNotBlank() && (isPackage || selectedCategory.isNotBlank())
             ) {
                 Text("Save")
             }

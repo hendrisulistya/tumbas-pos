@@ -51,44 +51,83 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
+    var isSearching by remember { mutableStateOf(false) }
     val showFab by remember { derivedStateOf { uiState.cartItemCount > 0 } }
 
     Scaffold(
         containerColor = Color.White,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "PadangPOS",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White
-                    )
-                },
-                actions = {
-                    if (uiState.cartItemCount > 0) {
-                        BadgedBox(
-                            badge = {
-                                Badge(containerColor = Color.White) {
-                                    Text(uiState.cartItemCount.toString(), color = Blue600)
+            if (isSearching) {
+                TopAppBar(
+                    title = {
+                        OutlinedTextField(
+                            value = uiState.searchQuery,
+                            onValueChange = viewModel::onSearchQueryChange,
+                            placeholder = { Text("Search dishes...", color = Color.White.copy(alpha = 0.7f)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                                cursorColor = Color.White
+                            ),
+                            trailingIcon = {
+                                IconButton(onClick = { 
+                                    viewModel.onSearchQueryChange("")
+                                    isSearching = false 
+                                }) {
+                                    Icon(Icons.Default.Close, "Close", tint = Color.White)
                                 }
-                            },
-                            modifier = Modifier.padding(end = 4.dp)
-                        ) {
-                            IconButton(onClick = onNavigateToCart) {
-                                Icon(Icons.Default.ShoppingCart, "Cart", tint = Color.White)
+                            }
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Blue600
+                    ),
+                    windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
+                )
+            } else {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "PadangPOS",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color.White
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = { isSearching = true }) {
+                            Icon(Icons.Default.Search, "Search", tint = Color.White)
+                        }
+                        if (uiState.cartItemCount > 0) {
+                            BadgedBox(
+                                badge = {
+                                    Badge(containerColor = Color.White) {
+                                        Text(uiState.cartItemCount.toString(), color = Blue600)
+                                    }
+                                },
+                                modifier = Modifier.padding(end = 4.dp)
+                            ) {
+                                IconButton(onClick = onNavigateToCart) {
+                                    Icon(Icons.Default.ShoppingCart, "Cart", tint = Color.White)
+                                }
                             }
                         }
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, "Settings", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Blue600
-                ),
-                windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
-            )
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(Icons.Default.Settings, "Settings", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Blue600
+                    ),
+                    windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
+                )
+            }
         },
         floatingActionButton = {
             if (showFab) {
@@ -127,8 +166,8 @@ fun HomeScreen(
                         .weight(0.20f)
                 )
 
-                // ── Dish Grid ─────────────────────────────────────────────
-                if (uiState.dishes.isEmpty()) {
+                // ── Product Grid ─────────────────────────────────────────────
+                if (uiState.filteredItems.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .weight(0.80f)
@@ -163,18 +202,18 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         gridItems(
-                            items = uiState.dishes,
-                            key = { it.dish.id },
+                            items = uiState.filteredItems,
+                            key = { item -> "${if (item.isPackage) "pkg" else "dish"}_${item.id}" },
                             contentType = { "product" }
-                        ) { dishWithCategory ->
-                            val cartQty = viewModel.getCartQuantity(dishWithCategory.dish.id)
+                        ) { item ->
+                            val cartQty = viewModel.getCartQuantity(item.id, item.isPackage)
                             ProductGridItem(
-                                productWithCategory = dishWithCategory,
+                                item = item,
                                 currencyFormatter = currencyFormatter,
                                 cartQuantity = cartQty,
-                                onAddToCart = { viewModel.addToCart(dishWithCategory) },
-                                onIncrease = { viewModel.increaseQuantity(dishWithCategory.dish.id) },
-                                onDecrease = { viewModel.decreaseQuantity(dishWithCategory.dish.id) }
+                                onAddToCart = { viewModel.addToCart(item) },
+                                onIncrease = { viewModel.increaseQuantity(item.id, item.isPackage) },
+                                onDecrease = { viewModel.decreaseQuantity(item.id, item.isPackage) }
                             )
                         }
                     }
@@ -260,14 +299,13 @@ private fun CategoryItem(
 
 @Composable
 fun ProductGridItem(
-    productWithCategory: com.argminres.app.data.local.dao.DishWithCategory,
+    item: ProductItem,
     currencyFormatter: NumberFormat,
     cartQuantity: Int,
     onAddToCart: () -> Unit,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
-    val product = productWithCategory.dish
     val isInCart = cartQuantity > 0
 
     Card(
@@ -291,14 +329,14 @@ fun ProductGridItem(
                     .background(Blue50),
                 contentAlignment = Alignment.Center
             ) {
-                if (product.image != null) {
+                if (item.image != null) {
                     com.argminres.app.presentation.dish.ProductImageDisplay(
-                        image = product.image!!,
+                        image = item.image!!,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
                     Icon(
-                        Icons.Default.Restaurant,
+                        if (item.isPackage) Icons.Default.LocalOffer else Icons.Default.Restaurant,
                         contentDescription = null,
                         modifier = Modifier.size(40.dp),
                         tint = Blue100
@@ -306,7 +344,7 @@ fun ProductGridItem(
                 }
 
                 // Habis overlay
-                if (product.stock <= 0) {
+                if (item.stock <= 0) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -349,7 +387,7 @@ fun ProductGridItem(
                     .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 Text(
-                    product.name,
+                    item.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
@@ -359,7 +397,7 @@ fun ProductGridItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    currencyFormatter.format(product.price),
+                    currencyFormatter.format(item.price),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = Blue600
@@ -378,7 +416,7 @@ fun ProductGridItem(
                     Button(
                         onClick = onAddToCart,
                         modifier = Modifier.fillMaxWidth().height(34.dp),
-                        enabled = product.stock > 0,
+                        enabled = item.stock > 0,
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(0.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -416,10 +454,10 @@ fun ProductGridItem(
                             modifier = Modifier
                                 .size(30.dp)
                                 .background(
-                                    if (cartQuantity < product.stock) Blue600 else Color(0xFFE0E0E0),
+                                    if (cartQuantity < item.stock) Blue600 else Color(0xFFE0E0E0),
                                     RoundedCornerShape(8.dp)
                                 ),
-                            enabled = cartQuantity < product.stock
+                            enabled = cartQuantity < item.stock
                         ) {
                             Icon(Icons.Default.Add, "Increase", modifier = Modifier.size(16.dp), tint = Color.White)
                         }

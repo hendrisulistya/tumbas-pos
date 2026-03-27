@@ -27,9 +27,10 @@ import com.argminres.app.data.local.entity.*
         IngredientUsageEntity::class,
         DishComponentEntity::class,
         DishHistoryEntity::class,
-        IngredientHistoryEntity::class
+        IngredientHistoryEntity::class,
+        PackageEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -53,4 +54,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dishComponentDao(): DishComponentDao
     abstract fun dishHistoryDao(): DishHistoryDao
     abstract fun ingredientHistoryDao(): IngredientHistoryDao
+    abstract fun packageDao(): PackageDao
 }

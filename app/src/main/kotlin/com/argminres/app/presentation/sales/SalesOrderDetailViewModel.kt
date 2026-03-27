@@ -7,11 +7,7 @@ import com.argminres.app.data.local.entity.StoreSettingsEntity
 import com.argminres.app.domain.manager.PrinterManager
 import com.argminres.app.domain.repository.DishRepository
 import com.argminres.app.domain.repository.SalesOrderRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class SalesOrderDetailUiState(
@@ -28,6 +24,7 @@ data class SalesOrderDetailUiState(
 class SalesOrderDetailViewModel(
     private val salesOrderRepository: SalesOrderRepository,
     private val productRepository: DishRepository,
+    private val packageRepository: com.argminres.app.domain.repository.PackageRepository,
     private val printerManager: PrinterManager,
     private val application: android.app.Application,
     private val getStoreSettingsUseCase: com.argminres.app.domain.usecase.settings.GetStoreSettingsUseCase,
@@ -43,12 +40,13 @@ class SalesOrderDetailViewModel(
             try {
                 val orderWithItems = salesOrderRepository.getSalesOrderById(orderId)
                 if (orderWithItems != null) {
-                    val cartItems = orderWithItems.items.mapNotNull { item ->
-                        val productWithCategory = productRepository.getDishById(item.dishId)
-                        if (productWithCategory != null) {
-                            CartItem(productWithCategory.dish, item.quantity)
+                    val cartItems = orderWithItems.items.map { item ->
+                        if (item.packageId != null) {
+                            val pkg = packageRepository.getPackageById(item.packageId!!)
+                            CartItem(pkg = pkg, quantity = item.quantity)
                         } else {
-                            null
+                            val dishWithCategory = productRepository.getDishById(item.dishId!!)
+                            CartItem(dish = dishWithCategory?.dish, quantity = item.quantity)
                         }
                     }
                     
@@ -130,11 +128,11 @@ class SalesOrderDetailViewModel(
                         // Items List
                         state.items.forEach { item ->
                             // Product name
-                            appendLine(item.product.name)
+                            appendLine(item.name)
                             
                             // Unit price x quantity = subtotal
                             appendLine(String.format("  @ %s x %d = %s",
-                                indonesianFormat.format(item.product.price.toLong()),
+                                indonesianFormat.format(item.price.toLong()),
                                 item.quantity,
                                 indonesianFormat.format(item.subtotal.toLong())
                             ))

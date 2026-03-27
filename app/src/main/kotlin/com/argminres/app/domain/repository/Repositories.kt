@@ -19,6 +19,15 @@ interface DishRepository {
     suspend fun updateStock(dishId: Long, quantity: Int)
 }
 
+interface PackageRepository {
+    fun getAllPackages(): Flow<List<com.argminres.app.data.local.entity.PackageEntity>>
+    suspend fun getPackageById(id: Long): com.argminres.app.data.local.entity.PackageEntity?
+    fun searchPackages(query: String): Flow<List<com.argminres.app.data.local.entity.PackageEntity>>
+    suspend fun insertPackage(pkg: com.argminres.app.data.local.entity.PackageEntity): Long
+    suspend fun updatePackage(pkg: com.argminres.app.data.local.entity.PackageEntity)
+    suspend fun deletePackage(pkg: com.argminres.app.data.local.entity.PackageEntity)
+}
+
 interface SalesOrderRepository {
     fun getAllSalesOrders(): Flow<List<SalesOrderWithItems>>
     suspend fun getSalesOrderById(id: Long): SalesOrderWithItems?
@@ -52,6 +61,7 @@ interface PurchaseOrderRepository {
 interface ReportingRepository {
     fun getDailySalesSummary(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<List<com.argminres.app.domain.model.SalesSummary>>
     fun getTopSellingDishes(startDate: Long, endDate: Long, limit: Int, cashierId: Long? = null): Flow<List<com.argminres.app.domain.model.TopProduct>>
+    fun getTopSellingPackages(startDate: Long, endDate: Long, limit: Int, cashierId: Long? = null): Flow<List<com.argminres.app.domain.model.TopProduct>>
     fun getLowStockDishes(threshold: Int): Flow<List<com.argminres.app.domain.model.LowStockProduct>>
     fun getTotalRevenue(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
     fun getTotalIngredientCost(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>

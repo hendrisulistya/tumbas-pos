@@ -383,9 +383,9 @@ class EscPosPrinterManager(
             sb.append("[C]$dashDivider\n")
             
             items.forEach { item ->
-                val total = item.product.price * item.quantity
-                sb.append("[L]<b>${item.product.name}</b>\n")
-                sb.append("[L]  ${item.quantity} x ${formatCurrency(item.product.price)}[R]${formatCurrency(total)}\n")
+                val total = item.price * item.quantity
+                sb.append("[L]<b>${item.name}</b>\n")
+                sb.append("[L]  ${item.quantity} x ${formatCurrency(item.price)}[R]${formatCurrency(total)}\n")
             }
             
             sb.append("[C]$dashDivider\n")

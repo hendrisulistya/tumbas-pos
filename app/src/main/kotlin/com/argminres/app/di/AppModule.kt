@@ -43,6 +43,7 @@ val appModule = module {
     single { get<AppDatabase>().dishComponentDao() }
     single { get<AppDatabase>().dishHistoryDao() }
     single { get<AppDatabase>().ingredientHistoryDao() }
+    single { get<AppDatabase>().packageDao() }
 
     // Repositories
     single<com.argminres.app.domain.repository.DishRepository> { 
@@ -50,6 +51,9 @@ val appModule = module {
     }
     single<com.argminres.app.domain.repository.SalesOrderRepository> { 
         com.argminres.app.data.repository.SalesOrderRepositoryImpl(get()) 
+    }
+    single<com.argminres.app.domain.repository.PackageRepository> {
+        com.argminres.app.data.repository.PackageRepositoryImpl(get())
     }
     single<com.argminres.app.domain.repository.IngredientStockRepository> {
         com.argminres.app.data.repository.IngredientStockRepositoryImpl(get())
@@ -181,6 +185,7 @@ val appModule = module {
             get<com.argminres.app.data.local.dao.CategoryDao>(),
             get<com.argminres.app.data.local.dao.IngredientDao>(),
             get<com.argminres.app.data.local.dao.DishComponentDao>(),
+            get<com.argminres.app.data.local.dao.PackageDao>(),
             get<SettingsRepository>(),
             get<com.argminres.app.data.local.dao.StoreSettingsDao>(),
             get<com.argminres.app.domain.repository.EmployerRepository>()
@@ -202,8 +207,8 @@ val appModule = module {
     
     // ViewModels
     viewModel { com.argminres.app.presentation.auth.LoginViewModel(get(), get()) }
-    viewModel { com.argminres.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
-    viewModel { com.argminres.app.presentation.home.HomeViewModel(get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.sales.SalesViewModel(get(), get(), get(), get(), get(), get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
+    viewModel { com.argminres.app.presentation.home.HomeViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.showcase.ShowcaseViewModel(get(), get(), get(), get(), get()) }
     viewModel { 
         com.argminres.app.presentation.purchase.PurchaseViewModel(
@@ -218,12 +223,12 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.startday.SessionCheckViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.ingredientmaster.IngredientMasterViewModel(get(), get(), get()) }
-    viewModel { com.argminres.app.presentation.dishmaster.DishMasterViewModel(get(), get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.dishmaster.DishMasterViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.PostActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.activation.RestoreStoreViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.sales.SalesOrderViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.settings.printer.PrinterSettingsViewModel(get(), get(), androidContext()) }
-    viewModel { com.argminres.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
+    viewModel { com.argminres.app.presentation.sales.SalesOrderDetailViewModel(get(), get(), get(), get(), androidContext() as android.app.Application, get(), get()) }
     viewModel { com.argminres.app.presentation.employer.EmployerManagementViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.audit.AuditLogViewModel(get()) }
     viewModel { 

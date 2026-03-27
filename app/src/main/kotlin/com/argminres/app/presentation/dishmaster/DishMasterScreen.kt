@@ -127,19 +127,36 @@ fun DishMasterScreen(
                     }
                 }
             } else {
+                val isPackageTab = uiState.selectedTab == 1
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(
-                        items = uiState.filteredDishes,
-                        key = { it.dish.id },
-                        contentType = { "dish" }
-                    ) { dishWithCat ->
-                        DishMasterCard(
-                            dishWithCategory = dishWithCat,
-                            currencyFormatter = currencyFormatter,
-                            onEditClick = { viewModel.onEditDishClick(dishWithCat) }
-                        )
+                    if (isPackageTab) {
+                        items(
+                            items = uiState.filteredPackages,
+                            key = { it.id },
+                            contentType = { "package" }
+                        ) { pkg ->
+                            PackageMasterCard(
+                                pkg = pkg,
+                                currencyFormatter = currencyFormatter,
+                                onEditClick = { viewModel.onEditPackageClick(pkg) },
+                                onDeleteClick = { viewModel.onDeletePackage(pkg.id) }
+                            )
+                        }
+                    } else {
+                        items(
+                            items = uiState.filteredDishes,
+                            key = { it.dish.id },
+                            contentType = { "dish" }
+                        ) { dishWithCat ->
+                            DishMasterCard(
+                                dishWithCategory = dishWithCat,
+                                currencyFormatter = currencyFormatter,
+                                onEditClick = { viewModel.onEditDishClick(dishWithCat) },
+                                onDeleteClick = { viewModel.onDeleteDish(dishWithCat.dish.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -150,6 +167,8 @@ fun DishMasterScreen(
     if (uiState.showAddEditDialog) {
         DishMasterDialog(
             dish = uiState.selectedDish,
+            pkg = uiState.selectedPackage,
+            isPackage = uiState.selectedTab == 1,
             isUploadingImage = uiState.isUploadingImage,
             initialComponents = uiState.selectedPackageComponents,
             allDishes = uiState.dishes,
@@ -164,7 +183,8 @@ fun DishMasterScreen(
 fun DishMasterCard(
     dishWithCategory: com.argminres.app.data.local.dao.DishWithCategory,
     currencyFormatter: NumberFormat,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     val dish = dishWithCategory.dish
     val categoryName = dishWithCategory.category?.name ?: "Uncategorized"
@@ -208,8 +228,13 @@ fun DishMasterCard(
                     )
                 }
                 
-                IconButton(onClick = onEditClick) {
-                    Icon(Icons.Default.Edit, "Edit")
+                Row {
+                    IconButton(onClick = onEditClick) {
+                        Icon(Icons.Default.Edit, "Edit", tint = androidx.compose.ui.graphics.Color(0xFF1976D2))
+                    }
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
             
@@ -243,6 +268,99 @@ fun DishMasterCard(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PackageMasterCard(
+    pkg: com.argminres.app.data.local.entity.PackageEntity,
+    currencyFormatter: NumberFormat,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = androidx.compose.ui.graphics.Color(0xFFF3E5F5) // Light Purple for Packages
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFE1BEE7))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Image Thumbnail
+                Card(
+                    modifier = Modifier.size(64.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    com.argminres.app.presentation.dish.ProductImageDisplay(
+                        image = pkg.image ?: "",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        pkg.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Paket Menu",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                Row {
+                    IconButton(onClick = onEditClick) {
+                        Icon(Icons.Default.Edit, "Edit", tint = androidx.compose.ui.graphics.Color(0xFF6A1B9A))
+                    }
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        "ID",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        pkg.id.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "Price",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        currencyFormatter.format(pkg.price),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = androidx.compose.ui.graphics.Color(0xFF6A1B9A)
                     )
                 }
             }

@@ -14,19 +14,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class HomeUiState(
-    val allDishes: List<DishWithCategory> = emptyList(),
-    val dishes: List<DishWithCategory> = emptyList(),
+    val allItems: List<ProductItem> = emptyList(),
+    val filteredItems: List<ProductItem> = emptyList(),
     val categories: List<String> = emptyList(),
     val selectedCategory: String = "All",
     val searchQuery: String = "",
-    val cart: List<CartItem> = emptyList(),
+    val cart: List<com.argminres.app.presentation.sales.CartItem> = emptyList(),
     val cartItemCount: Int = 0,
-    val isLoading: Boolean = false,
-    val componentEntities: List<com.argminres.app.data.local.entity.DishComponentEntity> = emptyList()
+    val isLoading: Boolean = false
 )
 
 class HomeViewModel(
     private val searchProductsUseCase: SearchDishesUseCase,
+    private val packageRepository: com.argminres.app.domain.repository.PackageRepository,
     private val cartRepository: com.argminres.app.domain.repository.CartRepository,
     private val dishComponentRepository: com.argminres.app.domain.repository.DishComponentRepository
 ) : ViewModel() {
@@ -35,7 +35,7 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        loadDishes()
+        loadData()
         observeCart()
     }
 
@@ -52,42 +52,47 @@ class HomeViewModel(
         }
     }
 
-    private fun loadDishes() {
+    private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // Use explicit flow variables to help the compiler with type inference
-            val dishesFlow: kotlinx.coroutines.flow.Flow<List<DishWithCategory>> = searchProductsUseCase("")
-            val componentsFlow: kotlinx.coroutines.flow.Flow<List<com.argminres.app.data.local.entity.DishComponentEntity>> = 
-                dishComponentRepository.getAllComponentEntities()
+            val dishesFlow = searchProductsUseCase("")
+            val packagesFlow = packageRepository.getAllPackages()
+            val componentsFlow = dishComponentRepository.getAllComponentEntities()
 
-            dishesFlow.combine(componentsFlow) { allDishes, components ->
-                allDishes to components
-            }.collect { (allDishesFromFlow, componentsFromFlow) ->
+            combine(dishesFlow, packagesFlow, componentsFlow) { dishes, packages, components ->
+                Triple(dishes, packages, components)
+            }.collect { (allDishes, allPackages, allComponents) ->
+                
+                val productItems = mutableListOf<ProductItem>()
+                
+                // Add Dishes
+                allDishes.filter { it.dish.category != "Paket" }.forEach { 
+                    productItems.add(ProductItem.Dish(it))
+                }
+                
+                // Add Packages with dynamic stock
+                allPackages.forEach { pkg ->
+                    val virtualStock = calculatePackageVirtualStock(pkg, allDishes, allComponents)
+                    productItems.add(ProductItem.Package(pkg, virtualStock))
+                }
+
                 val categoryOrder = listOf("Paket", "Makanan", "Minuman", "Lain-lain")
-                val categories = listOf("All") + allDishesFromFlow
-                    .map { dwc: DishWithCategory -> dwc.category?.name ?: "Uncategorized" }
+                val categories = listOf("All") + productItems
+                    .map { it.categoryName }
                     .distinct()
-                    .sortedWith(compareBy<String> { name: String ->
+                    .sortedWith(compareBy<String> { name ->
                         val idx = categoryOrder.indexOf(name)
                         if (idx >= 0) idx else Int.MAX_VALUE
                     })
 
-                val dishesWithVirtualStock = allDishesFromFlow.map { dwc: DishWithCategory ->
-                    val virtualStock = calculateVirtualStock(dwc, allDishesFromFlow, componentsFromFlow)
-                    dwc.copy(
-                        dish = dwc.dish.copy(stock = virtualStock)
-                    )
-                }
-
-                val filteredDishes = filterDishes(dishesWithVirtualStock, _uiState.value.selectedCategory, _uiState.value.searchQuery)
+                val filteredItems = filterItems(productItems, _uiState.value.selectedCategory, _uiState.value.searchQuery)
 
                 _uiState.update { state ->
                     state.copy(
-                        allDishes = dishesWithVirtualStock,
-                        dishes = filteredDishes,
+                        allItems = productItems,
+                        filteredItems = filteredItems,
                         categories = categories,
-                        componentEntities = componentsFromFlow,
                         isLoading = false
                     )
                 }
@@ -95,17 +100,16 @@ class HomeViewModel(
         }
     }
 
-    private fun calculateVirtualStock(
-        dishWithCat: DishWithCategory,
+    private fun calculatePackageVirtualStock(
+        pkg: com.argminres.app.data.local.entity.PackageEntity,
         allDishes: List<DishWithCategory>,
-        components: List<com.argminres.app.data.local.entity.DishComponentEntity>
+        allComponents: List<com.argminres.app.data.local.entity.DishComponentEntity>
     ): Int {
-        val dishComponents = components.filter { it.packageDishId == dishWithCat.dish.id }
-        if (dishComponents.isEmpty()) return dishWithCat.dish.stock
+        val components = allComponents.filter { it.packageId == pkg.id }
+        if (components.isEmpty()) return 0
 
-        // For packages, stock is the minimum stock of its components
         var minStock = Int.MAX_VALUE
-        dishComponents.forEach { component ->
+        components.forEach { component ->
             val compDish = allDishes.find { it.dish.id == component.componentDishId }
             val compStock = compDish?.dish?.stock ?: 0
             if (compStock < minStock) {
@@ -115,49 +119,52 @@ class HomeViewModel(
         return if (minStock == Int.MAX_VALUE) 0 else minStock
     }
 
-    private fun filterDishes(allDishes: List<DishWithCategory>, category: String, query: String): List<DishWithCategory> {
-        return allDishes
-            .filter { category == "All" || (it.category?.name ?: "Uncategorized") == category }
-            .filter { query.isBlank() || it.dish.name.contains(query, ignoreCase = true) }
+    private fun filterItems(items: List<ProductItem>, category: String, query: String): List<ProductItem> {
+        return items
+            .filter { category == "All" || it.categoryName == category }
+            .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) }
     }
 
     fun onCategorySelected(category: String) {
-        val filtered = filterDishes(_uiState.value.allDishes, category, _uiState.value.searchQuery)
-        _uiState.update { it.copy(selectedCategory = category, dishes = filtered) }
+        val filtered = filterItems(_uiState.value.allItems, category, _uiState.value.searchQuery)
+        _uiState.update { it.copy(selectedCategory = category, filteredItems = filtered) }
     }
 
     fun onSearchQueryChange(query: String) {
-        val filtered = filterDishes(_uiState.value.allDishes, _uiState.value.selectedCategory, query)
-        _uiState.update { it.copy(searchQuery = query, dishes = filtered) }
+        val filtered = filterItems(_uiState.value.allItems, _uiState.value.selectedCategory, query)
+        _uiState.update { it.copy(searchQuery = query, filteredItems = filtered) }
     }
 
-    fun addToCart(dishWithCategory: DishWithCategory) {
-        cartRepository.addToCart(dishWithCategory.dish, 1)
+    fun addToCart(item: ProductItem) {
+        when (item) {
+            is ProductItem.Dish -> cartRepository.addToCart(item.dishWithCategory.dish, 1)
+            is ProductItem.Package -> cartRepository.addPackageToCart(item.pkg, 1)
+        }
     }
 
-    fun increaseQuantity(dishId: Long) {
+    fun increaseQuantity(itemId: Long, isPackage: Boolean) {
         viewModelScope.launch {
-            val item = _uiState.value.cart.find { it.product.id == dishId }
+            val item = _uiState.value.cart.find { it.id == itemId && it.isPackage == isPackage }
             if (item != null) {
-                cartRepository.updateQuantity(dishId, item.quantity + 1)
+                cartRepository.updateQuantity(itemId, isPackage, item.quantity + 1)
             }
         }
     }
 
-    fun decreaseQuantity(dishId: Long) {
+    fun decreaseQuantity(itemId: Long, isPackage: Boolean) {
         viewModelScope.launch {
-            val item = _uiState.value.cart.find { it.product.id == dishId }
+            val item = _uiState.value.cart.find { it.id == itemId && it.isPackage == isPackage }
             if (item != null) {
                 if (item.quantity > 1) {
-                    cartRepository.updateQuantity(dishId, item.quantity - 1)
+                    cartRepository.updateQuantity(itemId, isPackage, item.quantity - 1)
                 } else {
-                    cartRepository.removeFromCart(dishId)
+                    cartRepository.removeFromCart(itemId, isPackage)
                 }
             }
         }
     }
 
-    fun getCartQuantity(dishId: Long): Int {
-        return _uiState.value.cart.find { it.product.id == dishId }?.quantity ?: 0
+    fun getCartQuantity(itemId: Long, isPackage: Boolean): Int {
+        return _uiState.value.cart.find { it.id == itemId && it.isPackage == isPackage }?.quantity ?: 0
     }
 }

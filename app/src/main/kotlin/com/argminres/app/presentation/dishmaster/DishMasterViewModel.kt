@@ -15,10 +15,13 @@ import kotlinx.coroutines.launch
 data class DishMasterUiState(
     val dishes: List<DishWithCategory> = emptyList(),
     val filteredDishes: List<DishWithCategory> = emptyList(),
+    val packages: List<com.argminres.app.data.local.entity.PackageEntity> = emptyList(),
+    val filteredPackages: List<com.argminres.app.data.local.entity.PackageEntity> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val showAddEditDialog: Boolean = false,
     val selectedDish: DishWithCategory? = null,
+    val selectedPackage: com.argminres.app.data.local.entity.PackageEntity? = null,
     val selectedPackageComponents: List<Long> = emptyList(),
     val selectedTab: Int = 0, // 0 = Hidangan, 1 = Paket
     val isUploadingImage: Boolean = false,
@@ -27,6 +30,7 @@ data class DishMasterUiState(
 
 class DishMasterViewModel(
     private val dishRepository: DishRepository,
+    private val packageRepository: com.argminres.app.domain.repository.PackageRepository,
     private val manageProductImageUseCase: com.argminres.app.domain.usecase.dish.ManageDishImageUseCase,
     private val auditLogger: com.argminres.app.domain.manager.AuditLogger,
     private val dishComponentRepository: com.argminres.app.domain.repository.DishComponentRepository
@@ -36,35 +40,47 @@ class DishMasterViewModel(
     val uiState: StateFlow<DishMasterUiState> = _uiState.asStateFlow()
 
     init {
-        loadDishes()
+        loadData()
     }
 
-    private fun loadDishes() {
+    private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            dishRepository.getAllDishes().collect { dishes ->
-                updateFilteredDishes(dishes, _uiState.value.searchQuery, _uiState.value.selectedTab)
+            launch {
+                dishRepository.getAllDishes().collect { dishes ->
+                    _uiState.update { it.copy(dishes = dishes) }
+                    updateFilteredData()
+                }
+            }
+            
+            launch {
+                packageRepository.getAllPackages().collect { packages ->
+                    _uiState.update { it.copy(packages = packages) }
+                    updateFilteredData()
+                }
             }
         }
     }
 
-    private fun updateFilteredDishes(dishes: List<DishWithCategory>, query: String, tab: Int) {
-        val filtered = dishes.filter { 
-            val matchesQuery = it.dish.name.contains(query, ignoreCase = true) || 
-                               it.dish.id.toString().contains(query)
-            val matchesTab = if (tab == 0) {
-                it.dish.category != "Paket"
-            } else {
-                it.dish.category == "Paket"
-            }
-            matchesQuery && matchesTab
+    private fun updateFilteredData() {
+        val state = _uiState.value
+        val query = state.searchQuery
+        
+        val filteredDishes = state.dishes.filter { 
+            it.dish.name.contains(query, ignoreCase = true) || 
+            it.dish.id.toString().contains(query)
+        }.filter { it.dish.category != "Paket" }
+        
+        val filteredPackages = state.packages.filter {
+            it.name.contains(query, ignoreCase = true) ||
+            it.id.toString().contains(query)
         }
         
         _uiState.update {
             it.copy(
-                dishes = dishes,
-                filteredDishes = filtered,
+                filteredDishes = filteredDishes,
+                filteredPackages = filteredPackages,
                 isLoading = false
             )
         }
@@ -72,35 +88,44 @@ class DishMasterViewModel(
 
     fun onTabSelected(index: Int) {
         _uiState.update { it.copy(selectedTab = index) }
-        updateFilteredDishes(_uiState.value.dishes, _uiState.value.searchQuery, index)
+        updateFilteredData()
     }
 
     fun onSearchQueryChange(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
-        updateFilteredDishes(_uiState.value.dishes, query, _uiState.value.selectedTab)
+        updateFilteredData()
     }
 
     fun onAddDishClick() {
         _uiState.update { 
             it.copy(
                 showAddEditDialog = true,
-                selectedDish = null
+                selectedDish = null,
+                selectedPackage = null,
+                selectedPackageComponents = emptyList()
             )
         }
     }
 
     fun onEditDishClick(dish: DishWithCategory) {
+        _uiState.update {
+            it.copy(
+                showAddEditDialog = true,
+                selectedDish = dish,
+                selectedPackage = null,
+                selectedPackageComponents = emptyList()
+            )
+        }
+    }
+
+    fun onEditPackageClick(pkg: com.argminres.app.data.local.entity.PackageEntity) {
         viewModelScope.launch {
-            val components = if (dish.dish.category == "Paket") {
-                dishComponentRepository.getComponentEntities(dish.dish.id).first().map { it.componentDishId }
-            } else {
-                emptyList<Long>()
-            }
-            
+            val components = dishComponentRepository.getComponentEntities(pkg.id).first().map { it.componentDishId }
             _uiState.update {
                 it.copy(
                     showAddEditDialog = true,
-                    selectedDish = dish,
+                    selectedDish = null,
+                    selectedPackage = pkg,
                     selectedPackageComponents = components
                 )
             }
@@ -112,6 +137,7 @@ class DishMasterViewModel(
             it.copy(
                 showAddEditDialog = false,
                 selectedDish = null,
+                selectedPackage = null,
                 selectedPackageComponents = emptyList()
             )
         }
@@ -122,54 +148,85 @@ class DishMasterViewModel(
         category: String,
         price: Double,
         image: String? = null,
-        components: List<Long> = emptyList()
+        components: List<Long> = emptyList(),
+        isPackage: Boolean = false
     ) {
         viewModelScope.launch {
             try {
-                val existingDish = _uiState.value.selectedDish?.dish
-                val savedId: Long
-                
-                if (existingDish != null) {
-                    savedId = existingDish.id
-                    dishRepository.updateDish(
-                        existingDish.copy(
-                            name = name,
-                            category = category,
-                            price = price,
-                            image = image,
-                            updatedAt = System.currentTimeMillis()
-                        )
-                    )
+                if (isPackage) {
+                    savePackage(name, price, image, components)
                 } else {
-                    savedId = dishRepository.insertDish(
-                        DishEntity(
-                            name = name,
-                            description = "",
-                            category = category,
-                            price = price,
-                            stock = 0,
-                            image = image
-                        )
-                    )
+                    saveDish(name, category, price, image)
                 }
-
-                // Sync components if it's a Paket
-                if (category == "Paket") {
-                    dishComponentRepository.removeAllComponents(savedId)
-                    components.forEach { compId ->
-                        dishComponentRepository.addComponent(savedId, compId)
-                    }
-                }
-                
                 onDialogDismiss()
-                
-                auditLogger.logAsync {
-                    if (existingDish != null) auditLogger.logUpdate("DISH", savedId, "Name: $name")
-                    else auditLogger.logCreate("DISH", savedId, "Name: $name")
-                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
+        }
+    }
+
+    private suspend fun saveDish(name: String, category: String, price: Double, image: String?) {
+        val existingDish = _uiState.value.selectedDish?.dish
+        val savedId: Long
+        
+        if (existingDish != null) {
+            savedId = existingDish.id
+            dishRepository.updateDish(
+                existingDish.copy(
+                    name = name,
+                    category = category,
+                    price = price,
+                    image = image,
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+            auditLogger.logUpdate("DISH", savedId, "Name: $name")
+        } else {
+            savedId = dishRepository.insertDish(
+                DishEntity(
+                    name = name,
+                    description = "",
+                    category = category,
+                    price = price,
+                    stock = 0,
+                    image = image
+                )
+            )
+            auditLogger.logCreate("DISH", savedId, "Name: $name")
+        }
+    }
+
+    private suspend fun savePackage(name: String, price: Double, image: String?, components: List<Long>) {
+        val existingPackage = _uiState.value.selectedPackage
+        val savedId: Long
+        
+        if (existingPackage != null) {
+            savedId = existingPackage.id
+            packageRepository.updatePackage(
+                existingPackage.copy(
+                    name = name,
+                    price = price,
+                    image = image,
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+            auditLogger.logUpdate("PACKAGE", savedId, "Name: $name")
+        } else {
+            savedId = packageRepository.insertPackage(
+                com.argminres.app.data.local.entity.PackageEntity(
+                    name = name,
+                    description = "",
+                    price = price,
+                    image = image
+                )
+            )
+            auditLogger.logCreate("PACKAGE", savedId, "Name: $name")
+        }
+
+        // Sync components
+        dishComponentRepository.removeAllComponents(savedId)
+        components.forEach { compId ->
+            dishComponentRepository.addComponent(savedId, compId)
         }
     }
 
@@ -178,19 +235,25 @@ class DishMasterViewModel(
             try {
                 val dish = _uiState.value.dishes.find { it.dish.id == dishId }?.dish
                 if (dish != null) {
-                    // Delete image if exists
-                    dish.image?.let { image ->
-                        manageProductImageUseCase.deleteImage(image)
-                    }
-                    // Clean up components if it's a Paket
-                    if (dish.category == "Paket") {
-                        dishComponentRepository.removeAllComponents(dish.id)
-                    }
+                    dish.image?.let { manageProductImageUseCase.deleteImage(it) }
                     dishRepository.deleteDish(dish)
-                    
-                    auditLogger.logAsync {
-                        auditLogger.logDelete("DISH", dishId, "Name: ${dish.name}")
-                    }
+                    auditLogger.logAsync { auditLogger.logDelete("DISH", dishId, "Name: ${dish.name}") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
+
+    fun onDeletePackage(packageId: Long) {
+        viewModelScope.launch {
+            try {
+                val pkg = _uiState.value.packages.find { it.id == packageId }
+                if (pkg != null) {
+                    pkg.image?.let { manageProductImageUseCase.deleteImage(it) }
+                    dishComponentRepository.removeAllComponents(pkg.id)
+                    packageRepository.deletePackage(pkg)
+                    auditLogger.logAsync { auditLogger.logDelete("PACKAGE", packageId, "Name: ${pkg.name}") }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
