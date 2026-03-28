@@ -40,6 +40,10 @@ import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
 import com.argminres.app.presentation.settings.printer.PrinterSettingsScreen
 import com.argminres.app.presentation.sales.SalesOrderDetailScreen
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import android.Manifest
+import android.os.Build
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
     data object Login : Screen("login", "Login")
@@ -68,6 +72,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     data object DishMaster : Screen("dish_master", "Kelola Etalase")
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun App() {
     KoinContext {
@@ -116,6 +121,24 @@ fun App() {
                 return@PadangPOSTheme
             }
             
+            // Handle startup permissions (Standard OS Dialog)
+            val permissions = mutableListOf(Manifest.permission.CAMERA)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+                permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            } else {
+                permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+            }
+            
+            @OptIn(ExperimentalPermissionsApi::class)
+            val permissionState = rememberMultiplePermissionsState(permissions)
+
+            LaunchedEffect(Unit) {
+                if (!permissionState.allPermissionsGranted) {
+                    permissionState.launchMultiplePermissionRequest()
+                }
+            }
+
             // Redirect to login if user becomes unauthenticated
             LaunchedEffect(isAuthenticated) {
                 if (settingsRepository.isActivated() && isAuthenticated == null) {
@@ -146,118 +169,118 @@ fun App() {
                     }
                 }
             }
-            
+
             Scaffold(
                 contentWindowInsets = WindowInsets(0, 0, 0, 0)
             ) { innerPadding ->
-                NavHost(
-                    navController = navController,
-                    startDestination = startDestination,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            androidx.compose.foundation.layout.PaddingValues(
-                                start = innerPadding.calculateLeftPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
-                                top = innerPadding.calculateTopPadding(),
-                                end = innerPadding.calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
-                                bottom = 0.dp
-                            )
-                        )
-                ) {
-                    composable(Screen.Login.route) {
-                    com.argminres.app.presentation.auth.LoginScreen(
-                        onLoginSuccess = {
-                            navController.navigate(Screen.SessionCheck.route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
-                            }
-                        },
-                        onNavigateToSettings = {
-                            navController.navigate(Screen.Settings.route)
-                        }
-                    )
-                }
-                
-                composable(Screen.SessionCheck.route) {
-                    val sessionCheckViewModel: com.argminres.app.presentation.startday.SessionCheckViewModel = koinViewModel()
-                    val uiState by sessionCheckViewModel.uiState.collectAsState()
-                    
-                    Scaffold(
-                        topBar = {
-                            if (!uiState.isLoading && !uiState.hasActiveSession) {
-                                TopAppBar(
-                                    title = { Text("Session Control", color = androidx.compose.ui.graphics.Color.White) },
-                                    actions = {
-                                        IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
-                                            Icon(
-                                                imageVector = Icons.Default.Settings,
-                                                contentDescription = "Settings",
-                                                tint = androidx.compose.ui.graphics.Color.White
-                                            )
-                                        }
-                                    },
-                                    colors = TopAppBarDefaults.topAppBarColors(
-                                        containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
-                                    ),
-                                    windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
+                    NavHost(
+                        navController = navController,
+                        startDestination = startDestination,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                androidx.compose.foundation.layout.PaddingValues(
+                                    start = innerPadding.calculateLeftPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                                    top = innerPadding.calculateTopPadding(),
+                                    end = innerPadding.calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                                    bottom = 0.dp
                                 )
-                            }
+                            )
+                    ) {
+                        composable(Screen.Login.route) {
+                            com.argminres.app.presentation.auth.LoginScreen(
+                                onLoginSuccess = {
+                                    navController.navigate(Screen.SessionCheck.route) {
+                                        popUpTo(Screen.Login.route) { inclusive = true }
+                                    }
+                                },
+                                onNavigateToSettings = {
+                                    navController.navigate(Screen.Settings.route)
+                                }
+                            )
                         }
-                    ) { padding ->
-                        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                            when {
-                                uiState.isLoading -> {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = androidx.compose.ui.Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                                uiState.hasActiveSession -> {
-                                    LaunchedEffect(Unit) {
-                                        navController.navigate(Screen.Home.route) {
-                                            popUpTo(Screen.SessionCheck.route) { inclusive = true }
-                                        }
-                                    }
-                                }
-                                uiState.isManager && uiState.showStartDayDialog -> {
-                                    com.argminres.app.presentation.startday.StartDayDialog(
-                                        isStarting = uiState.isStartingSession,
-                                        error = uiState.error,
-                                        onStartDay = sessionCheckViewModel::startDay,
-                                        onDismiss = {
-                                            sessionCheckViewModel.dismissDialog()
-                                            navController.navigate(Screen.Login.route) {
-                                                popUpTo(Screen.SessionCheck.route) { inclusive = true }
-                                            }
-                                        }
-                                    )
-                                }
-                                else -> {
-                                    if (uiState.isManager) {
-                                        LaunchedEffect(Unit) {
-                                            navController.navigate(Screen.Login.route) {
-                                                popUpTo(Screen.SessionCheck.route) { inclusive = true }
-                                            }
-                                        }
-                                    } else {
-                                        com.argminres.app.presentation.startday.NoSessionWarning(
-                                            onLogout = {
-                                                navController.navigate(Screen.Login.route) {
-                                                    popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                        
+                        composable(Screen.SessionCheck.route) {
+                            val sessionCheckViewModel: com.argminres.app.presentation.startday.SessionCheckViewModel = koinViewModel()
+                            val uiState by sessionCheckViewModel.uiState.collectAsState()
+                            
+                            Scaffold(
+                                topBar = {
+                                    if (!uiState.isLoading && !uiState.hasActiveSession) {
+                                        TopAppBar(
+                                            title = { Text("Session Control", color = androidx.compose.ui.graphics.Color.White) },
+                                            actions = {
+                                                IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Settings,
+                                                        contentDescription = "Settings",
+                                                        tint = androidx.compose.ui.graphics.Color.White
+                                                    )
                                                 }
                                             },
-                                            onSettingsClick = {
-                                                navController.navigate(Screen.Settings.route)
-                                            }
+                                            colors = TopAppBarDefaults.topAppBarColors(
+                                                containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
+                                            ),
+                                            windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
                                         )
                                     }
                                 }
+                            ) { padding ->
+                                Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                                    when {
+                                        uiState.isLoading -> {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = androidx.compose.ui.Alignment.Center
+                                            ) {
+                                                CircularProgressIndicator()
+                                            }
+                                        }
+                                        uiState.hasActiveSession -> {
+                                            LaunchedEffect(Unit) {
+                                                navController.navigate(Screen.Home.route) {
+                                                    popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                                }
+                                            }
+                                        }
+                                        uiState.isManager && uiState.showStartDayDialog -> {
+                                            com.argminres.app.presentation.startday.StartDayDialog(
+                                                isStarting = uiState.isStartingSession,
+                                                error = uiState.error,
+                                                onStartDay = sessionCheckViewModel::startDay,
+                                                onDismiss = {
+                                                    sessionCheckViewModel.dismissDialog()
+                                                    navController.navigate(Screen.Login.route) {
+                                                        popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                                    }
+                                                }
+                                            )
+                                        }
+                                        else -> {
+                                            if (uiState.isManager) {
+                                                LaunchedEffect(Unit) {
+                                                    navController.navigate(Screen.Login.route) {
+                                                        popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                                    }
+                                                }
+                                            } else {
+                                                com.argminres.app.presentation.startday.NoSessionWarning(
+                                                    onLogout = {
+                                                        navController.navigate(Screen.Login.route) {
+                                                            popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                                        }
+                                                    },
+                                                    onSettingsClick = {
+                                                        navController.navigate(Screen.Settings.route)
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-                    
+                        
                     composable(Screen.Home.route) {
                         HomeScreen(
                             onNavigateToCart = {
@@ -270,65 +293,65 @@ fun App() {
                     }
                     
                     composable(Screen.Settings.route) {
-                    val employerViewModel: com.argminres.app.presentation.employer.EmployerManagementViewModel = koinViewModel()
-                    val employerUiState by employerViewModel.uiState.collectAsState()
-                    val context = LocalContext.current
-                    
-                    SettingsScreen(
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToBackup = { navController.navigate(Screen.Backup.route) },
-                        onNavigateToPrinter = { navController.navigate(Screen.PrinterSettings.route) },
-                        onNavigateToStoreSettings = { navController.navigate(Screen.StoreSettings.route) },
-                        onNavigateToSalesOrder = { navController.navigate(Screen.SalesOrder.route) },
-                        onNavigateToShowcase = { navController.navigate(Screen.Showcase.route) },
-                        onNavigateToIngredient = { navController.navigate(Screen.Ingredient.route) },
-                        onNavigateToIngredientMaster = { navController.navigate(Screen.IngredientMaster.route) },
-                        onNavigateToDishMaster = { navController.navigate(Screen.DishMaster.route) },
-                        onNavigateToReporting = { navController.navigate(Screen.Reporting.route) },
-                        onNavigateToAbout = { navController.navigate(Screen.About.route) },
-                        onNavigateToEmployers = { navController.navigate(Screen.EmployerManagement.route) },
-                        onNavigateToAuditLog = { navController.navigate(Screen.AuditLog.route) },
-                        onNavigateToEndOfDay = { navController.navigate(Screen.EndOfDay.route) },
-                        onNavigateToWorkInProcess = { navController.navigate(Screen.WorkInProcess.route) },
-                        onChangePinClick = { employerViewModel.onChangePinClick() },
-                        onLogout = {
-                            navController.navigate(Screen.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
-                    )
-                    
-                    // Change PIN Dialog
-                    if (employerUiState.isChangePinDialogOpen) {
-                        com.argminres.app.presentation.settings.ChangePinDialog(
-                            onDismiss = { employerViewModel.onDismissChangePinDialog() },
-                            onConfirm = { oldPin, newPin ->
-                                employerViewModel.changePin(oldPin, newPin)
+                        val employerViewModel: com.argminres.app.presentation.employer.EmployerManagementViewModel = koinViewModel()
+                        val employerUiState by employerViewModel.uiState.collectAsState()
+                        val context = LocalContext.current
+                        
+                        SettingsScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToBackup = { navController.navigate(Screen.Backup.route) },
+                            onNavigateToPrinter = { navController.navigate(Screen.PrinterSettings.route) },
+                            onNavigateToStoreSettings = { navController.navigate(Screen.StoreSettings.route) },
+                            onNavigateToSalesOrder = { navController.navigate(Screen.SalesOrder.route) },
+                            onNavigateToShowcase = { navController.navigate(Screen.Showcase.route) },
+                            onNavigateToIngredient = { navController.navigate(Screen.Ingredient.route) },
+                            onNavigateToIngredientMaster = { navController.navigate(Screen.IngredientMaster.route) },
+                            onNavigateToDishMaster = { navController.navigate(Screen.DishMaster.route) },
+                            onNavigateToReporting = { navController.navigate(Screen.Reporting.route) },
+                            onNavigateToAbout = { navController.navigate(Screen.About.route) },
+                            onNavigateToEmployers = { navController.navigate(Screen.EmployerManagement.route) },
+                            onNavigateToAuditLog = { navController.navigate(Screen.AuditLog.route) },
+                            onNavigateToEndOfDay = { navController.navigate(Screen.EndOfDay.route) },
+                            onNavigateToWorkInProcess = { navController.navigate(Screen.WorkInProcess.route) },
+                            onChangePinClick = { employerViewModel.onChangePinClick() },
+                            onLogout = {
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         )
-                    }
-                    
-                    // Show success/error messages
-                    LaunchedEffect(employerUiState.pinChangeSuccess, employerUiState.pinChangeError) {
-                        if (employerUiState.pinChangeSuccess) {
-                            // Show success message
-                            android.widget.Toast.makeText(
-                                context,
-                                "PIN changed successfully",
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
+                        
+                        // Change PIN Dialog
+                        if (employerUiState.isChangePinDialogOpen) {
+                            com.argminres.app.presentation.settings.ChangePinDialog(
+                                onDismiss = { employerViewModel.onDismissChangePinDialog() },
+                                onConfirm = { oldPin, newPin ->
+                                    employerViewModel.changePin(oldPin, newPin)
+                                }
+                            )
                         }
-                        if (employerUiState.pinChangeError != null) {
-                            // Show error message
-                            android.widget.Toast.makeText(
-                                context,
-                                employerUiState.pinChangeError,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
+                        
+                        // Show success/error messages
+                        LaunchedEffect(employerUiState.pinChangeSuccess, employerUiState.pinChangeError) {
+                            if (employerUiState.pinChangeSuccess) {
+                                // Show success message
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "PIN changed successfully",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            if (employerUiState.pinChangeError != null) {
+                                // Show error message
+                                android.widget.Toast.makeText(
+                                    context,
+                                    employerUiState.pinChangeError,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
                     }
-                }
-                    
+                        
                     composable(Screen.PrinterSettings.route) {
                         PrinterSettingsScreen(
                             onNavigateBack = { navController.popBackStack() }
@@ -358,8 +381,6 @@ fun App() {
                         )
                     }
                     
-
-
                     composable(Screen.SalesOrder.route) {
                         SalesOrderScreen(
                             onNavigateBack = { navController.popBackStack() },

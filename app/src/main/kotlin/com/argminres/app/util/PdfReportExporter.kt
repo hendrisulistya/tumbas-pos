@@ -14,9 +14,12 @@ import android.provider.MediaStore
 import com.argminres.app.domain.model.AggregatedDishUsage
 import com.argminres.app.domain.model.AggregatedIngredientUsage
 import com.argminres.app.domain.model.TopProduct
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.text.NumberFormat
 import java.util.Locale
+import android.media.MediaScannerConnection
 
 data class PdfReportData(
     val storeName: String,
@@ -193,25 +196,57 @@ class PdfReportExporter(private val context: Context) {
     }
 
     private fun savePdfToDownloads(document: PdfDocument, fileName: String): Uri? {
-        val resolver = context.contentResolver
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-            put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+        val subfolderName = "PadangPOS"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = context.contentResolver
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/$subfolderName")
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
-        }
 
-        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-        if (uri != null) {
+            val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            val uri = resolver.insert(collection, contentValues)
+            
+            if (uri != null) {
+                try {
+                    resolver.openOutputStream(uri)?.use { outputStream ->
+                        document.writeTo(outputStream)
+                    }
+                    
+                    contentValues.clear()
+                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                    resolver.update(uri, contentValues, null, null)
+                    
+                    document.close()
+                    return uri
+                } catch (e: Exception) {
+                    resolver.delete(uri, null, null)
+                    document.close()
+                    return null
+                }
+            }
+        } else {
+            // Legacy Storage for API < 29
             try {
-                resolver.openOutputStream(uri)?.use { outputStream ->
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val tumbasDir = File(downloadsDir, subfolderName)
+                if (!tumbasDir.exists()) {
+                    tumbasDir.mkdirs()
+                }
+                
+                val file = File(tumbasDir, fileName)
+                FileOutputStream(file).use { outputStream ->
                     document.writeTo(outputStream)
                 }
+                
+                // Explicitly scan the file to make it visible in File Managers
+                MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), arrayOf("application/pdf"), null)
+                
                 document.close()
-                return uri
-            } catch (e: IOException) {
-                resolver.delete(uri, null, null)
+                return Uri.fromFile(file)
+            } catch (e: Exception) {
                 document.close()
                 return null
             }

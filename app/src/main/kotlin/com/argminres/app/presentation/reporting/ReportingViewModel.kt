@@ -69,7 +69,8 @@ class ReportingViewModel(
     private val dailySessionRepository: com.argminres.app.domain.repository.DailySessionRepository,
     private val authManager: com.argminres.app.domain.manager.AuthenticationManager,
     private val context: Context,
-    private val storeSettingsRepository: com.argminres.app.domain.repository.StoreSettingsRepository
+    private val storeSettingsRepository: com.argminres.app.domain.repository.StoreSettingsRepository,
+    private val reportingRepository: com.argminres.app.domain.repository.ReportingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportingUiState())
@@ -405,10 +406,14 @@ class ReportingViewModel(
                 val salesSummary: List<SalesSummary> = getSalesReportUseCase(period.startDate, period.endDate, cashierId).firstOrNull() ?: emptyList()
                 val totalRevenue = salesSummary.sumOf { s: SalesSummary -> s.totalSales }
                 
-                // 2. Get Products (State already has them for this period)
-                val topProducts = _uiState.value.topProducts
+                // 2. Get Products (For detailed reports, fetch the full list, otherwise take the top 5)
+                val productList: List<TopProduct> = if (isDetailed) {
+                    reportingRepository.getTopSellingDishes(period.startDate, period.endDate, 1000, cashierId).firstOrNull() ?: emptyList()
+                } else {
+                    _uiState.value.topProducts
+                }
                 
-                // 3. Get Details (Only if Detailed)
+                // 3. Get Details (Ingredients and Dish Usage)
                 var ingredientUsage = emptyList<com.argminres.app.domain.model.AggregatedIngredientUsage>()
                 var dishUsage = emptyList<com.argminres.app.domain.model.AggregatedDishUsage>()
                 
@@ -431,7 +436,7 @@ class ReportingViewModel(
                     totalRevenue = totalRevenue,
                     totalCost = totalCost,
                     totalWaste = totalWaste,
-                    topProducts = topProducts,
+                    topProducts = productList,
                     ingredientUsage = ingredientUsage,
                     dishUsage = dishUsage,
                     isDetailed = isDetailed

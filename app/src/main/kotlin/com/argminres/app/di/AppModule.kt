@@ -219,7 +219,7 @@ val appModule = module {
             get(), get(), get(), get(), get(), get(), get(), get(), get()
         ) 
     }
-    viewModel { com.argminres.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext(), get()) }
+    viewModel { com.argminres.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get(), get(), get(), get(), androidContext(), get(), get()) }
     viewModel { com.argminres.app.presentation.backup.BackupViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.ActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get(), get()) }
