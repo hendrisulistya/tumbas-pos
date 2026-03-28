@@ -38,6 +38,9 @@ data class WasteRecordEntity(
     val dishId: Long,
     val dishName: String, // Store name for historical record
     val quantity: Int,
+    val producedQuantity: Int = 0,
+    val remainingQuantity: Int = 0,
+    val soldQuantity: Int = 0,
     val reason: String = "UNSOLD", // UNSOLD, DAMAGED, EXPIRED
     val recordedBy: Long?, // Employer ID
     val createdAt: Long = System.currentTimeMillis()
@@ -62,6 +65,8 @@ data class IngredientUsageEntity(
     val sessionId: Long,
     val ingredientId: Long,
     val ingredientName: String, // Store name for historical record
+    val startingQuantity: Double = 0.0,
+    val remainingQuantity: Double = 0.0,
     val quantityUsed: Double, // Amount used during the day
     val unit: String, // kg, liter, pcs, etc.
     val costPerUnit: Double,

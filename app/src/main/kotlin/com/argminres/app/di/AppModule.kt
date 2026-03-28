@@ -166,6 +166,9 @@ val appModule = module {
     factory { com.argminres.app.domain.usecase.reporting.GetDashboardDataUseCase(get()) }
     factory { com.argminres.app.domain.usecase.reporting.GetSalesReportUseCase(get()) }
     factory { com.argminres.app.domain.usecase.reporting.GetLowStockReportUseCase(get()) }
+    factory { com.argminres.app.domain.usecase.reporting.GetSessionReportUseCase(get()) }
+    factory { com.argminres.app.domain.usecase.reporting.GetAggregatedUsageReportUseCase(get()) }
+    factory { com.argminres.app.domain.usecase.reporting.GetCashierPerformanceUseCase(get()) }
 
     // Backup Use Cases
     factory { com.argminres.app.domain.usecase.backup.BackupDatabaseUseCase(get()) }
@@ -216,7 +219,7 @@ val appModule = module {
             get(), get(), get(), get(), get(), get(), get(), get(), get()
         ) 
     }
-    viewModel { com.argminres.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.backup.BackupViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.ActivationViewModel(get(), get()) }
     viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get(), get()) }

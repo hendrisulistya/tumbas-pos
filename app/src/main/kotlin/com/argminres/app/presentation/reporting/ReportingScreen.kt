@@ -19,6 +19,7 @@ import com.argminres.app.domain.model.TopProduct
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -61,12 +62,12 @@ fun ReportingScreen(
                 Tab(
                     selected = uiState.selectedTab == 1,
                     onClick = { viewModel.onTabSelected(1) },
-                    text = { Text("Penjualan") }
+                    text = { Text("Statistik") }
                 )
                 Tab(
                     selected = uiState.selectedTab == 2,
                     onClick = { viewModel.onTabSelected(2) },
-                    text = { Text("Sesi Harian") }
+                    text = { Text("Riwayat Sesi") }
                 )
             }
 
@@ -74,21 +75,88 @@ fun ReportingScreen(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
+            // Date Range Picker (Simplified for now)
+            DateRangeHeader(
+                startDate = uiState.startDate,
+                endDate = uiState.endDate,
+                onDateRangeSelected = { start, end -> viewModel.setDateRange(start, end) }
+            )
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 contentAlignment = Alignment.TopCenter
             ) {
-                Box(modifier = Modifier.widthIn(max = 800.dp)) {
+                Box(modifier = Modifier.widthIn(max = 1000.dp)) {
                     when (uiState.selectedTab) {
                         0 -> DashboardContent(uiState, currencyFormatter)
-                        1 -> SalesReportContent(uiState.salesSummary, currencyFormatter)
-                        2 -> DailySessionsContent(uiState.unclosedSessions, onNavigateToEndOfDay)
+                        1 -> AggregatedUsageContent(uiState.aggregatedUsage, uiState.cashierDishSales, currencyFormatter)
+                        2 -> SessionHistoryContent(
+                            uiState.allSessions, 
+                            onSessionClick = { viewModel.selectSession(it.id) }
+                        )
                     }
                 }
             }
         }
+    }
+
+    // Detail Dialog for Session
+    uiState.selectedSessionDetails?.let { details ->
+        SessionDetailDialog(
+            details = details,
+            onDismiss = { viewModel.dismissSessionDetails() },
+            currencyFormatter = currencyFormatter
+        )
+    }
+}
+
+@Composable
+fun DateRangeHeader(
+    startDate: Long,
+    endDate: Long,
+    onDateRangeSelected: (Long, Long) -> Unit
+) {
+    val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy", Locale("id", "ID")) }
+    
+    // Quick Range Options
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AssistChip(
+            onClick = {
+                val cal = Calendar.getInstance()
+                val end = cal.timeInMillis
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                onDateRangeSelected(cal.timeInMillis, end)
+            },
+            label = { Text("Hari Ini") }
+        )
+        AssistChip(
+            onClick = {
+                val cal = Calendar.getInstance()
+                val end = cal.timeInMillis
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                onDateRangeSelected(cal.timeInMillis, end)
+            },
+            label = { Text("Bulan Ini") }
+        )
+        
+        Spacer(modifier = Modifier.weight(1f))
+        
+        Text(
+            "${dateFormatter.format(Date(startDate))} - ${dateFormatter.format(Date(endDate))}",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -104,38 +172,27 @@ fun DashboardContent(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBDEFB))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Ringkasan Bulanan",
+                        "Ringkasan Operasional",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    SummaryRow(
-                        label = "Total Pendapatan",
-                        value = currencyFormatter.format(uiState.totalRevenue)
-                    )
-                    SummaryRow(
-                        label = "Biaya Bahan",
-                        value = "- ${currencyFormatter.format(uiState.totalCost)}",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    SummaryRow(
-                        label = "Nilai Buangan (Waste)",
-                        value = "- ${currencyFormatter.format(uiState.totalWaste)}",
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    SummaryRow("Total Pendapatan", currencyFormatter.format(uiState.totalRevenue))
+                    SummaryRow("Biaya Bahan", "- ${currencyFormatter.format(uiState.totalCost)}", color = MaterialTheme.colorScheme.error)
+                    SummaryRow("Nilai Buangan", "- ${currencyFormatter.format(uiState.totalWaste)}", color = MaterialTheme.colorScheme.error)
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                     val netProfit = uiState.totalRevenue - uiState.totalCost - uiState.totalWaste
                     SummaryRow(
-                        label = "Laba Bersih",
-                        value = currencyFormatter.format(netProfit),
+                        "Laba Bersih",
+                        currencyFormatter.format(netProfit),
                         isTotal = true,
                         color = if (netProfit >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                     )
@@ -144,7 +201,7 @@ fun DashboardContent(
         }
 
         item {
-            Text("Produk Terlaris", style = MaterialTheme.typography.titleMedium)
+            Text("Produk Terlaris", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
 
         items(uiState.topProducts) { product ->
@@ -159,39 +216,67 @@ fun DashboardContent(
 }
 
 @Composable
-fun SalesReportContent(
-    salesSummary: List<SalesSummary>,
+fun AggregatedUsageContent(
+    state: AggregatedUsageState?,
+    cashierPerformance: List<com.argminres.app.domain.model.CashierDishSales>,
     currencyFormatter: NumberFormat
 ) {
+    if (state == null) return
+
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            Text("Penjualan Harian (30 Hari Terakhir)", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("Ringkasan Penggunaan Bahan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
-
-        items(salesSummary) { summary ->
+        
+        items(state.ingredientUsage) { usage ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(summary.date, style = MaterialTheme.typography.bodyMedium)
-                        Text("${summary.totalTransactions} Transaksi", style = MaterialTheme.typography.bodySmall)
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(usage.ingredientName, fontWeight = FontWeight.Bold)
+                        Text(currencyFormatter.format(usage.totalCost), color = MaterialTheme.colorScheme.primary)
                     }
                     Text(
-                        currencyFormatter.format(summary.totalSales),
-                        style = MaterialTheme.typography.titleMedium
+                        "Awal: ${usage.startingQuantity} ${usage.unit} | Sisa: ${usage.remainingQuantity} ${usage.unit} | Terpakai: ${usage.quantityUsed} ${usage.unit}",
+                        style = MaterialTheme.typography.bodySmall
                     )
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Ringkasan Statistik Hidangan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        }
+
+        items(state.dishUsage) { dish ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(dish.dishName, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Produksi: ${dish.producedQuantity} | Terjual: ${dish.soldQuantity} | Sisa: ${dish.remainingQuantity} | Buang: ${dish.wasteQuantity}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    
+                    val breakdown = cashierPerformance.filter { it.dishName == dish.dishName }
+                    if (breakdown.isNotEmpty()) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 0.5.dp)
+                        Text("Penjualan per Kasir:", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        breakdown.forEach { bp ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(bp.cashierName, style = MaterialTheme.typography.bodySmall)
+                                Text("${bp.quantitySold} porsi", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -199,204 +284,118 @@ fun SalesReportContent(
 }
 
 @Composable
-fun LowStockContent(
-    lowStockProducts: List<LowStockProduct>
+fun SessionHistoryContent(
+    sessions: List<com.argminres.app.data.local.entity.DailySessionEntity>,
+    onSessionClick: (com.argminres.app.data.local.entity.DailySessionEntity) -> Unit
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            Text("Peringatan Stok Rendah", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        items(lowStockProducts) { product ->
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                ListItem(
-                    headlineContent = { Text(product.productName) },
-                    supportingContent = { Text("Ambang Batas: ${product.threshold}") },
-                    trailingContent = { 
-                        Text(
-                            "Stok: ${product.currentStock}",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.error
-                        ) 
-                    },
-                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DailySessionsContent(
-    unclosedSessions: List<com.argminres.app.data.local.entity.DailySessionEntity>,
-    onNavigateToEndOfDay: () -> Unit
-) {
-    val dateFormatter = remember { SimpleDateFormat("EEEE, dd MMM yyyy", Locale("id", "ID")) }
-    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale("id", "ID")) }
+    val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("id", "ID")) }
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
-    
+
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Text("Manajemen Sesi Harian", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Lihat dan kelola hari bisnis yang belum ditutup",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        
-        if (unclosedSessions.isNotEmpty()) {
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                "${unclosedSessions.size} Sesi Belum Ditutup",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Text(
-                                "Harap tutup sesi ini untuk menjaga akurasi catatan",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        
-        items(unclosedSessions) { session ->
+        items(sessions.sortedByDescending { it.timestampStart }) { session ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color(0xFFE3F2FD)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFFBBDEFB))
+                onClick = { onSessionClick(session) }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "${dateFormatter.format(Date(session.timestampStart))} (${timeFormatter.format(Date(session.timestampStart))})",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "Status: ${session.status}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = when (session.status) {
-                                    "ACTIVE" -> MaterialTheme.colorScheme.primary
-                                    "PENDING_CLOSE" -> MaterialTheme.colorScheme.error
-                                    else -> MaterialTheme.colorScheme.onSurface
-                                }
-                            )
-                        }
-                        
-                        if (session.status == "PENDING_CLOSE") {
-                            AssistChip(
-                                onClick = onNavigateToEndOfDay,
-                                label = { Text("Tutup Sekarang") },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer
-                                )
-                            )
-                        } else {
-                            OutlinedButton(onClick = onNavigateToEndOfDay) {
-                                Text("Tutup Hari")
-                            }
-                        }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(dateFormatter.format(Date(session.timestampStart)), fontWeight = FontWeight.Bold)
+                        StatusBadge(session.status)
                     }
-                    
-                    if (session.totalSales > 0 || (session.totalDishWasteValue + session.totalIngredientWasteValue) > 0) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Divider()
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                    if (session.status == "CLOSED") {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column {
                                 Text("Penjualan", style = MaterialTheme.typography.bodySmall)
-                                Text(
-                                    currencyFormatter.format(session.totalSales),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Text(currencyFormatter.format(session.totalSales))
                             }
-                            
-                            Column {
-                                Text("Buangan", style = MaterialTheme.typography.bodySmall)
-                                Text(
-                                    currencyFormatter.format(session.totalDishWasteValue + session.totalIngredientWasteValue),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.error
-                                )
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("Profit", style = MaterialTheme.typography.bodySmall)
+                                Text(currencyFormatter.format(session.totalProfit), fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                             }
                         }
-                    }
-                }
-            }
-        }
-        
-        if (unclosedSessions.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            "Semua Sesi Telah Ditutup",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Semua hari bisnis telah ditutup dengan benar.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                    } else {
+                        Text("Sesi Masih Berjalan", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun StatusBadge(status: String) {
+    val color = when (status) {
+        "CLOSED" -> Color(0xFF2E7D32)
+        "ACTIVE" -> Color(0xFF1976D2)
+        else -> Color.Gray
+    }
+    Surface(
+        color = color.copy(alpha = 0.1f),
+        shape = MaterialTheme.shapes.extraSmall,
+        border = androidx.compose.foundation.BorderStroke(1.dp, color)
+    ) {
+        Text(
+            status,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = color
+        )
+    }
+}
+
+@Composable
+fun SessionDetailDialog(
+    details: SessionDetailState,
+    onDismiss: () -> Unit,
+    currencyFormatter: NumberFormat
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Detail Sesi #${details.sessionId}") },
+        text = {
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                item {
+                    Text("Bahan Baku", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Divider(Modifier.padding(vertical = 4.dp))
+                }
+                items(details.ingredientUsage) { usage ->
+                    Column(Modifier.padding(vertical = 4.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(usage.ingredientName, style = MaterialTheme.typography.bodyMedium)
+                            Text(currencyFormatter.format(usage.totalCost), style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Text(
+                            "Awal: ${usage.startingQuantity} | Sisa: ${usage.remainingQuantity} | Pakai: ${usage.quantityUsed} ${usage.unit}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    Text("Hidangan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Divider(Modifier.padding(vertical = 4.dp))
+                }
+                items(details.dishUsage) { dish ->
+                    Column(Modifier.padding(vertical = 4.dp)) {
+                        Text(dish.dishName, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Prod: ${dish.producedQuantity} | Jual: ${dish.soldQuantity} | Sisa: ${dish.remainingQuantity} | Buang: ${dish.quantity}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Tutup") }
+        }
+    )
 }
 
 @Composable

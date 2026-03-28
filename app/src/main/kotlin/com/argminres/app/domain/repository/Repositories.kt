@@ -67,6 +67,13 @@ interface ReportingRepository {
     fun getTotalRevenue(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
     fun getTotalIngredientCost(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
     fun getTotalWasteValue(startDate: Long, endDate: Long, cashierId: Long? = null): Flow<Double>
+    
+    fun getIngredientUsageBySession(sessionId: Long): Flow<List<com.argminres.app.data.local.entity.IngredientUsageEntity>>
+    fun getDishUsageBySession(sessionId: Long): Flow<List<com.argminres.app.data.local.entity.WasteRecordEntity>>
+    fun getAggregatedIngredientUsage(startDate: Long, endDate: Long): Flow<List<com.argminres.app.domain.model.AggregatedIngredientUsage>>
+    fun getAggregatedDishUsage(startDate: Long, endDate: Long): Flow<List<com.argminres.app.domain.model.AggregatedDishUsage>>
+    fun getAggregatedUsageReport(startDate: Long, endDate: Long): Flow<com.argminres.app.presentation.reporting.AggregatedUsageState>
+    fun getDishSalesByCashier(startDate: Long, endDate: Long): Flow<List<com.argminres.app.domain.model.CashierDishSales>>
 }
 
 interface BackupRepository {

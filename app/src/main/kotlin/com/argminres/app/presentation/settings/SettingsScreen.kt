@@ -384,32 +384,34 @@ fun SettingsScreen(
             // --- General Sections (All Users) ---
 
             // Account Section
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Akun",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
-                )
-            }
+            if (currentEmployer != null) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Akun",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                    )
+                }
 
-            item {
-                SettingsItem(
-                    icon = Icons.Default.Lock,
-                    title = "Ganti PIN",
-                    subtitle = "Perbarui PIN keamanan Anda",
-                    onClick = onChangePinClick
-                )
-            }
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Lock,
+                        title = "Ganti PIN",
+                        subtitle = "Perbarui PIN keamanan Anda",
+                        onClick = onChangePinClick
+                    )
+                }
 
-            item {
-                SettingsItem(
-                    icon = Icons.Default.Receipt,
-                    title = "Riwayat Penjualan",
-                    subtitle = "Lihat pesanan penjualan",
-                    onClick = onNavigateToSalesOrder
-                )
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Receipt,
+                        title = "Riwayat Penjualan",
+                        subtitle = "Lihat pesanan penjualan",
+                        onClick = onNavigateToSalesOrder
+                    )
+                }
             }
 
             // Reporting & Hardware

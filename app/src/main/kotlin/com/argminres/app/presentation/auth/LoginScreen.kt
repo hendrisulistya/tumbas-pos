@@ -36,7 +36,8 @@ private val Blue100 = Color(0xFFBBDEFB)
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -115,7 +116,6 @@ fun LoginScreen(
             }
         }
 
-        // ── Right: Login Form (62%) — white ─────────────────────────────
         Box(
             modifier = Modifier
                 .weight(0.62f)
@@ -123,6 +123,20 @@ fun LoginScreen(
                 .padding(40.dp),
             contentAlignment = Alignment.Center
         ) {
+            // Settings Icon in Top End
+            IconButton(
+                onClick = onNavigateToSettings,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = Color(0xFF757575)
+                )
+            }
+
             Card(
                 modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),

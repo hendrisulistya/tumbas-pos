@@ -50,3 +50,37 @@ class GetLowStockReportUseCase(
 ) {
     operator fun invoke(threshold: Int = 10) = reportingRepository.getLowStockDishes(threshold)
 }
+
+data class SessionReportData(
+    val ingredientUsage: Flow<List<com.argminres.app.data.local.entity.IngredientUsageEntity>>,
+    val dishUsage: Flow<List<com.argminres.app.data.local.entity.WasteRecordEntity>>
+)
+
+class GetSessionReportUseCase(
+    private val reportingRepository: ReportingRepository
+) {
+    operator fun invoke(sessionId: Long) = SessionReportData(
+        ingredientUsage = reportingRepository.getIngredientUsageBySession(sessionId),
+        dishUsage = reportingRepository.getDishUsageBySession(sessionId)
+    )
+}
+
+data class AggregatedUsageData(
+    val ingredientUsage: Flow<List<com.argminres.app.domain.model.AggregatedIngredientUsage>>,
+    val dishUsage: Flow<List<com.argminres.app.domain.model.AggregatedDishUsage>>
+)
+
+class GetAggregatedUsageReportUseCase(
+    private val reportingRepository: ReportingRepository
+) {
+    operator fun invoke(startDate: Long, endDate: Long) = AggregatedUsageData(
+        ingredientUsage = reportingRepository.getAggregatedIngredientUsage(startDate, endDate),
+        dishUsage = reportingRepository.getAggregatedDishUsage(startDate, endDate)
+    )
+}
+
+class GetCashierPerformanceUseCase(private val reportingRepository: ReportingRepository) {
+    operator fun invoke(startDate: Long, endDate: Long): Flow<List<com.argminres.app.domain.model.CashierDishSales>> {
+        return reportingRepository.getDishSalesByCashier(startDate, endDate)
+    }
+}

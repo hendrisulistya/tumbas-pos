@@ -55,6 +55,8 @@ class EndOfDayUseCase(
                         sessionId = activeSession.id,
                         ingredientId = input.ingredientId,
                         ingredientName = input.ingredientName,
+                        startingQuantity = input.startingQuantity,
+                        remainingQuantity = input.remainingQuantity,
                         quantityUsed = validUsedQuantity,
                         unit = input.unit,
                         costPerUnit = input.costPerUnit,
@@ -111,6 +113,9 @@ class EndOfDayUseCase(
                         dishId = input.dishId,
                         dishName = input.dishName,
                         quantity = waste,
+                        producedQuantity = input.produced,
+                        remainingQuantity = input.remaining,
+                        soldQuantity = sold,
                         reason = "UNSOLD",
                         recordedBy = recordedBy
                     )

@@ -170,6 +170,9 @@ fun App() {
                             navController.navigate(Screen.SessionCheck.route) {
                                 popUpTo(Screen.Login.route) { inclusive = true }
                             }
+                        },
+                        onNavigateToSettings = {
+                            navController.navigate(Screen.Settings.route)
                         }
                     )
                 }

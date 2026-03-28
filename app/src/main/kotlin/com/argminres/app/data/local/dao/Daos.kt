@@ -269,6 +269,61 @@ interface ReportingDao {
           AND (:cashierId IS NULL OR startedBy = :cashierId)
     """)
     fun getTotalWasteValue(startDate: Long, endDate: Long, cashierId: Long?): Flow<Double?>
+
+    @Query("""
+        SELECT * FROM ingredient_usage 
+        WHERE sessionId = :sessionId
+    """)
+    fun getIngredientUsageBySession(sessionId: Long): Flow<List<com.argminres.app.data.local.entity.IngredientUsageEntity>>
+
+    @Query("""
+        SELECT * FROM waste_records 
+        WHERE sessionId = :sessionId
+    """)
+    fun getDishUsageBySession(sessionId: Long): Flow<List<com.argminres.app.data.local.entity.WasteRecordEntity>>
+
+    @Query("""
+        SELECT 
+            ingredientName,
+            unit,
+            SUM(startingQuantity) as startingQuantity,
+            SUM(remainingQuantity) as remainingQuantity,
+            SUM(quantityUsed) as quantityUsed,
+            SUM(totalCost) as totalCost
+        FROM ingredient_usage 
+        WHERE createdAt >= :startDate AND createdAt <= :endDate
+        GROUP BY ingredientName, unit
+    """)
+    fun getAggregatedIngredientUsage(startDate: Long, endDate: Long): Flow<List<com.argminres.app.domain.model.AggregatedIngredientUsage>>
+
+    @Query("""
+        SELECT 
+            dishName,
+            SUM(producedQuantity) as producedQuantity,
+            SUM(remainingQuantity) as remainingQuantity,
+            SUM(soldQuantity) as soldQuantity,
+            SUM(quantity) as wasteQuantity
+        FROM waste_records 
+        WHERE createdAt >= :startDate AND createdAt <= :endDate
+        GROUP BY dishName
+    """)
+    fun getAggregatedDishUsage(startDate: Long, endDate: Long): Flow<List<com.argminres.app.domain.model.AggregatedDishUsage>>
+
+    @Query("""
+        SELECT 
+            p.name as dishName,
+            e.fullName as cashierName,
+            SUM(soi.quantity) as quantitySold,
+            SUM(soi.subtotal) as totalRevenue
+        FROM sales_order_items soi
+        INNER JOIN dishes p ON soi.dishId = p.id
+        INNER JOIN sales_orders so ON soi.salesOrderId = so.id
+        INNER JOIN employers e ON so.cashierId = e.id
+        WHERE so.orderDate >= :startDate AND so.orderDate <= :endDate
+        GROUP BY p.id, e.id
+        ORDER BY dishName ASC, quantitySold DESC
+    """)
+    fun getDishSalesByCashier(startDate: Long, endDate: Long): Flow<List<com.argminres.app.domain.model.CashierDishSales>>
 }
 
 // Relations
