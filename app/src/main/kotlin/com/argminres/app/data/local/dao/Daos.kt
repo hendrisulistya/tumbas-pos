@@ -147,7 +147,22 @@ interface SalesOrderDao {
 
     @Update
     suspend fun updateSalesOrder(order: SalesOrderEntity)
+
+    @Query("""
+        SELECT dishId, SUM(quantity) as quantity
+        FROM sales_order_items soi
+        INNER JOIN sales_orders so ON soi.salesOrderId = so.id
+        WHERE so.orderDate BETWEEN :startDate AND :endDate
+          AND soi.dishId IS NOT NULL
+        GROUP BY dishId
+    """)
+    suspend fun getSoldQuantitiesByDish(startDate: Long, endDate: Long): List<DishSoldQuantity>
 }
+
+data class DishSoldQuantity(
+    val dishId: Long,
+    val quantity: Int
+)
 
 @Dao
 interface StockDao {

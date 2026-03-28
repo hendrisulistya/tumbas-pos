@@ -91,7 +91,10 @@ fun SettingsScreen(
     val coroutineScope = rememberCoroutineScope()
     val isManager = currentEmployer?.role == "MANAGER"
     val settingsRepository: com.argminres.app.data.repository.SettingsRepository = koinInject()
+    val dailySessionRepository: com.argminres.app.domain.repository.DailySessionRepository = koinInject()
+    
     val themeMode by settingsRepository.themeMode.collectAsState()
+    val activeSession by dailySessionRepository.getActiveSessionFlow().collectAsState(initial = null)
     var showThemeDialog by remember { mutableStateOf(false) }
     
     if (showLogoutDialog) {
@@ -306,13 +309,6 @@ fun SettingsScreen(
                         subtitle = "Lihat sesi yang belum tutup",
                         onClick = onNavigateToWorkInProcess
                     )
-
-                    SettingsItem(
-                        icon = Icons.Default.EventNote,
-                        title = "Tutup Hari",
-                        subtitle = "Tutup hari dan catat sisa/buangan",
-                        onClick = onNavigateToEndOfDay
-                    )
                 }
 
                 // --- Manager Only: Master Data ---
@@ -345,32 +341,43 @@ fun SettingsScreen(
                 }
 
                 // --- Manager Only: Daily Operations ---
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Operasional Harian",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-                }
+                if (activeSession != null) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Operasional Harian",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
 
-                item {
-                    SettingsItem(
-                        icon = Icons.Default.Warehouse,
-                        title = "Etalase",
-                        subtitle = "Kelola stok hidangan",
-                        onClick = onNavigateToShowcase
-                    )
-                }
+                    item {
+                        SettingsItem(
+                            icon = Icons.Default.Warehouse,
+                            title = "Etalase",
+                            subtitle = "Kelola stok hidangan",
+                            onClick = onNavigateToShowcase
+                        )
+                    }
 
-                item {
-                    SettingsItem(
-                        icon = Icons.Default.ShoppingBag,
-                        title = "Bahan",
-                        subtitle = "Kelola bahan baku",
-                        onClick = onNavigateToIngredient
-                    )
+                    item {
+                        SettingsItem(
+                            icon = Icons.Default.ShoppingBag,
+                            title = "Bahan",
+                            subtitle = "Kelola bahan baku",
+                            onClick = onNavigateToIngredient
+                        )
+                    }
+
+                    item {
+                        SettingsItem(
+                            icon = Icons.Default.EventNote,
+                            title = "Tutup Hari",
+                            subtitle = "Tutup hari dan catat sisa/buangan",
+                            onClick = onNavigateToEndOfDay
+                        )
+                    }
                 }
             }
 

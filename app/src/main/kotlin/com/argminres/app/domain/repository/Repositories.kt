@@ -35,6 +35,7 @@ interface SalesOrderRepository {
     suspend fun createSalesOrder(order: SalesOrderEntity, items: List<SalesOrderItemEntity>): Long
     suspend fun updateSalesOrder(order: SalesOrderEntity)
     suspend fun getLastOrderByNumber(prefix: String): SalesOrderEntity?
+    suspend fun getSoldQuantitiesByDish(startDate: Long, endDate: Long): List<com.argminres.app.data.local.dao.DishSoldQuantity>
 }
 
 interface StockRepository {

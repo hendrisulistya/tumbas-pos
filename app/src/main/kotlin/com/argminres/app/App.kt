@@ -178,53 +178,78 @@ fun App() {
                     val sessionCheckViewModel: com.argminres.app.presentation.startday.SessionCheckViewModel = koinViewModel()
                     val uiState by sessionCheckViewModel.uiState.collectAsState()
                     
-                    when {
-                        uiState.isLoading -> {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = androidx.compose.ui.Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
+                    Scaffold(
+                        topBar = {
+                            if (!uiState.isLoading && !uiState.hasActiveSession) {
+                                TopAppBar(
+                                    title = { Text("Session Control", color = androidx.compose.ui.graphics.Color.White) },
+                                    actions = {
+                                        IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Settings,
+                                                contentDescription = "Settings",
+                                                tint = androidx.compose.ui.graphics.Color.White
+                                            )
+                                        }
+                                    },
+                                    colors = TopAppBarDefaults.topAppBarColors(
+                                        containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2)
+                                    ),
+                                    windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
+                                )
                             }
                         }
-                        uiState.hasActiveSession -> {
-                            LaunchedEffect(Unit) {
-                                navController.navigate(Screen.Home.route) {
-                                    popUpTo(Screen.SessionCheck.route) { inclusive = true }
-                                }
-                            }
-                        }
-                        uiState.isManager && uiState.showStartDayDialog -> {
-                            com.argminres.app.presentation.startday.StartDayDialog(
-                                isStarting = uiState.isStartingSession,
-                                error = uiState.error,
-                                onStartDay = sessionCheckViewModel::startDay,
-                                onDismiss = {
-                                    sessionCheckViewModel.dismissDialog()
-                                    navController.navigate(Screen.Login.route) {
-                                        popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                    ) { padding ->
+                        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                            when {
+                                uiState.isLoading -> {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = androidx.compose.ui.Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
                                     }
                                 }
-                            )
-                        }
-                        // Non-manager: no active session → show restriction message
-                        // Also handles: manager who dismissed the dialog → redirect to login
-                        else -> {
-                            if (uiState.isManager) {
-                                // Manager dismissed dialog — go back to login
-                                LaunchedEffect(Unit) {
-                                    navController.navigate(Screen.Login.route) {
-                                        popUpTo(Screen.SessionCheck.route) { inclusive = true }
-                                    }
-                                }
-                            } else {
-                                com.argminres.app.presentation.startday.NoSessionWarning(
-                                    onLogout = {
-                                        navController.navigate(Screen.Login.route) {
+                                uiState.hasActiveSession -> {
+                                    LaunchedEffect(Unit) {
+                                        navController.navigate(Screen.Home.route) {
                                             popUpTo(Screen.SessionCheck.route) { inclusive = true }
                                         }
                                     }
-                                )
+                                }
+                                uiState.isManager && uiState.showStartDayDialog -> {
+                                    com.argminres.app.presentation.startday.StartDayDialog(
+                                        isStarting = uiState.isStartingSession,
+                                        error = uiState.error,
+                                        onStartDay = sessionCheckViewModel::startDay,
+                                        onDismiss = {
+                                            sessionCheckViewModel.dismissDialog()
+                                            navController.navigate(Screen.Login.route) {
+                                                popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                            }
+                                        }
+                                    )
+                                }
+                                else -> {
+                                    if (uiState.isManager) {
+                                        LaunchedEffect(Unit) {
+                                            navController.navigate(Screen.Login.route) {
+                                                popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                            }
+                                        }
+                                    } else {
+                                        com.argminres.app.presentation.startday.NoSessionWarning(
+                                            onLogout = {
+                                                navController.navigate(Screen.Login.route) {
+                                                    popUpTo(Screen.SessionCheck.route) { inclusive = true }
+                                                }
+                                            },
+                                            onSettingsClick = {
+                                                navController.navigate(Screen.Settings.route)
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

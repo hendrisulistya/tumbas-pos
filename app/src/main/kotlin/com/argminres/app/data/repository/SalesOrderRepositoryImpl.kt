@@ -36,4 +36,8 @@ class SalesOrderRepositoryImpl(
     override suspend fun getLastOrderByNumber(prefix: String): SalesOrderEntity? {
         return salesOrderDao.getLastOrderByNumber(prefix)
     }
+
+    override suspend fun getSoldQuantitiesByDish(startDate: Long, endDate: Long): List<com.argminres.app.data.local.dao.DishSoldQuantity> {
+        return salesOrderDao.getSoldQuantitiesByDish(startDate, endDate)
+    }
 }

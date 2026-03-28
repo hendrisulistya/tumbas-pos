@@ -36,13 +36,9 @@ fun EndOfDayIngredientInputScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            "End of Day - Ingredient Check",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        
+        Spacer(modifier = Modifier.height(10.dp))
         
         Card(
             modifier = Modifier.fillMaxWidth(),

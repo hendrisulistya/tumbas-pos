@@ -141,7 +141,7 @@ val appModule = module {
     factory { com.argminres.app.domain.usecase.ingredient.GetIngredientsUseCase(get()) }
     
     // Session Use Cases
-    factory { com.argminres.app.domain.usecase.session.EndOfDayUseCase(get(), get(), get(), get(), get(), get()) }
+    factory { com.argminres.app.domain.usecase.session.EndOfDayUseCase(get(), get(), get(), get(), get(), get(), get()) }
     factory { com.argminres.app.domain.usecase.session.StartDailySessionUseCase(get()) }
     factory { com.argminres.app.domain.usecase.session.CheckAutoDailyCloseUseCase(get()) }
     factory { com.argminres.app.domain.usecase.session.SessionCheckUseCase(get()) }
@@ -219,7 +219,7 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.backup.BackupViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.ActivationViewModel(get(), get()) }
-    viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.wip.WorkInProcessViewModel(get()) }
     viewModel { com.argminres.app.presentation.startday.SessionCheckViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get(), get(), get()) }

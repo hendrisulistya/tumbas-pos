@@ -23,34 +23,30 @@ class EndOfDayUseCase(
     private val ingredientUsageRepository: com.argminres.app.domain.repository.IngredientUsageRepository,
     private val ingredientWasteRecordRepository: IngredientWasteRecordRepository,
     private val dishRepository: DishRepository,
+    private val salesOrderRepository: com.argminres.app.domain.repository.SalesOrderRepository,
     private val reportingRepository: com.argminres.app.domain.repository.ReportingRepository
 ) {
     suspend operator fun invoke(
         recordedBy: Long?,
-        remainingIngredients: List<EndOfDayIngredientInput> = emptyList()
+        remainingIngredients: List<EndOfDayIngredientInput> = emptyList(),
+        remainingDishes: List<EndOfDayDishInput> = emptyList()
     ): EndOfDayResult {
         // Get active session
         val activeSession = dailySessionRepository.getActiveSession()
             ?: return EndOfDayResult.NoActiveSession
         
-        // Get all dishes with stock > 0 (unsold dishes)
-        val allDishes = dishRepository.getAllDishes().first()
-        val unsoldDishes = allDishes.filter { it.dish.stock > 0 }
+        val closedAt = System.currentTimeMillis()
         
-        // Calculate total dish waste value 
-        val totalDishWasteValue = unsoldDishes.sumOf { it.dish.price * it.dish.stock }
-        
-        // Calculate ingredient usage and waste
+        // 1. Process Ingredients
         val ingredientUsageRecords = mutableListOf<com.argminres.app.data.local.entity.IngredientUsageEntity>()
         val ingredientWasteRecords = mutableListOf<IngredientWasteRecordEntity>()
+        val ingredientRecaps = mutableListOf<IngredientRecap>()
         var totalIngredientCost = 0.0
         var totalIngredientWasteValue = 0.0
         
         remainingIngredients.forEach { input ->
-            // Calculate used quantity based on starting, remaining, and wasted
             val usedQuantity = input.startingQuantity - input.remainingQuantity - input.wastedQuantity
             val validUsedQuantity = if (usedQuantity > 0) usedQuantity else 0.0
-            
             val totalCostForUsage = validUsedQuantity * input.costPerUnit
             
             if (validUsedQuantity > 0) {
@@ -84,33 +80,62 @@ class EndOfDayUseCase(
                 )
                 totalIngredientWasteValue += totalCostForWaste
             }
-        }
-        
-        // Get total sales for the session (between session start and now)
-        val closedAt = System.currentTimeMillis()
-        val totalSales = reportingRepository.getTotalRevenue(activeSession.timestampStart, closedAt).first() ?: 0.0
-        
-        // Calculate profit 
-        val totalProfit = totalSales - totalIngredientCost
-        
-        // Create waste records for unsold dishes
-        val wasteRecords = unsoldDishes.map { dishWithCategory ->
-            WasteRecordEntity(
-                sessionId = activeSession.id,
-                dishId = dishWithCategory.dish.id,
-                dishName = dishWithCategory.dish.name,
-                quantity = dishWithCategory.dish.stock,
-                reason = "UNSOLD",
-                recordedBy = recordedBy
+
+            ingredientRecaps.add(
+                IngredientRecap(
+                    name = input.ingredientName,
+                    initial = input.startingQuantity,
+                    remaining = input.remainingQuantity,
+                    used = validUsedQuantity,
+                    unit = input.unit
+                )
             )
         }
         
-        // Save waste records
+        // 2. Process Dishes
+        val soldQuantities = salesOrderRepository.getSoldQuantitiesByDish(activeSession.timestampStart, closedAt)
+            .associateBy({ it.dishId }, { it.quantity })
+            
+        val wasteRecords = mutableListOf<WasteRecordEntity>()
+        val dishRecaps = mutableListOf<DishRecap>()
+        var totalDishWasteValue = 0.0
+        
+        remainingDishes.forEach { input ->
+            val sold = soldQuantities[input.dishId] ?: 0
+            val waste = (input.produced - sold - input.remaining).coerceAtLeast(0)
+            
+            if (waste > 0) {
+                wasteRecords.add(
+                    WasteRecordEntity(
+                        sessionId = activeSession.id,
+                        dishId = input.dishId,
+                        dishName = input.dishName,
+                        quantity = waste,
+                        reason = "UNSOLD",
+                        recordedBy = recordedBy
+                    )
+                )
+                totalDishWasteValue += waste * input.price
+            }
+            
+            dishRecaps.add(
+                DishRecap(
+                    name = input.dishName,
+                    produced = input.produced,
+                    remaining = input.remaining,
+                    sold = sold
+                )
+            )
+        }
+        
+        // 3. Totals and Persistence
+        val totalSales = reportingRepository.getTotalRevenue(activeSession.timestampStart, closedAt).first() ?: 0.0
+        val totalProfit = totalSales - totalIngredientCost
+        
         if (wasteRecords.isNotEmpty()) {
             wasteRecordRepository.createWasteRecords(wasteRecords)
         }
         
-        // Save ingredient usage and waste records
         if (ingredientUsageRecords.isNotEmpty()) {
             ingredientUsageRepository.createUsageRecords(ingredientUsageRecords)
         }
@@ -121,7 +146,6 @@ class EndOfDayUseCase(
             }
         }
         
-        // Close the session
         dailySessionRepository.closeSession(
             sessionId = activeSession.id,
             closedAt = closedAt,
@@ -131,11 +155,12 @@ class EndOfDayUseCase(
             totalIngredientWasteValue = totalIngredientWasteValue,
             totalProfit = totalProfit
         )
-        // Note: the dailySessionDao needs to be updated to support the new columns
         
-        // Reset all dish stock to zero
-        unsoldDishes.forEach { dishWithCategory ->
-            dishRepository.updateDish(dishWithCategory.dish.copy(stock = 0))
+        // Reset stock for all dishes involved in the session
+        remainingDishes.forEach { input ->
+            dishRepository.getDishById(input.dishId)?.let { d ->
+                dishRepository.updateDish(d.dish.copy(stock = 0))
+            }
         }
         
         return EndOfDayResult.Success(
@@ -146,7 +171,8 @@ class EndOfDayUseCase(
             totalIngredientWasteValue = totalIngredientWasteValue,
             totalIngredientCost = totalIngredientCost,
             totalSales = totalSales,
-            totalProfit = totalProfit
+            totalProfit = totalProfit,
+            recap = EndOfDayRecap(ingredientRecaps, dishRecaps)
         )
     }
 }
@@ -160,7 +186,8 @@ sealed class EndOfDayResult {
         val totalIngredientWasteValue: Double,
         val totalIngredientCost: Double,
         val totalSales: Double,
-        val totalProfit: Double
+        val totalProfit: Double,
+        val recap: EndOfDayRecap
     ) : EndOfDayResult()
     
     object NoActiveSession : EndOfDayResult()
@@ -210,14 +237,42 @@ class CheckAutoDailyCloseUseCase(
 }
 
 /**
- * Data class for manual ingredient input at end of day
+ * Data classes for manual input at end of day
  */
 data class EndOfDayIngredientInput(
     val ingredientId: Long,
     val ingredientName: String,
     val startingQuantity: Double,
     val remainingQuantity: Double,
-    val wastedQuantity: Double, // User manually inputs how much was thrown out/spoiled
+    val wastedQuantity: Double,
     val unit: String,
     val costPerUnit: Double
+)
+
+data class EndOfDayDishInput(
+    val dishId: Long,
+    val dishName: String,
+    val produced: Int, // Current stock
+    val remaining: Int, // Manual input
+    val price: Double
+)
+
+data class IngredientRecap(
+    val name: String,
+    val initial: Double,
+    val remaining: Double,
+    val used: Double,
+    val unit: String
+)
+
+data class DishRecap(
+    val name: String,
+    val produced: Int,
+    val remaining: Int,
+    val sold: Int
+)
+
+data class EndOfDayRecap(
+    val ingredients: List<IngredientRecap>,
+    val dishes: List<DishRecap>
 )
