@@ -89,7 +89,7 @@ fun SettingsScreen(
     val currentEmployer by authManager.currentEmployer.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val isManager = currentEmployer?.role == "MANAGER"
+    val isManager = currentEmployer?.role?.equals("MANAGER", ignoreCase = true) == true
     val settingsRepository: com.argminres.app.data.repository.SettingsRepository = koinInject()
     val dailySessionRepository: com.argminres.app.domain.repository.DailySessionRepository = koinInject()
     

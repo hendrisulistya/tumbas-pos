@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.koin.androidx.compose.koinViewModel
 
@@ -65,137 +66,171 @@ fun StoreSettingsScreen(
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-                    .padding(bottom = 80.dp), // Extra padding for bottom navigation
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Logo Section
-                Text(
-                    "Logo Toko",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Box(
+            if (!uiState.isManager) {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    if (uiState.logoImage != null) {
-                        com.argminres.app.presentation.dish.ProductImageDisplay(
-                            image = uiState.logoImage!!,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Icon(
-                            Icons.Default.Image,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Akses Ditolak",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        "Anda tidak memiliki izin untuk mengakses halaman ini.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(onClick = onNavigateBack) {
+                        Text("Kembali")
                     }
                 }
-                
-                Button(
-                    onClick = { imagePickerLauncher.launch("image/*") },
-                    modifier = Modifier.fillMaxWidth()
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                        .padding(bottom = 80.dp), // Extra padding for bottom navigation
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Icon(Icons.Default.Image, null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (uiState.logoImage != null) "Ganti Logo" else "Unggah Logo")
-                }
-                
-                Divider()
-                
-                // Store Information Section
-                Text(
-                    "Informasi Toko",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                OutlinedTextField(
-                    value = uiState.storeName,
-                    onValueChange = viewModel::onStoreNameChange,
-                    label = { Text("Nama Toko") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
-                OutlinedTextField(
-                    value = uiState.storeAddress,
-                    onValueChange = viewModel::onStoreAddressChange,
-                    label = { Text("Alamat Toko") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    maxLines = 5
-                )
-                
-                OutlinedTextField(
-                    value = uiState.storePhone,
-                    onValueChange = viewModel::onStorePhoneChange,
-                    label = { Text("Nomor Telepon") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
-                OutlinedTextField(
-                    value = uiState.storeTaxId,
-                    onValueChange = viewModel::onStoreTaxIdChange,
-                    label = { Text("ID Pajak / NPWP") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Save Button
-                Button(
-                    onClick = viewModel::onSaveSettings,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !uiState.isLoading
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text(if (uiState.isLoading) "Menyimpan..." else "Simpan Pengaturan")
-                }
-                
-                // Error Message
-                if (uiState.error != null) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                    // Logo Section
+                    Text(
+                        "Logo Toko",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                shape = RoundedCornerShape(8.dp)
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                "Error: ${uiState.error}",
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                        if (uiState.logoImage != null) {
+                            com.argminres.app.presentation.dish.ProductImageDisplay(
+                                image = uiState.logoImage!!,
+                                modifier = Modifier.fillMaxSize()
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            TextButton(onClick = viewModel::clearError) {
-                                Text("Tutup")
+                        } else {
+                            Icon(
+                                Icons.Default.Image,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                    
+                    Button(
+                        onClick = { imagePickerLauncher.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Image, null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (uiState.logoImage != null) "Ganti Logo" else "Unggah Logo")
+                    }
+                    
+                    Divider()
+                    
+                    // Store Information Section
+                    Text(
+                        "Informasi Toko",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    OutlinedTextField(
+                        value = uiState.storeName,
+                        onValueChange = viewModel::onStoreNameChange,
+                        label = { Text("Nama Toko") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = uiState.storeAddress,
+                        onValueChange = viewModel::onStoreAddressChange,
+                        label = { Text("Alamat Toko") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 5
+                    )
+                    
+                    OutlinedTextField(
+                        value = uiState.storePhone,
+                        onValueChange = viewModel::onStorePhoneChange,
+                        label = { Text("Nomor Telepon") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = uiState.storeTaxId,
+                        onValueChange = viewModel::onStoreTaxIdChange,
+                        label = { Text("ID Pajak / NPWP") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Save Button
+                    Button(
+                        onClick = viewModel::onSaveSettings,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isLoading
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(if (uiState.isLoading) "Menyimpan..." else "Simpan Pengaturan")
+                    }
+                    
+                    // Error Message
+                    if (uiState.error != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(
+                                    "Error: ${uiState.error}",
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TextButton(onClick = viewModel::clearError) {
+                                    Text("Tutup")
+                                }
                             }
                         }
                     }

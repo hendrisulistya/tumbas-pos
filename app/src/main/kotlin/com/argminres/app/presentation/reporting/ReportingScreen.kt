@@ -1,10 +1,14 @@
 package com.argminres.app.presentation.reporting
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,7 +33,14 @@ fun ReportingScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEndOfDay: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    
+    LaunchedEffect(uiState.exportMessage) {
+        uiState.exportMessage?.let {
+            android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
 
     Scaffold(
@@ -39,6 +50,11 @@ fun ReportingScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Kembali", tint = androidx.compose.ui.graphics.Color.White)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = viewModel::onDownloadIconClick) {
+                        Icon(Icons.Default.Download, "Download Report", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -110,6 +126,93 @@ fun ReportingScreen(
             currencyFormatter = currencyFormatter
         )
     }
+
+    // Download Type Selection Dialog
+    if (uiState.isDownloadTypeDialogOpen) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissDownloadDialogs,
+            title = { Text("Pilih Jenis Laporan") },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ReportTypeItem("Harian", "Berdasarkan sesi yang sudah ditutup", onClick = { viewModel.onReportTypeSelected("Harian") })
+                    ReportTypeItem("Mingguan", "Rangkuman penjualan per minggu", onClick = { viewModel.onReportTypeSelected("Mingguan") })
+                    ReportTypeItem("Bulanan", "Rangkuman penjualan per bulan", onClick = { viewModel.onReportTypeSelected("Bulanan") })
+                    ReportTypeItem("Tahunan", "Rangkuman penjualan per tahun", onClick = { viewModel.onReportTypeSelected("Tahunan") })
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissDownloadDialogs) { Text("Batal") }
+            }
+        )
+    }
+
+    // Period Selection Dialog
+    if (uiState.isPeriodSelectionDialogOpen) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissDownloadDialogs,
+            title = { Text("Pilih Periode ${uiState.downloadReportType}") },
+            text = {
+                Box(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+                    if (uiState.availablePeriods.isEmpty()) {
+                        Text("Tidak ada data tersedia untuk periode ini.", modifier = Modifier.padding(16.dp))
+                    } else {
+                        LazyColumn {
+                            items(uiState.availablePeriods) { period ->
+                                ListItem(
+                                    headlineContent = { Text(period.label) },
+                                    modifier = Modifier.clickable { viewModel.onPeriodSelected(period) }
+                                )
+                                HorizontalDivider(thickness = 0.5.dp)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissDownloadDialogs) { Text("Batal") }
+            }
+        )
+    }
+
+    // PDF Generation Loading Overlay
+    if (uiState.isGeneratingPdf) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.3f))
+                .clickable(enabled = false) {},
+            contentAlignment = Alignment.Center
+        ) {
+            Card {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(16.dp))
+                    Text("Menyusun Laporan PDF...")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReportTypeItem(title: String, description: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(description, style = MaterialTheme.typography.bodySmall)
+        }
+    }
 }
 
 @Composable
@@ -124,10 +227,17 @@ fun DateRangeHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Icon(
+            Icons.Default.FilterList,
+            contentDescription = "Filter",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        
         AssistChip(
             onClick = {
                 val cal = Calendar.getInstance()
@@ -138,20 +248,57 @@ fun DateRangeHeader(
                 cal.set(Calendar.MILLISECOND, 0)
                 onDateRangeSelected(cal.timeInMillis, end)
             },
-            label = { Text("Hari Ini") }
+            label = { Text("Hari") }
+        )
+        AssistChip(
+            onClick = {
+                val cal = Calendar.getInstance()
+                val end = cal.timeInMillis
+                // Set to start of week (Sunday or Monday depending on locale)
+                cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                onDateRangeSelected(cal.timeInMillis, end)
+            },
+            label = { Text("Minggu") }
         )
         AssistChip(
             onClick = {
                 val cal = Calendar.getInstance()
                 val end = cal.timeInMillis
                 cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
                 onDateRangeSelected(cal.timeInMillis, end)
             },
-            label = { Text("Bulan Ini") }
+            label = { Text("Bulan") }
         )
-        
-        Spacer(modifier = Modifier.weight(1f))
-        
+        AssistChip(
+            onClick = {
+                val cal = Calendar.getInstance()
+                val end = cal.timeInMillis
+                cal.set(Calendar.DAY_OF_YEAR, 1)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                onDateRangeSelected(cal.timeInMillis, end)
+            },
+            label = { Text("Tahun") }
+        )
+    }
+    
+    // Date Range Display
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.End
+    ) {
         Text(
             "${dateFormatter.format(Date(startDate))} - ${dateFormatter.format(Date(endDate))}",
             style = MaterialTheme.typography.bodySmall,

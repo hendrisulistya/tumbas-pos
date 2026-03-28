@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.Flow
 interface DailySessionDao {
     @Query("SELECT * FROM daily_sessions ORDER BY timestampStart DESC")
     fun getAllSessions(): Flow<List<DailySessionEntity>>
+    
+    @Query("SELECT * FROM daily_sessions WHERE status = 'CLOSED' ORDER BY timestampStart DESC")
+    fun getClosedSessions(): Flow<List<DailySessionEntity>>
 
     @Query("SELECT * FROM daily_sessions WHERE status = 'ACTIVE' LIMIT 1")
     suspend fun getActiveSession(): DailySessionEntity?
