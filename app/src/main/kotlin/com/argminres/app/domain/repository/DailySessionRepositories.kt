@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface DailySessionRepository {
     fun getAllSessions(): Flow<List<DailySessionEntity>>
     suspend fun getActiveSession(): DailySessionEntity?
+    fun getActiveSessionFlow(): Flow<DailySessionEntity?>
     suspend fun getSessionById(id: Long): DailySessionEntity?
     fun getSessionsByDateRange(startDate: Long, endDate: Long): Flow<List<DailySessionEntity>>
     suspend fun createSession(session: DailySessionEntity): Long

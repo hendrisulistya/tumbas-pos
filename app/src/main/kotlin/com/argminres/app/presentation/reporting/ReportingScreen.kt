@@ -34,10 +34,10 @@ fun ReportingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reports", color = androidx.compose.ui.graphics.Color.White) },
+                title = { Text("Laporan", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
+                        Icon(Icons.Default.ArrowBack, "Kembali", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -61,12 +61,12 @@ fun ReportingScreen(
                 Tab(
                     selected = uiState.selectedTab == 1,
                     onClick = { viewModel.onTabSelected(1) },
-                    text = { Text("Sales") }
+                    text = { Text("Penjualan") }
                 )
                 Tab(
                     selected = uiState.selectedTab == 2,
                     onClick = { viewModel.onTabSelected(2) },
-                    text = { Text("Daily Sessions") }
+                    text = { Text("Sesi Harian") }
                 )
             }
 
@@ -109,23 +109,23 @@ fun DashboardContent(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Monthly Summary",
+                        "Ringkasan Bulanan",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
                     SummaryRow(
-                        label = "Total Revenue",
+                        label = "Total Pendapatan",
                         value = currencyFormatter.format(uiState.totalRevenue)
                     )
                     SummaryRow(
-                        label = "Ingredient Cost",
+                        label = "Biaya Bahan",
                         value = "- ${currencyFormatter.format(uiState.totalCost)}",
                         color = MaterialTheme.colorScheme.error
                     )
                     SummaryRow(
-                        label = "Waste Value",
+                        label = "Nilai Buangan (Waste)",
                         value = "- ${currencyFormatter.format(uiState.totalWaste)}",
                         color = MaterialTheme.colorScheme.error
                     )
@@ -134,7 +134,7 @@ fun DashboardContent(
 
                     val netProfit = uiState.totalRevenue - uiState.totalCost - uiState.totalWaste
                     SummaryRow(
-                        label = "Net Profit",
+                        label = "Laba Bersih",
                         value = currencyFormatter.format(netProfit),
                         isTotal = true,
                         color = if (netProfit >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
@@ -144,13 +144,13 @@ fun DashboardContent(
         }
 
         item {
-            Text("Top Selling Products", style = MaterialTheme.typography.titleMedium)
+            Text("Produk Terlaris", style = MaterialTheme.typography.titleMedium)
         }
 
         items(uiState.topProducts) { product ->
             ListItem(
                 headlineContent = { Text(product.productName) },
-                supportingContent = { Text("Sold: ${product.quantitySold}") },
+                supportingContent = { Text("Terjual: ${product.quantitySold}") },
                 trailingContent = { Text(currencyFormatter.format(product.totalRevenue)) }
             )
             Divider()
@@ -168,7 +168,7 @@ fun SalesReportContent(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
-            Text("Daily Sales (Last 30 Days)", style = MaterialTheme.typography.titleMedium)
+            Text("Penjualan Harian (30 Hari Terakhir)", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -186,7 +186,7 @@ fun SalesReportContent(
                 ) {
                     Column {
                         Text(summary.date, style = MaterialTheme.typography.bodyMedium)
-                        Text("${summary.totalTransactions} Transactions", style = MaterialTheme.typography.bodySmall)
+                        Text("${summary.totalTransactions} Transaksi", style = MaterialTheme.typography.bodySmall)
                     }
                     Text(
                         currencyFormatter.format(summary.totalSales),
@@ -207,7 +207,7 @@ fun LowStockContent(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
-            Text("Low Stock Alerts", style = MaterialTheme.typography.titleMedium)
+            Text("Peringatan Stok Rendah", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -219,10 +219,10 @@ fun LowStockContent(
             ) {
                 ListItem(
                     headlineContent = { Text(product.productName) },
-                    supportingContent = { Text("Threshold: ${product.threshold}") },
+                    supportingContent = { Text("Ambang Batas: ${product.threshold}") },
                     trailingContent = { 
                         Text(
-                            "Stock: ${product.currentStock}",
+                            "Stok: ${product.currentStock}",
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.error
                         ) 
@@ -248,10 +248,10 @@ fun DailySessionsContent(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text("Daily Sessions Management", style = MaterialTheme.typography.titleLarge)
+            Text("Manajemen Sesi Harian", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                "View and manage unclosed business days",
+                "Lihat dan kelola hari bisnis yang belum ditutup",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -276,13 +276,13 @@ fun DailySessionsContent(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                "${unclosedSessions.size} Unclosed Session(s)",
+                                "${unclosedSessions.size} Sesi Belum Ditutup",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
                             Text(
-                                "Please close these sessions to maintain accurate records",
+                                "Harap tutup sesi ini untuk menjaga akurasi catatan",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
@@ -325,14 +325,14 @@ fun DailySessionsContent(
                         if (session.status == "PENDING_CLOSE") {
                             AssistChip(
                                 onClick = onNavigateToEndOfDay,
-                                label = { Text("Close Now") },
+                                label = { Text("Tutup Sekarang") },
                                 colors = AssistChipDefaults.assistChipColors(
                                     containerColor = MaterialTheme.colorScheme.errorContainer
                                 )
                             )
                         } else {
                             OutlinedButton(onClick = onNavigateToEndOfDay) {
-                                Text("Close Day")
+                                Text("Tutup Hari")
                             }
                         }
                     }
@@ -347,7 +347,7 @@ fun DailySessionsContent(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("Sales", style = MaterialTheme.typography.bodySmall)
+                                Text("Penjualan", style = MaterialTheme.typography.bodySmall)
                                 Text(
                                     currencyFormatter.format(session.totalSales),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -356,7 +356,7 @@ fun DailySessionsContent(
                             }
                             
                             Column {
-                                Text("Waste", style = MaterialTheme.typography.bodySmall)
+                                Text("Buangan", style = MaterialTheme.typography.bodySmall)
                                 Text(
                                     currencyFormatter.format(session.totalDishWasteValue + session.totalIngredientWasteValue),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -383,13 +383,13 @@ fun DailySessionsContent(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            "All Sessions Closed",
+                            "Semua Sesi Telah Ditutup",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "All business days have been properly closed.",
+                            "Semua hari bisnis telah ditutup dengan benar.",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }

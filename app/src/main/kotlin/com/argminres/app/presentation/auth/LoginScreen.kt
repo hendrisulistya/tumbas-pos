@@ -5,12 +5,15 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.foundation.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,9 +22,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.argminres.app.data.local.entity.EmployerEntity
+import com.argminres.app.R
 import org.koin.androidx.compose.koinViewModel
 
 private val Blue600 = Color(0xFF1976D2)
@@ -62,11 +67,10 @@ fun LoginScreen(
                         .background(Color.White, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Restaurant,
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
                         contentDescription = null,
-                        modifier = Modifier.size(52.dp),
-                        tint = Blue600
+                        modifier = Modifier.size(80.dp)
                     )
                 }
 
@@ -78,7 +82,7 @@ fun LoginScreen(
                     letterSpacing = 0.5.sp
                 )
                 Text(
-                    text = "Point of Sale System",
+                    text = "Sistem Kasir",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFFBBDEFB),
                     textAlign = TextAlign.Center
@@ -87,7 +91,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Feature pills
-                listOf("Fast Checkout", "Real-time Stock", "Multi-employee").forEach { feature ->
+                listOf("Pembayaran Cepat", "Stok Real-time", "Multi-karyawan").forEach { feature ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -170,70 +174,126 @@ fun EmployeeSelectionView(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "Welcome Back",
+            text = "Selamat Datang Kembali",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )
         Text(
-            text = "Select your account to continue",
+            text = "Pilih akun Anda untuk melanjutkan",
             style = MaterialTheme.typography.bodyLarge,
             color = Color(0xFF757575)
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = "Choose an account",
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Employee") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.fillMaxWidth().menuAnchor(),
-                leadingIcon = {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = Blue600)
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Blue600,
-                    unfocusedBorderColor = Color(0xFFBDBDBD),
-                    focusedLabelColor = Blue600
-                )
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
+        // Custom Dropdown for better reliability and control
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedCard(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.5.dp, if (expanded) Blue600 else Color(0xFFE0E0E0)),
+                colors = CardDefaults.outlinedCardColors(containerColor = Color.White)
             ) {
-                employers.forEach { employer ->
-                    DropdownMenuItem(
-                        text = {
-                            Column {
-                                Text(
-                                    text = employer.fullName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.Black
-                                )
-                                Text(
-                                    text = employer.role,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Blue600
-                                )
-                            }
-                        },
-                        onClick = {
-                            onEmployeeSelected(employer)
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = null,
+                            tint = Blue600,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Klik untuk memilih akun",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color(0xFF9E9E9E),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = Color(0xFF757575)
                     )
                 }
             }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .width(416.dp) // Match max width - padding
+                    .background(Color.White)
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(12.dp))
+            ) {
+                if (employers.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Memuat data karyawan...", color = Color.Gray) },
+                        onClick = { },
+                        enabled = false
+                    )
+                } else {
+                    employers.forEach { employer ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(Blue50, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = employer.fullName.take(1).uppercase(),
+                                            color = Blue600,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = employer.fullName,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black
+                                        )
+                                        Text(
+                                            text = employer.role,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Blue600
+                                        )
+                                    }
+                                }
+                            },
+                            onClick = {
+                                onEmployeeSelected(employer)
+                                expanded = false
+                            },
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        if (employers.isEmpty()) {
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().height(2.dp).clip(RoundedCornerShape(1.dp)),
+                color = Blue600,
+                trackColor = Blue50
+            )
         }
     }
 }
@@ -261,7 +321,7 @@ fun PinInputView(
             Spacer(modifier = Modifier.width(4.dp))
             Column {
                 Text(
-                    text = "Enter PIN",
+                    text = "Masukkan PIN",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -299,7 +359,7 @@ fun PinInputView(
         )
 
         TextButton(onClick = onBack) {
-            Text("Not ${employer.fullName}? Change User", color = Color(0xFF9E9E9E))
+            Text("Bukan ${employer.fullName}? Ganti Pengguna", color = Color(0xFF9E9E9E))
         }
     }
 }

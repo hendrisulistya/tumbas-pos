@@ -54,12 +54,12 @@ fun ActivationScreen(
                     )
                     
                     Text(
-                        text = "Activate Store",
+                        text = "Aktivasi Toko",
                         style = MaterialTheme.typography.headlineMedium
                     )
                     
                     Text(
-                        text = "Please enter your Store ID and Activation Code to continue.",
+                        text = "Silakan masukkan ID Toko dan Kode Aktivasi Anda untuk melanjutkan.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -67,7 +67,7 @@ fun ActivationScreen(
                     OutlinedTextField(
                         value = uiState.storeId,
                         onValueChange = {},
-                        label = { Text("App ID") },
+                        label = { Text("ID Aplikasi") },
                         leadingIcon = { Icon(Icons.Default.Store, null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -81,14 +81,14 @@ fun ActivationScreen(
                     OutlinedTextField(
                         value = uiState.activationCode,
                         onValueChange = viewModel::onActivationCodeChange,
-                        label = { Text("Activation Code") },
+                        label = { Text("Kode Aktivasi") },
                         leadingIcon = { Icon(Icons.Default.Lock, null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         placeholder = { Text("XXXX-XXXX-XXXX-XXXX") },
                         trailingIcon = {
                             IconButton(onClick = { showScanner = true }) {
-                                Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR Code")
+                                Icon(Icons.Default.QrCodeScanner, contentDescription = "Pindai Kode QR")
                             }
                         }
                     )
@@ -117,9 +117,9 @@ fun ActivationScreen(
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Initializing...")
+                            Text("Menginisialisasi...")
                         } else {
-                            Text("Activate")
+                            Text("Aktivasi")
                         }
                     }
                     
@@ -129,7 +129,7 @@ fun ActivationScreen(
                         onClick = onNavigateToRestore,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Restore App")
+                        Text("Pulihkan Aplikasi")
                     }
                 }
             }

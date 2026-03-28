@@ -51,10 +51,10 @@ fun StoreSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Store Settings", color = androidx.compose.ui.graphics.Color.White) },
+                title = { Text("Pengaturan Toko", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
+                        Icon(Icons.Default.ArrowBack, "Kembali", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -76,7 +76,7 @@ fun StoreSettingsScreen(
             ) {
                 // Logo Section
                 Text(
-                    "Store Logo",
+                    "Logo Toko",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -115,14 +115,14 @@ fun StoreSettingsScreen(
                 ) {
                     Icon(Icons.Default.Image, null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (uiState.logoImage != null) "Change Logo" else "Upload Logo")
+                    Text(if (uiState.logoImage != null) "Ganti Logo" else "Unggah Logo")
                 }
                 
                 Divider()
                 
                 // Store Information Section
                 Text(
-                    "Store Information",
+                    "Informasi Toko",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -130,7 +130,7 @@ fun StoreSettingsScreen(
                 OutlinedTextField(
                     value = uiState.storeName,
                     onValueChange = viewModel::onStoreNameChange,
-                    label = { Text("Store Name") },
+                    label = { Text("Nama Toko") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -138,7 +138,7 @@ fun StoreSettingsScreen(
                 OutlinedTextField(
                     value = uiState.storeAddress,
                     onValueChange = viewModel::onStoreAddressChange,
-                    label = { Text("Store Address") },
+                    label = { Text("Alamat Toko") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 5
@@ -147,7 +147,7 @@ fun StoreSettingsScreen(
                 OutlinedTextField(
                     value = uiState.storePhone,
                     onValueChange = viewModel::onStorePhoneChange,
-                    label = { Text("Phone Number") },
+                    label = { Text("Nomor Telepon") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -155,7 +155,7 @@ fun StoreSettingsScreen(
                 OutlinedTextField(
                     value = uiState.storeTaxId,
                     onValueChange = viewModel::onStoreTaxIdChange,
-                    label = { Text("Tax ID / NPWP") },
+                    label = { Text("ID Pajak / NPWP") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -175,7 +175,7 @@ fun StoreSettingsScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text(if (uiState.isLoading) "Saving..." else "Save Settings")
+                    Text(if (uiState.isLoading) "Menyimpan..." else "Simpan Pengaturan")
                 }
                 
                 // Error Message
@@ -195,7 +195,7 @@ fun StoreSettingsScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             TextButton(onClick = viewModel::clearError) {
-                                Text("Dismiss")
+                                Text("Tutup")
                             }
                         }
                     }
@@ -222,7 +222,7 @@ fun StoreSettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Settings saved successfully!",
+                            "Pengaturan berhasil disimpan!",
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold
@@ -230,7 +230,7 @@ fun StoreSettingsScreen(
                         IconButton(onClick = viewModel::clearSavedStatus) {
                             Icon(
                                 Icons.Default.Close,
-                                contentDescription = "Dismiss",
+                                contentDescription = "Tutup",
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }

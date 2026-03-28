@@ -97,8 +97,8 @@ fun SettingsScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
+            title = { Text("Keluar") },
+            text = { Text("Apakah Anda yakin ingin keluar?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -109,12 +109,12 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text("Logout")
+                    Text("Keluar")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text("Batal")
                 }
             }
         )
@@ -124,7 +124,7 @@ fun SettingsScreen(
     if (showThemeDialog) {
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },
-            title = { Text("Choose Theme") },
+            title = { Text("Pilih Tema") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     com.argminres.app.data.repository.SettingsRepository.ThemeMode.values().forEach { mode ->
@@ -149,17 +149,17 @@ fun SettingsScreen(
                             Column {
                                 Text(
                                     text = when (mode) {
-                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Light"
-                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Dark"
-                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "System default"
+                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Terang"
+                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Gelap"
+                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "Default sistem"
                                     },
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                                 Text(
                                     text = when (mode) {
-                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Always use light theme"
-                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Always use dark theme"
-                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "Follow system setting"
+                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Gunakan tema terang"
+                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Gunakan tema gelap"
+                                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "Ikuti pengaturan sistem"
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -171,7 +171,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showThemeDialog = false }) {
-                    Text("Close")
+                    Text("Tutup")
                 }
             }
         )
@@ -180,10 +180,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", color = androidx.compose.ui.graphics.Color.White) },
+                title = { Text("Pengaturan", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Kembali", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -217,7 +217,7 @@ fun SettingsScreen(
                     ListItem(
                         headlineContent = { 
                             Text(
-                                currentEmployer?.fullName ?: "Not Logged In",
+                                currentEmployer?.fullName ?: "Belum Masuk",
                                 style = MaterialTheme.typography.titleMedium
                             ) 
                         },
@@ -251,7 +251,7 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Appearance",
+                    "Tampilan",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -261,11 +261,11 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Palette,
-                    title = "Theme",
+                    title = "Tema",
                     subtitle = when (themeMode) {
-                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Light"
-                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Dark"
-                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "System default"
+                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.LIGHT -> "Terang"
+                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.DARK -> "Gelap"
+                        com.argminres.app.data.repository.SettingsRepository.ThemeMode.SYSTEM -> "Default sistem"
                     },
                     onClick = { showThemeDialog = true }
                 )
@@ -276,7 +276,7 @@ fun SettingsScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Management",
+                        "Manajemen",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -286,8 +286,8 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.Person,
-                        title = "Employees",
-                        subtitle = "Manage employees",
+                        title = "Karyawan",
+                        subtitle = "Kelola data karyawan",
                         onClick = onNavigateToEmployers
                     )
                 }
@@ -295,22 +295,22 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.History,
-                        title = "Audit Log",
-                        subtitle = "View system activity",
+                        title = "Log Audit",
+                        subtitle = "Lihat aktivitas sistem",
                         onClick = onNavigateToAuditLog
                     )
 
                     SettingsItem(
                         icon = Icons.Default.Pending,
-                        title = "Work in Process",
-                        subtitle = "View unclosed sessions",
+                        title = "Pekerjaan Berjalan",
+                        subtitle = "Lihat sesi yang belum tutup",
                         onClick = onNavigateToWorkInProcess
                     )
 
                     SettingsItem(
                         icon = Icons.Default.EventNote,
-                        title = "End of Day",
-                        subtitle = "Close day and record waste",
+                        title = "Tutup Hari",
+                        subtitle = "Tutup hari dan catat sisa/buangan",
                         onClick = onNavigateToEndOfDay
                     )
                 }
@@ -319,7 +319,7 @@ fun SettingsScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Master Data",
+                        "Data Master",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -330,7 +330,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.ShoppingBag,
                         title = "Kelola Bahan",
-                        subtitle = "Manage ingredient catalog",
+                        subtitle = "Kelola katalog bahan baku",
                         onClick = onNavigateToIngredientMaster
                     )
                 }
@@ -339,7 +339,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.Warehouse,
                         title = "Kelola Etalase",
-                        subtitle = "Manage dish catalog",
+                        subtitle = "Kelola katalog hidangan",
                         onClick = onNavigateToDishMaster
                     )
                 }
@@ -348,7 +348,7 @@ fun SettingsScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Daily Operations",
+                        "Operasional Harian",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -359,7 +359,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.Warehouse,
                         title = "Etalase",
-                        subtitle = "Kelola inventori",
+                        subtitle = "Kelola stok hidangan",
                         onClick = onNavigateToShowcase
                     )
                 }
@@ -380,7 +380,7 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Account",
+                    "Akun",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
@@ -390,8 +390,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Lock,
-                    title = "Change PIN",
-                    subtitle = "Update your security PIN",
+                    title = "Ganti PIN",
+                    subtitle = "Perbarui PIN keamanan Anda",
                     onClick = onChangePinClick
                 )
             }
@@ -399,8 +399,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Receipt,
-                    title = "Sales Orders",
-                    subtitle = "View sales history",
+                    title = "Riwayat Penjualan",
+                    subtitle = "Lihat pesanan penjualan",
                     onClick = onNavigateToSalesOrder
                 )
             }
@@ -409,7 +409,7 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Reporting & Hardware",
+                    "Laporan & Perangkat",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
@@ -419,8 +419,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Assessment,
-                    title = "Reporting",
-                    subtitle = "View reports",
+                    title = "Laporan",
+                    subtitle = "Lihat laporan analisis",
                     onClick = onNavigateToReporting
                 )
             }
@@ -429,7 +429,7 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Default.Print,
                     title = "Printer",
-                    subtitle = "Manage Bluetooth/USB printers",
+                    subtitle = "Kelola printer Bluetooth/USB",
                     onClick = onNavigateToPrinter
                 )
             }
@@ -439,7 +439,7 @@ fun SettingsScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Advanced",
+                        "Lanjutan",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
@@ -449,8 +449,8 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.ShoppingBag,
-                        title = "Store Settings",
-                        subtitle = "Configure store information",
+                        title = "Pengaturan Toko",
+                        subtitle = "Konfigurasi informasi toko",
                         onClick = onNavigateToStoreSettings
                     )
                 }
@@ -458,8 +458,8 @@ fun SettingsScreen(
                 item {
                     SettingsItem(
                         icon = Icons.Default.Backup,
-                        title = "Backup & Restore",
-                        subtitle = "Manage data backups",
+                        title = "Cadangan & Pulihkan",
+                        subtitle = "Kelola cadangan data",
                         onClick = onNavigateToBackup
                     )
                 }
@@ -469,7 +469,7 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Information",
+                    "Informasi",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -479,8 +479,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Info,
-                    title = "About",
-                    subtitle = "App information",
+                    title = "Tentang",
+                    subtitle = "Informasi aplikasi",
                     onClick = onNavigateToAbout
                 )
             }

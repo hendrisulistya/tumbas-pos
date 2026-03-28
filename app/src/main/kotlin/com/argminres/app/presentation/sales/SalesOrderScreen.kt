@@ -32,10 +32,10 @@ fun SalesOrderScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sales Orders", color = androidx.compose.ui.graphics.Color.White) },
+                title = { Text("Riwayat Penjualan", color = androidx.compose.ui.graphics.Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = androidx.compose.ui.graphics.Color.White)
+                        Icon(Icons.Default.ArrowBack, "Kembali", tint = androidx.compose.ui.graphics.Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -51,7 +51,7 @@ fun SalesOrderScreen(
                     containerColor = androidx.compose.ui.graphics.Color(0xFF1976D2),
                     contentColor = androidx.compose.ui.graphics.Color.White
                 ) {
-                    Icon(Icons.Default.Add, "Add Customer")
+                    Icon(Icons.Default.Add, "Tambah Pelanggan")
                 }
             }
         }
@@ -65,12 +65,12 @@ fun SalesOrderScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Orders") }
+                    text = { Text("Pesanan") }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Customers") }
+                    text = { Text("Pelanggan") }
                 )
             }
 
@@ -139,13 +139,13 @@ fun OrderHistoryList(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.Person,
-                            contentDescription = "Cashier",
+                            contentDescription = "Kasir",
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            "Cashier: ${orderWithItems.cashierName ?: "Unknown"}",
+                            "Kasir: ${orderWithItems.cashierName ?: "Tidak Diketahui"}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -208,13 +208,13 @@ fun CustomerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (customer == null) "Add Customer" else "Edit Customer") },
+        title = { Text(if (customer == null) "Tambah Pelanggan" else "Ubah Pelanggan") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") })
-                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") })
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nama") })
+                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Telepon") })
                 OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
+                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Alamat") })
             }
         },
         confirmButton = {
@@ -232,12 +232,12 @@ fun CustomerDialog(
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text("Save")
+                Text("Simpan")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Batal")
             }
         }
     )

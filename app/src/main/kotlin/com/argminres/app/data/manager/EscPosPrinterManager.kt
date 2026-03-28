@@ -90,7 +90,7 @@ class EscPosPrinterManager(
                             }
                             BluetoothDevice.BOND_NONE -> {
                                 if (previousBondState == BluetoothDevice.BOND_BONDING) {
-                                    _pairingState.value = PairingState.Failed(deviceName, "Pairing cancelled or failed")
+                                    _pairingState.value = PairingState.Failed(deviceName, "Penyandingan dibatalkan atau gagal")
                                 }
                             }
                         }
@@ -105,7 +105,7 @@ class EscPosPrinterManager(
         withContext(Dispatchers.Main) {
             val bluetoothAdapter = context.getSystemService(BluetoothManager::class.java)?.adapter
             if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
-                throw Exception("Bluetooth is not enabled")
+                throw Exception("Bluetooth tidak aktif")
             }
 
             _scannedDevices.value = emptyList()
@@ -139,7 +139,7 @@ class EscPosPrinterManager(
             try {
                 val bluetoothAdapter = context.getSystemService(BluetoothManager::class.java)?.adapter
                 if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
-                    throw Exception("Bluetooth is not enabled")
+                    throw Exception("Bluetooth tidak aktif")
                 }
 
                 // Stop discovery before connecting
@@ -172,14 +172,14 @@ class EscPosPrinterManager(
                             delay(1000) // Brief delay to show success message
                         }
                         BluetoothDevice.BOND_NONE -> {
-                            _pairingState.value = PairingState.Failed(deviceName, "Pairing was cancelled")
+                            _pairingState.value = PairingState.Failed(deviceName, "Penyandingan dibatalkan")
                             unregisterPairingReceiver()
-                            throw Exception("Device pairing failed or was cancelled")
+                            throw Exception("Penyandingan perangkat gagal atau dibatalkan")
                         }
                         else -> {
-                            _pairingState.value = PairingState.Failed(deviceName, "Pairing timeout")
+                            _pairingState.value = PairingState.Failed(deviceName, "Waktu penyandingan habis")
                             unregisterPairingReceiver()
-                            throw Exception("Pairing timeout")
+                            throw Exception("Waktu penyandingan habis")
                         }
                     }
                     
@@ -219,7 +219,7 @@ class EscPosPrinterManager(
             try {
                 val bluetoothAdapter = context.getSystemService(BluetoothManager::class.java)?.adapter
                 if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
-                    throw Exception("Bluetooth is not enabled")
+                    throw Exception("Bluetooth tidak aktif")
                 }
 
                 val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
@@ -252,10 +252,10 @@ class EscPosPrinterManager(
                         _pairingState.value = PairingState.Success(deviceName)
                     }
                     BluetoothDevice.BOND_NONE -> {
-                        _pairingState.value = PairingState.Failed(deviceName, "Pairing was cancelled")
+                        _pairingState.value = PairingState.Failed(deviceName, "Penyandingan dibatalkan")
                     }
                     else -> {
-                        _pairingState.value = PairingState.Failed(deviceName, "Pairing timeout")
+                        _pairingState.value = PairingState.Failed(deviceName, "Waktu penyandingan habis")
                     }
                 }
                 
@@ -370,7 +370,7 @@ class EscPosPrinterManager(
                 sb.append("[C]${settings?.storeAddress}\n")
             }
             if (!settings?.storePhone.isNullOrBlank()) {
-                sb.append("[C]Phone: ${settings?.storePhone}\n")
+                sb.append("[C]Telp: ${settings?.storePhone}\n")
             }
             if (!settings?.storeTaxId.isNullOrBlank()) {
                 sb.append("[C]NPWP: ${settings?.storeTaxId}\n")
@@ -379,7 +379,7 @@ class EscPosPrinterManager(
             sb.append("[C]$divider\n")
             sb.append("[L]<b>Tanggal:</b> $dateStr\n")
             sb.append("[L]<b>No. Order:</b> ${order.orderNumber}\n")
-            sb.append("[L]<b>Pelanggan:</b> ${order.customerId ?: "Guest"}\n")
+            sb.append("[L]<b>Pelanggan:</b> ${order.customerId ?: "Umum"}\n")
             sb.append("[C]$dashDivider\n")
             
             items.forEach { item ->
@@ -408,7 +408,7 @@ class EscPosPrinterManager(
             
             p.printFormattedText(
                 "[C]<b><font size='big'>$storeName</font></b>\n" +
-                "[C]Printer Test Successful!\n" +
+                "[C]Tes Printer Berhasil!\n" +
                 "[C]$divider\n"
             )
         }

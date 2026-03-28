@@ -81,10 +81,10 @@ fun SalesScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Sales", color = Color.White, fontWeight = FontWeight.Bold) },
+                title = { Text("Penjualan", color = Color.White, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, "Kembali", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -124,18 +124,18 @@ fun SalesScreen(
                                 tint = Blue100
                             )
                             Text(
-                                "Your cart is empty",
+                                "Keranjang Anda kosong",
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = Color(0xFF9E9E9E)
                             )
                             Text(
-                                "Add products from the Home screen",
+                                "Tambah produk dari menu utama",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             FilledTonalButton(onClick = onNavigateBack) {
-                                Text("Browse Products")
+                                Text("Lihat Menu")
                             }
                         }
                     }
@@ -183,7 +183,7 @@ fun SalesScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    "Order Summary",
+                    "Ringkasan Pesanan",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -214,12 +214,12 @@ fun SalesScreen(
                             Icon(Icons.Default.Person, null, tint = Blue600)
                             Column {
                                 Text(
-                                    "Customer",
+                                    "Pelanggan",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = Color(0xFF616161)
                                 )
                                 Text(
-                                    uiState.selectedCustomer?.name ?: "Select Customer",
+                                    uiState.selectedCustomer?.name ?: "Pilih Pelanggan",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium,
                                     color = if (uiState.selectedCustomer != null) Color.Black else Color(0xFF9E9E9E)
@@ -266,7 +266,7 @@ fun SalesScreen(
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                     } else {
                         Text(
-                            "Checkout",
+                            "Bayar",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = if (canCheckout) Color.White else Color(0xFF9E9E9E)
@@ -314,7 +314,7 @@ fun CustomerSelectionDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Customer") },
+        title = { Text("Pilih Pelanggan") },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -324,7 +324,7 @@ fun CustomerSelectionDialog(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search customers...") },
+                    placeholder = { Text("Cari pelanggan...") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
@@ -431,7 +431,7 @@ fun CustomerSelectionDialog(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    "No customers found",
+                                    "Pelanggan tidak ditemukan",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -444,7 +444,7 @@ fun CustomerSelectionDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Batal")
             }
         }
     )
@@ -463,7 +463,7 @@ fun InvoiceDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Payment Successful!")
+            Text("Pembayaran Berhasil!")
         },
         text = {
             if (pdfPath != null) {
@@ -493,7 +493,7 @@ fun InvoiceDialog(
             ) {
                 Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Print & Close")
+                Text("Cetak & Tutup")
             }
         },
         dismissButton = {}

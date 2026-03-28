@@ -12,6 +12,8 @@ class DailySessionRepositoryImpl(
     
     override suspend fun getActiveSession(): DailySessionEntity? = dailySessionDao.getActiveSession()
     
+    override fun getActiveSessionFlow(): Flow<DailySessionEntity?> = dailySessionDao.getActiveSessionFlow()
+    
     override suspend fun getSessionById(id: Long): DailySessionEntity? = dailySessionDao.getSessionById(id)
     
     override fun getSessionsByDateRange(startDate: Long, endDate: Long): Flow<List<DailySessionEntity>> =

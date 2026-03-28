@@ -63,7 +63,7 @@ fun HomeScreen(
                         OutlinedTextField(
                             value = uiState.searchQuery,
                             onValueChange = viewModel::onSearchQueryChange,
-                            placeholder = { Text("Search dishes...", color = Color.White.copy(alpha = 0.7f)) },
+                            placeholder = { Text("Cari menu...", color = Color.White.copy(alpha = 0.7f)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp),
@@ -80,7 +80,7 @@ fun HomeScreen(
                                     viewModel.onSearchQueryChange("")
                                     isSearching = false 
                                 }) {
-                                    Icon(Icons.Default.Close, "Close", tint = Color.White)
+                                    Icon(Icons.Default.Close, "Tutup", tint = Color.White)
                                 }
                             }
                         )
@@ -102,7 +102,7 @@ fun HomeScreen(
                     },
                     actions = {
                         IconButton(onClick = { isSearching = true }) {
-                            Icon(Icons.Default.Search, "Search", tint = Color.White)
+                            Icon(Icons.Default.Search, "Cari", tint = Color.White)
                         }
                         if (uiState.cartItemCount > 0) {
                             BadgedBox(
@@ -114,12 +114,12 @@ fun HomeScreen(
                                 modifier = Modifier.padding(end = 4.dp)
                             ) {
                                 IconButton(onClick = onNavigateToCart) {
-                                    Icon(Icons.Default.ShoppingCart, "Cart", tint = Color.White)
+                                    Icon(Icons.Default.ShoppingCart, "Keranjang", tint = Color.White)
                                 }
                             }
                         }
                         IconButton(onClick = onNavigateToSettings) {
-                            Icon(Icons.Default.Settings, "Settings", tint = Color.White)
+                            Icon(Icons.Default.Settings, "Pengaturan", tint = Color.White)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -133,8 +133,8 @@ fun HomeScreen(
             if (showFab) {
                 ExtendedFloatingActionButton(
                     onClick = onNavigateToCart,
-                    icon = { Icon(Icons.Default.ShoppingCart, "Cart") },
-                    text = { Text("View Cart (${uiState.cartItemCount})", fontWeight = FontWeight.SemiBold) },
+                    icon = { Icon(Icons.Default.ShoppingCart, "Keranjang") },
+                    text = { Text("Lihat Keranjang (${uiState.cartItemCount})", fontWeight = FontWeight.SemiBold) },
                     containerColor = Blue600,
                     contentColor = Color.White,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -185,7 +185,7 @@ fun HomeScreen(
                                 tint = Color(0xFFBBDEFB)
                             )
                             Text(
-                                "No dishes available",
+                                "Tidak ada menu tersedia",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Color(0xFF9E9E9E)
                             )

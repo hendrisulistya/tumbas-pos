@@ -179,6 +179,7 @@ val appModule = module {
     // Database Initializer
     single<com.argminres.app.data.local.DatabaseInitializer> { 
         com.argminres.app.data.local.DatabaseInitializer(
+            get<com.argminres.app.data.local.AppDatabase>(),
             androidContext(),
             get<DishDao>(),
             get<CustomerDao>(),
@@ -218,7 +219,7 @@ val appModule = module {
     viewModel { com.argminres.app.presentation.reporting.ReportingViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.backup.BackupViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.activation.ActivationViewModel(get(), get()) }
-    viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get(), get()) }
+    viewModel { com.argminres.app.presentation.endofday.EndOfDayViewModel(get(), get(), get(), get()) }
     viewModel { com.argminres.app.presentation.wip.WorkInProcessViewModel(get()) }
     viewModel { com.argminres.app.presentation.startday.SessionCheckViewModel(get(), get(), get()) }
     viewModel { com.argminres.app.presentation.ingredient.IngredientManagementViewModel(get(), get(), get()) }

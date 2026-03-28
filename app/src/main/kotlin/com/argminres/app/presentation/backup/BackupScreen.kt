@@ -26,10 +26,10 @@ fun BackupScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Backup & Restore") },
+                title = { Text("Cadangan & Pulihkan") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Kembali")
                     }
                 },
                 windowInsets = WindowInsets(left = 0.dp, top = 10.dp, right = 0.dp, bottom = 0.dp)
@@ -56,13 +56,13 @@ fun BackupScreen(
                 ) {
                     Icon(Icons.Default.Backup, null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Backup Database Now")
+                    Text("Cadangkan Database Sekarang")
                 }
 
-                Text("Available Backups", style = MaterialTheme.typography.titleMedium)
+                Text("Cadangan Tersedia", style = MaterialTheme.typography.titleMedium)
                 
                 if (uiState.backups.isEmpty()) {
-                    Text("No backups found.", style = MaterialTheme.typography.bodyMedium)
+                    Text("Tidak ada cadangan ditemukan.", style = MaterialTheme.typography.bodyMedium)
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -85,7 +85,7 @@ fun BackupScreen(
             if (uiState.error != null) {
                 AlertDialog(
                     onDismissRequest = viewModel::onDismissMessage,
-                    title = { Text("Error") },
+                    title = { Text("Kesalahan") },
                     text = { Text(uiState.error!!) },
                     confirmButton = {
                         TextButton(onClick = viewModel::onDismissMessage) { Text("OK") }
@@ -96,7 +96,7 @@ fun BackupScreen(
             if (uiState.successMessage != null) {
                 AlertDialog(
                     onDismissRequest = viewModel::onDismissMessage,
-                    title = { Text("Success") },
+                    title = { Text("Berhasil") },
                     text = { Text(uiState.successMessage!!) },
                     confirmButton = {
                         TextButton(onClick = viewModel::onDismissMessage) { Text("OK") }
@@ -125,7 +125,7 @@ fun BackupItem(
             Button(onClick = onRestore, enabled = enabled) {
                 Icon(Icons.Default.Restore, null)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Restore")
+                Text("Pulihkan")
             }
         }
     }

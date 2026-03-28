@@ -204,7 +204,8 @@ class CheckAutoDailyCloseUseCase(
         val twentyFourHoursInMillis = 24 * 60 * 60 * 1000L
         
         // Auto-close if session has been active for more than 24 hours
-        return (now - sessionStartTime) >= twentyFourHoursInMillis
+        // User requested to remove this limit for more flexibility
+        return false
     }
 }
 

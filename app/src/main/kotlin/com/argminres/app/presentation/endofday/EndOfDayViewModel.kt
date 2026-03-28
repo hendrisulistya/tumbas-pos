@@ -6,7 +6,6 @@ import com.argminres.app.data.local.entity.WasteRecordEntity
 import com.argminres.app.domain.manager.AuthenticationManager
 import com.argminres.app.domain.usecase.session.EndOfDayResult
 import com.argminres.app.domain.usecase.session.EndOfDayUseCase
-import com.argminres.app.domain.usecase.session.StartDailySessionUseCase
 import com.argminres.app.domain.repository.DailySessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +32,6 @@ data class EndOfDayUiState(
 
 class EndOfDayViewModel(
     private val endOfDayUseCase: EndOfDayUseCase,
-    private val startDailySessionUseCase: StartDailySessionUseCase,
     private val dailySessionRepository: DailySessionRepository,
     private val ingredientRepository: com.argminres.app.domain.repository.IngredientRepository,
     private val authManager: AuthenticationManager
@@ -109,9 +107,6 @@ class EndOfDayViewModel(
                             hasActiveSession = false
                         )
                     }
-                    
-                    // Start new session for next day
-                    startDailySessionUseCase(currentEmployer?.id)
                 }
                 is EndOfDayResult.NoActiveSession -> {
                     _uiState.update {

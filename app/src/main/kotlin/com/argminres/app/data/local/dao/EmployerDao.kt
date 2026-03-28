@@ -9,6 +9,9 @@ interface EmployerDao {
     @Query("SELECT * FROM employers")
     fun getAll(): Flow<List<EmployerEntity>>
     
+    @Query("SELECT * FROM employers")
+    suspend fun getAllSync(): List<EmployerEntity>
+    
     @Query("SELECT * FROM employers WHERE id = :id")
     suspend fun getById(id: Long): EmployerEntity?
     

@@ -37,8 +37,10 @@ class LoginViewModel(
     
     private fun loadEmployers() {
         viewModelScope.launch {
-            val employers = employerRepository.getAll().first()
-            _uiState.update { it.copy(employers = employers, selectedEmployer = null) }
+            employerRepository.getAll().collect { employers ->
+                android.util.Log.d("LoginViewModel", "Received ${employers.size} employers")
+                _uiState.update { it.copy(employers = employers) }
+            }
         }
     }
     

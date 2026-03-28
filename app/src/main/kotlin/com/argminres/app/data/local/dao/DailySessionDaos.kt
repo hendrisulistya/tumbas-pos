@@ -13,6 +13,9 @@ interface DailySessionDao {
     @Query("SELECT * FROM daily_sessions WHERE status = 'ACTIVE' LIMIT 1")
     suspend fun getActiveSession(): DailySessionEntity?
 
+    @Query("SELECT * FROM daily_sessions WHERE status = 'ACTIVE' LIMIT 1")
+    fun getActiveSessionFlow(): Flow<DailySessionEntity?>
+
     @Query("SELECT * FROM daily_sessions WHERE id = :id")
     suspend fun getSessionById(id: Long): DailySessionEntity?
 

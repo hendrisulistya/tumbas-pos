@@ -8,13 +8,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import com.argminres.app.util.CsvParser
 
 class EmployerRepositoryImpl(
     private val employerDao: EmployerDao,
     private val context: Context
 ) : EmployerRepository {
     
-    override fun getAll(): Flow<List<EmployerEntity>> = employerDao.getAll()
+    override fun getAll(): Flow<List<EmployerEntity>> {
+        android.util.Log.d("EmployerRepository", "getAll() called")
+        return employerDao.getAll()
+    }
+    
+    override suspend fun getAllSync(): List<EmployerEntity> = employerDao.getAllSync()
     
     override suspend fun getById(id: Long): EmployerEntity? = employerDao.getById(id)
     
@@ -38,7 +44,7 @@ class EmployerRepositoryImpl(
     
     override suspend fun initializeFromCsv() {
         // Check if employers already exist
-        val existingEmployers = employerDao.getAll().first()
+        val existingEmployers = employerDao.getAllSync()
         if (existingEmployers.isNotEmpty()) {
             return // Already initialized
         }
@@ -55,7 +61,7 @@ class EmployerRepositoryImpl(
             
             while (reader.readLine().also { line = it } != null) {
                 line?.let {
-                    val parts = it.split(",")
+                    val parts = CsvParser.parseCsvLine(it)
                     if (parts.size >= 4) {
                         val employer = EmployerEntity(
                             fullName = parts[0].trim(),

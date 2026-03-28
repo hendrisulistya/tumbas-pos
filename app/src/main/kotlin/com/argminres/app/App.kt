@@ -71,15 +71,20 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
 @Composable
 fun App() {
     KoinContext {
-        val settingsRepository: SettingsRepository = koinInject()
-        val databaseInitializer: com.argminres.app.data.local.DatabaseInitializer = koinInject()
-        
-        com.argminres.app.ui.theme.PadangPOSTheme(settingsRepository = settingsRepository) {
-            val navController = rememberNavController()
-            val authManager: com.argminres.app.domain.manager.AuthenticationManager = koinInject()
-            val isAuthenticated by authManager.currentEmployer.collectAsState()
+            val settingsRepository: SettingsRepository = koinInject()
+            val databaseInitializer: com.argminres.app.data.local.DatabaseInitializer = koinInject()
+            val dailySessionRepository: com.argminres.app.domain.repository.DailySessionRepository = koinInject()
             
-            var isInitializing by remember { mutableStateOf(settingsRepository.isActivated() && !settingsRepository.isDatabaseInitialized()) }
+            com.argminres.app.ui.theme.PadangPOSTheme(settingsRepository = settingsRepository) {
+                val navController = rememberNavController()
+                val authManager: com.argminres.app.domain.manager.AuthenticationManager = koinInject()
+                val isAuthenticated by authManager.currentEmployer.collectAsState()
+                val activeSession by dailySessionRepository.getActiveSessionFlow().collectAsState(initial = null)
+                
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+                
+                var isInitializing by remember { mutableStateOf(settingsRepository.isActivated() && !settingsRepository.isDatabaseInitialized()) }
             
             // Restore session on app start
             LaunchedEffect(Unit) {
@@ -116,6 +121,28 @@ fun App() {
                 if (settingsRepository.isActivated() && isAuthenticated == null) {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+            
+            // Redirect to SessionCheck if session is closed and user is in an operational screen
+            LaunchedEffect(activeSession, isAuthenticated, currentRoute) {
+                if (isAuthenticated != null && activeSession == null) {
+                    val operationalScreens = listOf(
+                        Screen.Home.route,
+                        Screen.Cart.route,
+                        Screen.SalesOrder.route,
+                        Screen.Showcase.route,
+                        Screen.Purchase.route,
+                        Screen.Reporting.route,
+                        Screen.EndOfDay.route,
+                        Screen.WorkInProcess.route
+                    )
+                    
+                    if (currentRoute in operationalScreens) {
+                        navController.navigate(Screen.SessionCheck.route) {
+                            popUpTo(currentRoute!!) { inclusive = true }
+                        }
                     }
                 }
             }
