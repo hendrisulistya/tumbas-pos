@@ -1,4 +1,4 @@
-rootProject.name = "YellowPos"
+rootProject.name = "tambooPOS"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

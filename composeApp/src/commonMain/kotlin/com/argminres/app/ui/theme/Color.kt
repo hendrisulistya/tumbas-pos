@@ -2,27 +2,40 @@ package com.argminres.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── YellowPos Warm Golden Palette ─────────────────────────────────────────────
+// ── tambooPOS Cyan Palette (Base: #0095DA from logo.svg) ───────────────────────
 
-// Primary Yellow & Amber Shades
-val Yellow900 = Color(0xFF78350F)   // deep amber / dark text contrast
-val Yellow800 = Color(0xFF92400E)   // rich dark amber
-val Yellow700 = Color(0xFFB45309)   // deep golden primary (high contrast)
-val Yellow600 = Color(0xFFD97706)   // warm golden amber
-val Yellow500 = Color(0xFFF59E0B)   // vibrant gold
-val Yellow400 = Color(0xFFFBBF24)   // bright sunshine gold
-val Yellow300 = Color(0xFFFCD34D)   // light gold
-val Yellow100 = Color(0xFFFEF3C7)   // soft yellow accent
-val Yellow50  = Color(0xFFFFFBEB)   // warm cream / soft yellow card bg
+// Primary Cyan / Cerulean Shades
+val Cyan900 = Color(0xFF003D5B)   // deep navy / dark text contrast
+val Cyan800 = Color(0xFF005A87)   // rich dark cerulean
+val Cyan700 = Color(0xFF0077B3)   // deep brand primary (high contrast)
+val Cyan600 = Color(0xFF0088CC)   // vivid cerulean
+val Cyan500 = Color(0xFF0095DA)   // exact base color from logo.svg
+val Cyan400 = Color(0xFF33AAEC)   // bright cerulean accent
+val Cyan300 = Color(0xFF66BFF2)   // light cerulean
+val Cyan200 = Color(0xFF99D4F7)   // soft sky
+val Cyan100 = Color(0xFFD2EFFD)   // soft cyan accent / chip
+val Cyan50  = Color(0xFFF0F9FE)   // gentle ice-blue card bg / surface variant
 
-// Theme Aliases (Redirect legacy color tokens to YellowPos palette)
-val Blue800   = Yellow800
-val Blue700   = Yellow700
-val Blue600   = Yellow600
-val Blue500   = Yellow500
-val Blue400   = Yellow400
-val Blue100   = Yellow100
-val Blue50    = Yellow50
+// Theme Aliases (Redirect legacy color tokens to tambooPOS palette)
+val Blue900   = Cyan900
+val Blue800   = Cyan800
+val Blue700   = Cyan700
+val Blue600   = Cyan600
+val Blue500   = Cyan500
+val Blue400   = Cyan400
+val Blue100   = Cyan100
+val Blue50    = Cyan50
+
+// Backward-compatibility aliases for Yellow tokens
+val Yellow900 = Cyan900
+val Yellow800 = Cyan800
+val Yellow700 = Cyan700
+val Yellow600 = Cyan600
+val Yellow500 = Cyan500
+val Yellow400 = Cyan400
+val Yellow300 = Cyan300
+val Yellow100 = Cyan100
+val Yellow50  = Cyan50
 
 // Neutral
 val Black     = Color(0xFF18181B)   // deep zinc black
@@ -37,8 +50,8 @@ val White     = Color(0xFFFFFFFF)
 val Success   = Color(0xFF16A34A)
 val Warning   = Color(0xFFEA580C)
 val Error     = Color(0xFFDC2626)
-val Info      = Color(0xFFD97706)
+val Info      = Color(0xFF0095DA)
 
 // Surface
 val SurfaceLight        = White
-val SurfaceVariantLight = Yellow50
+val SurfaceVariantLight = Cyan50

@@ -120,6 +120,11 @@ kotlin {
     }
 }
 
+compose.resources {
+    packageOfResClass = "com.argminres.app.generated.resources"
+    publicResClass = true
+}
+
 dependencies {
     // Compose BOM — manages all compose library versions
     implementation(platform(libs.androidx.compose.bom))

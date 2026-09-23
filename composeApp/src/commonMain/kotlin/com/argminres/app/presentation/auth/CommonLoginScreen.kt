@@ -1,6 +1,7 @@
 package com.argminres.app.presentation.auth
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +24,9 @@ import androidx.compose.ui.unit.sp
 import com.argminres.app.Employee
 import com.argminres.app.core.PlatformConfig
 import com.argminres.app.ui.theme.*
+import org.jetbrains.compose.resources.painterResource
+import com.argminres.app.generated.resources.Res
+import com.argminres.app.generated.resources.logo
 
 @Composable
 fun CommonLoginScreen(
@@ -34,12 +38,12 @@ fun CommonLoginScreen(
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
     Row(modifier = Modifier.fillMaxSize().background(White)) {
-        // ── Panel Kiri: Branding YellowPos (38% lebar) ─────────────────────
+        // ── Panel Kiri: Branding tambooPOS (38% lebar) ─────────────────────
         Box(
             modifier = Modifier
                 .weight(0.38f)
                 .fillMaxHeight()
-                .background(Yellow700),
+                .background(Cyan700),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -53,13 +57,17 @@ fun CommonLoginScreen(
                     modifier = Modifier.size(92.dp),
                     shadowElevation = 6.dp
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("🟡", fontSize = 44.sp)
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(14.dp)) {
+                        Image(
+                            painter = painterResource(Res.drawable.logo),
+                            contentDescription = "tambooPOS Logo",
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
 
                 Text(
-                    text = "YellowPos",
+                    text = "tambooPOS",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = White,
@@ -68,7 +76,7 @@ fun CommonLoginScreen(
                 Text(
                     text = "Sistem Kasir Rumah Makan Padang",
                     fontSize = 15.sp,
-                    color = Yellow100,
+                    color = Cyan100,
                     textAlign = TextAlign.Center
                 )
 

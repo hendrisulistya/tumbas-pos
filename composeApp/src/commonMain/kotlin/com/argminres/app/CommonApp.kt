@@ -26,11 +26,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
 import com.argminres.app.core.PlatformConfig
 import com.argminres.app.core.Screen
 import com.argminres.app.presentation.auth.CommonLoginScreen
 import com.argminres.app.ui.theme.*
 import com.argminres.app.util.formatRupiah
+import org.jetbrains.compose.resources.painterResource
+import com.argminres.app.generated.resources.Res
+import com.argminres.app.generated.resources.logo
 
 // ── Models ──────────────────────────────────────────────────────────────────
 data class MenuItem(
@@ -105,19 +109,19 @@ data class MetroCategory(
 fun CommonApp() {
     MaterialTheme(
         colorScheme = lightColorScheme(
-            primary = Yellow600,
+            primary = Cyan600,
             onPrimary = White,
-            primaryContainer = Yellow50,
-            onPrimaryContainer = Yellow900,
-            secondary = Yellow500,
+            primaryContainer = Cyan50,
+            onPrimaryContainer = Cyan900,
+            secondary = Cyan500,
             background = Color(0xFFFAFAF9),
             surface = White,
-            surfaceVariant = Yellow50,
+            surfaceVariant = Cyan50,
             onSurface = Black,
             onSurfaceVariant = Gray600
         )
     ) {
-        PlatformStatusBar(color = Yellow700, darkIcons = false)
+        PlatformStatusBar(color = Cyan700, darkIcons = false)
 
         var loggedInEmployee by remember { mutableStateOf<Employee?>(null) }
         var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
@@ -251,11 +255,17 @@ fun CommonApp() {
 
                                 Column {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Image(
+                                            painter = painterResource(Res.drawable.logo),
+                                            contentDescription = "tambooPOS Logo",
+                                            modifier = Modifier.size(26.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
                                         Text(
-                                            text = "🟡 YellowPos",
+                                            text = "tambooPOS",
                                             fontSize = 17.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = Yellow900
+                                            color = Cyan900
                                         )
                                         Spacer(Modifier.width(8.dp))
                                         Surface(
@@ -468,7 +478,7 @@ fun MetroTileMenuOverlay(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Yellow600,
+                            color = Cyan600,
                             modifier = Modifier.size(44.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -478,7 +488,7 @@ fun MetroTileMenuOverlay(
                         Spacer(Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "YELLOWPOS (METRO TILES)",
+                                text = "TAMBOOPOS (METRO TILES)",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = White,
@@ -1216,7 +1226,7 @@ fun AuditLogOverviewScreen(audits: List<AuditEntry>) {
 fun SettingsOverviewScreen() {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White)) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("Pengaturan YellowPos", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Pengaturan tambooPOS", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(color = Gray300)
             Spacer(Modifier.height(16.dp))
@@ -1234,7 +1244,7 @@ fun SettingsOverviewScreen() {
             Spacer(Modifier.height(20.dp))
             Text("Pengaturan Toko:", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            Text("Nama Toko: Rumah Makan Padang YellowPos", fontSize = 13.sp, color = Gray800)
+            Text("Nama Toko: Rumah Makan Padang tambooPOS", fontSize = 13.sp, color = Gray800)
             Text("Pajak PB1: 10% (Aktif)", fontSize = 13.sp, color = Gray800)
             Text("Mata Uang: Rupiah (IDR)", fontSize = 13.sp, color = Gray800)
         }
