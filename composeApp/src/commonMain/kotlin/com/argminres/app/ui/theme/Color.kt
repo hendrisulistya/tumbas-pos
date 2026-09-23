@@ -55,3 +55,79 @@ val Info      = Color(0xFF0095DA)
 // Surface
 val SurfaceLight        = White
 val SurfaceVariantLight = Cyan50
+
+// ── Material 3 (Material You) Color Schemes ────────────────────────────────────
+
+val TambooLightColorScheme = androidx.compose.material3.lightColorScheme(
+    primary = Cyan600,
+    onPrimary = White,
+    primaryContainer = Cyan50,
+    onPrimaryContainer = Cyan900,
+    inversePrimary = Cyan300,
+
+    secondary = Cyan700,
+    onSecondary = White,
+    secondaryContainer = Cyan100,
+    onSecondaryContainer = Cyan900,
+
+    tertiary = Color(0xFF0284C7),
+    onTertiary = White,
+    tertiaryContainer = Color(0xFFE0F2FE),
+    onTertiaryContainer = Color(0xFF0369A1),
+
+    background = Color(0xFFF8FAFC),
+    onBackground = Black,
+
+    surface = White,
+    onSurface = Black,
+    surfaceVariant = Cyan50,
+    onSurfaceVariant = Gray600,
+    inverseSurface = Cyan900,
+    inverseOnSurface = White,
+
+    error = Error,
+    onError = White,
+    errorContainer = Color(0xFFFEE2E2),
+    onErrorContainer = Color(0xFF991B1B),
+
+    outline = Gray300,
+    outlineVariant = Gray100,
+    scrim = Black
+)
+
+val TambooDarkColorScheme = androidx.compose.material3.darkColorScheme(
+    primary = Cyan400,
+    onPrimary = Color(0xFF00334D),
+    primaryContainer = Cyan900,
+    onPrimaryContainer = Cyan100,
+    inversePrimary = Cyan700,
+
+    secondary = Cyan300,
+    onSecondary = Color(0xFF00334D),
+    secondaryContainer = Cyan800,
+    onSecondaryContainer = Cyan100,
+
+    tertiary = Color(0xFF7DD3FC),
+    onTertiary = Color(0xFF082F49),
+    tertiaryContainer = Color(0xFF0369A1),
+    onTertiaryContainer = Color(0xFFE0F2FE),
+
+    background = Color(0xFF0F172A),
+    onBackground = Color(0xFFF1F5F9),
+
+    surface = Color(0xFF1E293B),
+    onSurface = Color(0xFFF1F5F9),
+    surfaceVariant = Color(0xFF334155),
+    onSurfaceVariant = Color(0xFFCBD5E1),
+    inverseSurface = Color(0xFFF1F5F9),
+    inverseOnSurface = Color(0xFF0F172A),
+
+    error = Color(0xFFF87171),
+    onError = Color(0xFF450A0A),
+    errorContainer = Color(0xFF7F1D1D),
+    onErrorContainer = Color(0xFFFECACA),
+
+    outline = Color(0xFF475569),
+    outlineVariant = Color(0xFF334155),
+    scrim = Black
+)

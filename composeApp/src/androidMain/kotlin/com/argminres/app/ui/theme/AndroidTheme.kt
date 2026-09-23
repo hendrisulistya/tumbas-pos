@@ -65,6 +65,8 @@ fun PadangPOSTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = TambooPosTypography,
+        shapes = TambooPosShapes,
         content = content
     )
 }

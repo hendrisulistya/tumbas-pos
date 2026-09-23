@@ -109,21 +109,7 @@ data class MetroCategory(
 
 @Composable
 fun CommonApp() {
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Cyan600,
-            onPrimary = White,
-            primaryContainer = Cyan50,
-            onPrimaryContainer = Cyan900,
-            secondary = Cyan500,
-            background = Color(0xFFFAFAF9),
-            surface = White,
-            surfaceVariant = Cyan50,
-            onSurface = Black,
-            onSurfaceVariant = Gray600
-        )
-    ) {
-        PlatformStatusBar(color = Cyan700, darkIcons = false)
+    TambooPosTheme {
 
         var loggedInEmployee by remember { mutableStateOf<Employee?>(null) }
         var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
