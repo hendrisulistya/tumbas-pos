@@ -138,6 +138,12 @@ android {
     namespace = "com.argminres.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    sourceSets {
+        named("main") {
+            assets.srcDirs("src/commonMain/assets")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.argminres.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
