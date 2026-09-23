@@ -276,21 +276,6 @@ fun CommonApp() {
                             }
                         }
 
-                        // Center: Metro Menu Trigger Pill Button
-                        Button(
-                            onClick = { showMetroMenu = true },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (showMetroMenu) Blue700 else Blue50,
-                                contentColor = if (showMetroMenu) White else Blue700
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Icon(Icons.Default.Dashboard, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Menu Metro (☰)", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        }
-
                         // Right: Session Status & Cashier Info
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
