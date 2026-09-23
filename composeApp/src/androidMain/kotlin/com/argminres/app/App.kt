@@ -42,6 +42,7 @@ import com.argminres.app.presentation.settings.printer.PrinterSettingsScreen
 import com.argminres.app.presentation.sales.SalesOrderDetailScreen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.argminres.app.core.PlatformConfig
 import android.Manifest
 import android.os.Build
 
@@ -107,8 +108,8 @@ fun App() {
                 authManager.restoreSession()
             }
             
-            // Determine start destination - always require login after activation
-            val startDestination = if (!settingsRepository.isActivated()) {
+            // Determine start destination - require activation only if platform enforces it
+            val startDestination = if (PlatformConfig.requiresActivation && !settingsRepository.isActivated()) {
                 Screen.Activation.route
             } else {
                 Screen.Login.route
