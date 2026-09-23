@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.argminres.app.core.PlatformConfig
 import com.argminres.app.core.Screen
+import com.argminres.app.presentation.auth.CommonLoginScreen
 import com.argminres.app.ui.theme.*
 import com.argminres.app.util.formatRupiah
 
@@ -72,7 +73,8 @@ data class Employee(
     val name: String,
     val role: String,
     val phone: String,
-    val status: String
+    val status: String,
+    val pin: String = "1234"
 )
 
 data class AuditEntry(
@@ -117,6 +119,7 @@ fun CommonApp() {
     ) {
         PlatformStatusBar(color = Blue600, darkIcons = false)
 
+        var loggedInEmployee by remember { mutableStateOf<Employee?>(null) }
         var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
         var showMetroMenu by remember { mutableStateOf(false) }
 
@@ -154,19 +157,19 @@ fun CommonApp() {
 
         val orderList = remember {
             mutableStateListOf(
-                OrderRecord("#ORD-1001", "12:15", "Rahmat", 76000, "QRIS", "Selesai", "2x Rendang, 1x Teh Talua, 1x Es Jeruk"),
-                OrderRecord("#ORD-1002", "12:40", "Rahmat", 44000, "Cash", "Selesai", "1x Ayam Pop, 1x Telur Dadar, 1x Es Teh"),
-                OrderRecord("#ORD-1003", "13:05", "Siti", 112000, "Cash", "Selesai", "3x Gulai Tunjang, 2x Perkedel, 2x Es Jeruk"),
-                OrderRecord("#ORD-1004", "13:30", "Siti", 53000, "QRIS", "Selesai", "2x Dendeng Batokok, 1x Sambal Ijo")
+                OrderRecord("#ORD-1001", "12:15", "Rahmat Hidayat", 76000, "QRIS", "Selesai", "2x Rendang, 1x Teh Talua, 1x Es Jeruk"),
+                OrderRecord("#ORD-1002", "12:40", "Rahmat Hidayat", 44000, "Cash", "Selesai", "1x Ayam Pop, 1x Telur Dadar, 1x Es Teh"),
+                OrderRecord("#ORD-1003", "13:05", "Siti Rahma", 112000, "Cash", "Selesai", "3x Gulai Tunjang, 2x Perkedel, 2x Es Jeruk"),
+                OrderRecord("#ORD-1004", "13:30", "Siti Rahma", 53000, "QRIS", "Selesai", "2x Dendeng Batokok, 1x Sambal Ijo")
             )
         }
 
         val employeeList = remember {
             mutableStateListOf(
-                Employee("EMP-01", "Budi Santoso", "MANAGER", "081234567890", "Aktif"),
-                Employee("EMP-02", "Rahmat Hidayat", "CASHIER", "081398765432", "Aktif"),
-                Employee("EMP-03", "Siti Rahma", "CASHIER", "082156781234", "Aktif"),
-                Employee("EMP-04", "Ahmad Fauzi", "KOKI", "085211223344", "Aktif")
+                Employee("EMP-01", "Budi Santoso", "MANAGER", "081234567890", "Aktif", pin = "0000"),
+                Employee("EMP-02", "Rahmat Hidayat", "CASHIER", "081398765432", "Aktif", pin = "1234"),
+                Employee("EMP-03", "Siti Rahma", "CASHIER", "082156781234", "Aktif", pin = "1234"),
+                Employee("EMP-04", "Ahmad Fauzi", "KOKI", "085211223344", "Aktif", pin = "1234")
             )
         }
 
@@ -198,149 +201,188 @@ fun CommonApp() {
             else -> "Kasir (POS)"
         }
 
-        // FULL SCREEN ROOT CONTAINER (NO FIXED SIDEBAR - OPTIMIZED FOR TABLET)
-        Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // TOP BAR WITH HAMBURGER BUTTON
-                Surface(
-                    color = White,
-                    shadowElevation = 2.dp,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+        // ── GERBANG AUTENTIKASI: Jika belum ada karyawan login, tampilkan LoginScreen ──
+        if (loggedInEmployee == null) {
+            CommonLoginScreen(
+                employees = employeeList,
+                onLoginSuccess = { emp ->
+                    loggedInEmployee = emp
+                    currentScreen = Screen.Home
+                    auditList.add(0, AuditEntry("Sekarang", "${emp.name} (${emp.role})", "LOGIN", "Berhasil login dengan autentikasi PIN"))
+                }
+            )
+        } else {
+            val activeEmployee = loggedInEmployee!!
+
+            // FULL SCREEN ROOT CONTAINER (NO FIXED SIDEBAR - OPTIMIZED FOR TABLET)
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // TOP BAR WITH HAMBURGER BUTTON
+                    Surface(
+                        color = White,
+                        shadowElevation = 2.dp,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Left: Hamburger Menu Button + Branding & Current Screen
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { showMetroMenu = !showMetroMenu },
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (showMetroMenu) Blue700 else Blue50)
-                            ) {
-                                Icon(
-                                    imageVector = if (showMetroMenu) Icons.Default.Close else Icons.Default.Menu,
-                                    contentDescription = "Buka Menu Metro",
-                                    tint = if (showMetroMenu) White else Blue700,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Spacer(Modifier.width(14.dp))
-
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "🍲 TumbasPOS",
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Blue800
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Left: Hamburger Menu Button + Branding & Current Screen
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(
+                                    onClick = { showMetroMenu = !showMetroMenu },
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (showMetroMenu) Blue700 else Blue50)
+                                ) {
+                                    Icon(
+                                        imageVector = if (showMetroMenu) Icons.Default.Close else Icons.Default.Menu,
+                                        contentDescription = "Buka Menu Metro",
+                                        tint = if (showMetroMenu) White else Blue700,
+                                        modifier = Modifier.size(24.dp)
                                     )
-                                    Spacer(Modifier.width(8.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = if (PlatformConfig.requiresActivation) Color(0xFFFFF3E0) else Color(0xFFE8F5E9)
-                                    ) {
+                                }
+
+                                Spacer(Modifier.width(14.dp))
+
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
-                                            text = if (PlatformConfig.requiresActivation) "Mobile (Aktivasi)" else "Web (Bypass)",
-                                            fontSize = 10.sp,
+                                            text = "🍲 TumbasPOS",
+                                            fontSize = 17.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (PlatformConfig.requiresActivation) Color(0xFFE65100) else Color(0xFF2E7D32),
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            color = Blue800
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = if (PlatformConfig.requiresActivation) Color(0xFFFFF3E0) else Color(0xFFE8F5E9)
+                                        ) {
+                                            Text(
+                                                text = if (PlatformConfig.requiresActivation) "Mobile (Aktivasi)" else "Web (Bypass)",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (PlatformConfig.requiresActivation) Color(0xFFE65100) else Color(0xFF2E7D32),
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "RM Padang",
+                                            fontSize = 12.sp,
+                                            color = Gray600
+                                        )
+                                        Text(
+                                            text = "  ❯  ",
+                                            fontSize = 11.sp,
+                                            color = Gray400
+                                        )
+                                        Text(
+                                            text = currentScreenTitle,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Blue700
                                         )
                                     }
                                 }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "RM Padang",
-                                        fontSize = 12.sp,
-                                        color = Gray600
-                                    )
-                                    Text(
-                                        text = "  ❯  ",
-                                        fontSize = 11.sp,
-                                        color = Gray400
-                                    )
-                                    Text(
-                                        text = currentScreenTitle,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Blue700
-                                    )
-                                }
                             }
-                        }
 
-                        // Right: Session Status & Cashier Info
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFFE8F5E9),
-                                modifier = Modifier.padding(end = 12.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                            // Right: Session Status, Logged-in Employee Info & Logout Button
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color(0xFFE8F5E9),
+                                    modifier = Modifier.padding(end = 12.dp)
                                 ) {
-                                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Success))
-                                    Spacer(Modifier.width(6.dp))
-                                    Text("Sesi: Aktif", fontSize = 12.sp, color = Success, fontWeight = FontWeight.SemiBold)
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Success))
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("Sesi: Aktif", fontSize = 12.sp, color = Success, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Blue100,
+                                    modifier = Modifier.size(34.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = activeEmployee.name.take(1).uppercase(),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = Blue700
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Text(activeEmployee.name, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(activeEmployee.role, fontSize = 10.sp, color = Gray600)
+                                }
+                                Spacer(Modifier.width(10.dp))
+                                // Logout / Ganti Karyawan Button
+                                IconButton(
+                                    onClick = {
+                                        auditList.add(0, AuditEntry("Sekarang", "${activeEmployee.name} (${activeEmployee.role})", "LOGOUT", "Keluar dari sesi POS"))
+                                        loggedInEmployee = null
+                                        showMetroMenu = false
+                                    },
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFFFEBEE))
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Logout,
+                                        contentDescription = "Keluar / Ganti Akun",
+                                        tint = Color(0xFFC62828),
+                                        modifier = Modifier.size(18.dp)
+                                    )
                                 }
                             }
-                            Surface(
-                                shape = CircleShape,
-                                color = Blue100,
-                                modifier = Modifier.size(34.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text("R", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Blue700)
-                                }
-                            }
-                            Spacer(Modifier.width(8.dp))
-                            Column {
-                                Text("Rahmat Hidayat", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                Text("KASIR", fontSize = 10.sp, color = Gray600)
-                            }
+                        }
+                    }
+
+                    // SCREEN CONTENT AREA (FULL TABLET WIDTH)
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(14.dp)) {
+                        when (currentScreen) {
+                            Screen.Home -> PosCashierScreen(menuList, cart, onOrderPaid = { ord -> orderList.add(0, ord.copy(cashier = activeEmployee.name)) })
+                            Screen.SalesOrder -> SalesOrderHistoryScreen(orderList)
+                            Screen.Showcase -> ShowcaseStockScreen(menuList)
+                            Screen.DishMaster -> DishMasterManagementScreen(menuList)
+                            Screen.Ingredient -> IngredientStockScreen(ingredientList)
+                            Screen.IngredientMaster -> IngredientMasterManagementScreen(ingredientList)
+                            Screen.SessionCheck -> SessionControlScreen()
+                            Screen.EndOfDay -> EndOfDayScreen(menuList, orderList)
+                            Screen.EmployerManagement -> EmployerListScreen(employeeList)
+                            Screen.Reporting -> ReportingOverviewScreen(orderList)
+                            Screen.WorkInProcess -> WorkInProcessOverviewScreen(menuList, orderList)
+                            Screen.AuditLog -> AuditLogOverviewScreen(auditList)
+                            Screen.Settings -> SettingsOverviewScreen()
+                            else -> PosCashierScreen(menuList, cart, onOrderPaid = { ord -> orderList.add(0, ord.copy(cashier = activeEmployee.name)) })
                         }
                     }
                 }
 
-                // SCREEN CONTENT AREA (FULL TABLET WIDTH)
-                Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(14.dp)) {
-                    when (currentScreen) {
-                        Screen.Home -> PosCashierScreen(menuList, cart, onOrderPaid = { ord -> orderList.add(0, ord) })
-                        Screen.SalesOrder -> SalesOrderHistoryScreen(orderList)
-                        Screen.Showcase -> ShowcaseStockScreen(menuList)
-                        Screen.DishMaster -> DishMasterManagementScreen(menuList)
-                        Screen.Ingredient -> IngredientStockScreen(ingredientList)
-                        Screen.IngredientMaster -> IngredientMasterManagementScreen(ingredientList)
-                        Screen.SessionCheck -> SessionControlScreen()
-                        Screen.EndOfDay -> EndOfDayScreen(menuList, orderList)
-                        Screen.EmployerManagement -> EmployerListScreen(employeeList)
-                        Screen.Reporting -> ReportingOverviewScreen(orderList)
-                        Screen.WorkInProcess -> WorkInProcessOverviewScreen(menuList, orderList)
-                        Screen.AuditLog -> AuditLogOverviewScreen(auditList)
-                        Screen.Settings -> SettingsOverviewScreen()
-                        else -> PosCashierScreen(menuList, cart, onOrderPaid = { ord -> orderList.add(0, ord) })
-                    }
+                // METRO TILE NAVIGATION OVERLAY
+                if (showMetroMenu) {
+                    MetroTileMenuOverlay(
+                        currentScreen = currentScreen,
+                        onSelectScreen = { screen ->
+                            currentScreen = screen
+                            showMetroMenu = false
+                        },
+                        onDismiss = { showMetroMenu = false }
+                    )
                 }
-            }
-
-            // METRO TILE NAVIGATION OVERLAY
-            if (showMetroMenu) {
-                MetroTileMenuOverlay(
-                    currentScreen = currentScreen,
-                    onSelectScreen = { screen ->
-                        currentScreen = screen
-                        showMetroMenu = false
-                    },
-                    onDismiss = { showMetroMenu = false }
-                )
             }
         }
     }
