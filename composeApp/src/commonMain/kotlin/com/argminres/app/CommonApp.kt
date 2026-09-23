@@ -35,6 +35,7 @@ import com.argminres.app.util.formatRupiah
 import org.jetbrains.compose.resources.painterResource
 import com.argminres.app.generated.resources.Res
 import com.argminres.app.generated.resources.logo
+import com.argminres.app.ui.components.DishImage
 
 // ── Models ──────────────────────────────────────────────────────────────────
 data class MenuItem(
@@ -44,7 +45,8 @@ data class MenuItem(
     val price: Long,
     val cost: Long,
     var stock: Int,
-    val emoji: String,
+    val image: String = "",
+    val emoji: String = "🍲",
     val unit: String = "Porsi"
 )
 
@@ -127,22 +129,37 @@ fun CommonApp() {
         var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
         var showMetroMenu by remember { mutableStateOf(false) }
 
-        // Master sample data
+        // Master menu data dari dishes.csv & dish_package.json
         val menuList = remember {
             mutableStateListOf(
-                MenuItem("1", "Rendang Daging Sapi", "Makanan", 25000, 16000, 35, "🥩"),
-                MenuItem("2", "Ayam Pop Gurih", "Makanan", 22000, 13000, 28, "🍗"),
-                MenuItem("3", "Gulai Tunjang Kikil", "Makanan", 30000, 19000, 18, "🍲"),
-                MenuItem("4", "Dendeng Batokok Balado", "Makanan", 26000, 17000, 22, "🍖"),
-                MenuItem("5", "Telur Dadar Khas Padang", "Makanan", 12000, 5000, 45, "🍳"),
-                MenuItem("6", "Ayam Bakar Padang", "Makanan", 23000, 14000, 20, "🍗"),
-                MenuItem("7", "Sayur Nangka & Singkong", "Tambahan", 8000, 2500, 50, "🥗"),
-                MenuItem("8", "Perkedel Kentang", "Tambahan", 6000, 2000, 30, "🥔"),
-                MenuItem("9", "Sambal Ijo & Merah", "Tambahan", 5000, 1500, 60, "🌶️"),
-                MenuItem("10", "Teh Talua (Teh Telur)", "Minuman", 15000, 6000, 40, "🍵"),
-                MenuItem("11", "Es Teh Manis", "Minuman", 6000, 1200, 80, "🧋"),
-                MenuItem("12", "Es Jeruk Murni", "Minuman", 8000, 3000, 40, "🍊"),
-                MenuItem("13", "Jus Alpukat Kental", "Minuman", 14000, 6000, 25, "🥑")
+                MenuItem("1001", "Rendang Daging", "Makanan", 35000, 22000, 35, "dish_image/1001.png", "🥩"),
+                MenuItem("1002", "Gulai Ayam", "Makanan", 28000, 18000, 28, "dish_image/1002.png", "🍗"),
+                MenuItem("1003", "Gulai Ikan", "Makanan", 32000, 20000, 20, "dish_image/1003.png", "🐟"),
+                MenuItem("1004", "Ayam Pop", "Makanan", 30000, 19000, 30, "dish_image/1004.png", "🍗"),
+                MenuItem("1005", "Dendeng Balado", "Makanan", 38000, 24000, 22, "dish_image/1005.png", "🥓"),
+                MenuItem("1006", "Gulai Otak", "Makanan", 25000, 15000, 15, "dish_image/1006.png", "🍲"),
+                MenuItem("1007", "Gulai Limpa", "Makanan", 24000, 14000, 18, "dish_image/1007.png", "🥣"),
+                MenuItem("1008", "Gulai Usus", "Makanan", 24000, 14000, 20, "dish_image/1008.png", "🥣"),
+                MenuItem("1009", "Terong Balado", "Makanan", 14000, 8000, 25, "dish_image/1009.png", "🍆"),
+                MenuItem("1010", "Kacang Panjang Balado", "Makanan", 14000, 7000, 25, "dish_image/1010.png", "🥗"),
+                MenuItem("1011", "Nasi Putih", "Makanan", 5000, 2000, 100, "dish_image/1011.png", "🍚"),
+                MenuItem("1012", "Nasi Kuning", "Makanan", 8000, 3500, 40, "dish_image/1012.png", "🍚"),
+                MenuItem("1013", "Sambal Ijo", "Makanan", 5000, 1500, 50, "dish_image/1013.png", "🌶️"),
+                MenuItem("1014", "Sambal Merah", "Makanan", 5000, 1500, 50, "dish_image/1014.png", "🌶️"),
+                MenuItem("1015", "Sambal Balado", "Makanan", 5000, 1500, 50, "dish_image/1015.png", "🌶️"),
+                MenuItem("1016", "Es Teh Manis", "Minuman", 5000, 1200, 80, "dish_image/1016.png", "🧋"),
+                MenuItem("1017", "Es Jeruk", "Minuman", 8000, 3000, 40, "dish_image/1017.png", "🍊"),
+                MenuItem("1018", "Teh Tawar Panas", "Minuman", 3000, 800, 60, "dish_image/1018.png", "🍵"),
+                MenuItem("1019", "Kopi Hitam", "Minuman", 8000, 3000, 35, "dish_image/1019.png", "☕"),
+                MenuItem("1020", "Air Mineral", "Minuman", 3000, 1500, 90, "dish_image/1020.png", "💧"),
+                MenuItem("1021", "Kerupuk Jangek", "Lain-lain", 8000, 4000, 45, "dish_image/1021.png", "🍘"),
+                MenuItem("1022", "Kerupuk Sanjai", "Lain-lain", 10000, 5000, 30, "dish_image/1022.png", "🍘"),
+                MenuItem("1023", "Perkedel Kentang", "Lain-lain", 8000, 3500, 35, "dish_image/1023.png", "🥔"),
+                MenuItem("1024", "Perkedel Jagung", "Lain-lain", 8000, 3500, 35, "dish_image/1024.png", "🌽"),
+                MenuItem("1025", "Paket Komplit", "Paket", 45000, 27000, 25, "dish_image/1025.png", "🍱"),
+                MenuItem("1026", "Paket Berdua", "Paket", 85000, 52000, 15, "dish_image/1026.png", "🍱"),
+                MenuItem("1027", "Paket Keluarga", "Paket", 165000, 100000, 10, "dish_image/1027.png", "🍱"),
+                MenuItem("1028", "Paket Hemat", "Paket", 32000, 19000, 30, "dish_image/1028.png", "🍱")
             )
         }
 
@@ -689,7 +706,7 @@ fun PosCashierScreen(
     var showSuccessDialog by remember { mutableStateOf(false) }
     var lastPaidAmount by remember { mutableLongStateOf(0L) }
 
-    val categories = listOf("Semua", "Makanan", "Minuman", "Tambahan")
+    val categories = listOf("Semua", "Makanan", "Minuman", "Paket", "Lain-lain")
 
     val filteredList = menuList.filter {
         (selectedCategory == "Semua" || it.category == selectedCategory) &&
@@ -751,8 +768,15 @@ fun PosCashierScreen(
                         shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = White)
                     ) {
-                        Column(modifier = Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(item.emoji, fontSize = 38.sp)
+                        Column(modifier = Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            DishImage(
+                                imagePath = item.image,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(105.dp)
+                                    .clip(RoundedCornerShape(10.dp)),
+                                fallbackEmoji = item.emoji
+                            )
                             Spacer(Modifier.height(8.dp))
                             Text(item.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(formatRupiah(item.price), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Blue600, modifier = Modifier.padding(top = 4.dp))
@@ -797,9 +821,19 @@ fun PosCashierScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(ci.item.name, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                                    Text(formatRupiah(ci.item.price * ci.quantity), fontSize = 11.sp, color = Blue700)
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    DishImage(
+                                        imagePath = ci.item.image,
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(6.dp)),
+                                        fallbackEmoji = ci.item.emoji
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Column {
+                                        Text(ci.item.name, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                        Text(formatRupiah(ci.item.price * ci.quantity), fontSize = 11.sp, color = Blue700)
+                                    }
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Surface(shape = CircleShape, color = White, modifier = Modifier.size(24.dp).clickable {
@@ -927,7 +961,13 @@ fun DishMasterManagementScreen(menuList: MutableList<MenuItem>) {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(item.emoji, fontSize = 28.sp)
+                            DishImage(
+                                imagePath = item.image,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                fallbackEmoji = item.emoji
+                            )
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(item.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -963,7 +1003,13 @@ fun ShowcaseStockScreen(menuList: List<MenuItem>) {
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = Blue50)) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(item.emoji, fontSize = 28.sp)
+                                DishImage(
+                                    imagePath = item.image,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    fallbackEmoji = item.emoji
+                                )
                                 Spacer(Modifier.width(10.dp))
                                 Column {
                                     Text(item.name, fontWeight = FontWeight.Bold, fontSize = 13.sp)
