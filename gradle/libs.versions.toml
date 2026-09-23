@@ -1,5 +1,6 @@
 [versions]
 agp = "8.11.2"
+ksp = "2.2.20-2.0.4"
 android-compileSdk = "36"
 android-minSdk = "26"
 android-targetSdk = "36"
@@ -98,6 +99,7 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version = "2.3.3" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
