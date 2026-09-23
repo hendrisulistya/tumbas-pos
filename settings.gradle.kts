@@ -1,4 +1,4 @@
-rootProject.name = "PadangPOS"
+rootProject.name = "YellowPos"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

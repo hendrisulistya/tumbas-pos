@@ -2,32 +2,43 @@ package com.argminres.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Clean Blue & White Palette ────────────────────────────────────────────────
+// ── YellowPos Warm Golden Palette ─────────────────────────────────────────────
 
-// Primary Blues
-val Blue800   = Color(0xFF0D47A1)   // deepest primary
-val Blue700   = Color(0xFF1565C0)   // deep primary
-val Blue600   = Color(0xFF1976D2)   // primary
-val Blue500   = Color(0xFF2196F3)   // lighter primary
-val Blue400   = Color(0xFF42A5F5)
-val Blue100   = Color(0xFFBBDEFB)   // light blue tint
-val Blue50    = Color(0xFFE3F2FD)   // softest blue (card bg)
+// Primary Yellow & Amber Shades
+val Yellow900 = Color(0xFF78350F)   // deep amber / dark text contrast
+val Yellow800 = Color(0xFF92400E)   // rich dark amber
+val Yellow700 = Color(0xFFB45309)   // deep golden primary (high contrast)
+val Yellow600 = Color(0xFFD97706)   // warm golden amber
+val Yellow500 = Color(0xFFF59E0B)   // vibrant gold
+val Yellow400 = Color(0xFFFBBF24)   // bright sunshine gold
+val Yellow300 = Color(0xFFFCD34D)   // light gold
+val Yellow100 = Color(0xFFFEF3C7)   // soft yellow accent
+val Yellow50  = Color(0xFFFFFBEB)   // warm cream / soft yellow card bg
+
+// Theme Aliases (Redirect legacy color tokens to YellowPos palette)
+val Blue800   = Yellow800
+val Blue700   = Yellow700
+val Blue600   = Yellow600
+val Blue500   = Yellow500
+val Blue400   = Yellow400
+val Blue100   = Yellow100
+val Blue50    = Yellow50
 
 // Neutral
-val Black     = Color(0xFF111111)
-val Gray800   = Color(0xFF424242)
-val Gray600   = Color(0xFF757575)
-val Gray400   = Color(0xFFBDBDBD)
-val Gray300   = Color(0xFFE0E0E0)
-val Gray100   = Color(0xFFF5F5F5)
+val Black     = Color(0xFF18181B)   // deep zinc black
+val Gray800   = Color(0xFF3F3F46)
+val Gray600   = Color(0xFF71717A)
+val Gray400   = Color(0xFFA1A1AA)
+val Gray300   = Color(0xFFE4E4E7)
+val Gray100   = Color(0xFFF4F4F5)
 val White     = Color(0xFFFFFFFF)
 
 // Semantic
-val Success   = Color(0xFF2E7D32)
-val Warning   = Color(0xFFF57C00)
-val Error     = Color(0xFFC62828)
-val Info      = Color(0xFF0288D1)
+val Success   = Color(0xFF16A34A)
+val Warning   = Color(0xFFEA580C)
+val Error     = Color(0xFFDC2626)
+val Info      = Color(0xFFD97706)
 
 // Surface
-val SurfaceLight    = White
-val SurfaceVariantLight = Blue50
+val SurfaceLight        = White
+val SurfaceVariantLight = Yellow50

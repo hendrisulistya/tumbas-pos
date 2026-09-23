@@ -105,19 +105,19 @@ data class MetroCategory(
 fun CommonApp() {
     MaterialTheme(
         colorScheme = lightColorScheme(
-            primary = Blue600,
+            primary = Yellow600,
             onPrimary = White,
-            primaryContainer = Blue50,
-            onPrimaryContainer = Blue700,
-            secondary = Blue500,
-            background = Color(0xFFF8F9FA),
+            primaryContainer = Yellow50,
+            onPrimaryContainer = Yellow900,
+            secondary = Yellow500,
+            background = Color(0xFFFAFAF9),
             surface = White,
-            surfaceVariant = Blue50,
+            surfaceVariant = Yellow50,
             onSurface = Black,
             onSurfaceVariant = Gray600
         )
     ) {
-        PlatformStatusBar(color = Blue600, darkIcons = false)
+        PlatformStatusBar(color = Yellow700, darkIcons = false)
 
         var loggedInEmployee by remember { mutableStateOf<Employee?>(null) }
         var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
@@ -252,10 +252,10 @@ fun CommonApp() {
                                 Column {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
-                                            text = "🍲 TumbasPOS",
+                                            text = "🟡 YellowPos",
                                             fontSize = 17.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = Blue800
+                                            color = Yellow900
                                         )
                                         Spacer(Modifier.width(8.dp))
                                         Surface(
@@ -400,11 +400,11 @@ fun MetroTileMenuOverlay(
             MetroCategory(
                 name = "Operasional",
                 icon = Icons.Default.PointOfSale,
-                color = Color(0xFF1E88E5),
+                color = Color(0xFFD97706),
                 tiles = listOf(
-                    MetroTile(Screen.Home, "Kasir (POS)", "Transaksi cepat & cetak struk", Icons.Default.PointOfSale, Color(0xFF1565C0), badge = "Utama"),
-                    MetroTile(Screen.SalesOrder, "Pesanan Penjualan", "Riwayat order & status bayar", Icons.Default.Receipt, Color(0xFF0288D1)),
-                    MetroTile(Screen.SessionCheck, "Sesi Kasir", "Buka/tutup shift kas & modal awal", Icons.Default.Timer, Color(0xFF00838F))
+                    MetroTile(Screen.Home, "Kasir (POS)", "Transaksi cepat & cetak struk", Icons.Default.PointOfSale, Color(0xFFD97706), badge = "Utama"),
+                    MetroTile(Screen.SalesOrder, "Pesanan Penjualan", "Riwayat order & status bayar", Icons.Default.Receipt, Color(0xFFEAB308)),
+                    MetroTile(Screen.SessionCheck, "Sesi Kasir", "Buka/tutup shift kas & modal awal", Icons.Default.Timer, Color(0xFFB45309))
                 )
             ),
             MetroCategory(
@@ -468,7 +468,7 @@ fun MetroTileMenuOverlay(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Blue600,
+                            color = Yellow600,
                             modifier = Modifier.size(44.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -478,7 +478,7 @@ fun MetroTileMenuOverlay(
                         Spacer(Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "MENU UTAMA (METRO TILES)",
+                                text = "YELLOWPOS (METRO TILES)",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = White,
@@ -1216,7 +1216,7 @@ fun AuditLogOverviewScreen(audits: List<AuditEntry>) {
 fun SettingsOverviewScreen() {
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White)) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text("Pengaturan TumbasPOS", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Pengaturan YellowPos", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(color = Gray300)
             Spacer(Modifier.height(16.dp))
@@ -1234,7 +1234,7 @@ fun SettingsOverviewScreen() {
             Spacer(Modifier.height(20.dp))
             Text("Pengaturan Toko:", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            Text("Nama Toko: Rumah Makan Padang TumbasPOS", fontSize = 13.sp, color = Gray800)
+            Text("Nama Toko: Rumah Makan Padang YellowPos", fontSize = 13.sp, color = Gray800)
             Text("Pajak PB1: 10% (Aktif)", fontSize = 13.sp, color = Gray800)
             Text("Mata Uang: Rupiah (IDR)", fontSize = 13.sp, color = Gray800)
         }

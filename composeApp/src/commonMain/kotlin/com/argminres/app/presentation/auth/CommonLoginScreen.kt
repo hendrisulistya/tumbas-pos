@@ -34,12 +34,12 @@ fun CommonLoginScreen(
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
     Row(modifier = Modifier.fillMaxSize().background(White)) {
-        // ── Panel Kiri: Branding TumbasPOS (38% lebar) ─────────────────────
+        // ── Panel Kiri: Branding YellowPos (38% lebar) ─────────────────────
         Box(
             modifier = Modifier
                 .weight(0.38f)
                 .fillMaxHeight()
-                .background(Blue600),
+                .background(Yellow700),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -54,12 +54,12 @@ fun CommonLoginScreen(
                     shadowElevation = 6.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("🍲", fontSize = 44.sp)
+                        Text("🟡", fontSize = 44.sp)
                     }
                 }
 
                 Text(
-                    text = "TumbasPOS",
+                    text = "YellowPos",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = White,
@@ -68,7 +68,7 @@ fun CommonLoginScreen(
                 Text(
                     text = "Sistem Kasir Rumah Makan Padang",
                     fontSize = 15.sp,
-                    color = Blue100,
+                    color = Yellow100,
                     textAlign = TextAlign.Center
                 )
 
