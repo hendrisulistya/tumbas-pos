@@ -38,6 +38,7 @@ import com.argomin.app.domain.model.PosCartItem
 import com.argomin.app.presentation.components.DishImage
 import com.argomin.app.presentation.theme.*
 import com.argomin.app.util.DynamicQrisCard
+import com.argomin.app.util.QrisCodeDisplay
 import com.argomin.app.util.formatNumber
 import com.argomin.app.util.formatRupiah
 import com.argomin.app.util.generateDynamicQris
@@ -488,16 +489,197 @@ fun PosCashierScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 if (!isTunai) {
-                                    // Tampilan QRIS Dinamis (Nominal Pesanan + Fee Rp 1.000)
+                                    // Tampilan QRIS 2 Grid: Grid 1 (Detail Pembayaran) & Grid 2 (QR Code)
                                     val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
-                                    Box(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        DynamicQrisCard(
-                                            qrisData = dynamicQris,
-                                            modifier = Modifier.widthIn(max = 480.dp)
-                                        )
+
+                                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                                        val isTwoGrid = maxWidth >= 540.dp
+
+                                        if (isTwoGrid) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                                verticalAlignment = Alignment.Top
+                                            ) {
+                                                // ── Grid 1: Detail Pembayaran ──────────────────────
+                                                Column(
+                                                    modifier = Modifier.weight(1f),
+                                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                                ) {
+                                                    // Rincian Tagihan Card
+                                                    Surface(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(12.dp),
+                                                        color = Cyan50,
+                                                        border = BorderStroke(1.dp, Cyan200)
+                                                    ) {
+                                                        Column(modifier = Modifier.padding(16.dp)) {
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ) {
+                                                                Text(
+                                                                    "DETAIL PEMBAYARAN",
+                                                                    fontSize = 12.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = Cyan900,
+                                                                    letterSpacing = 0.5.sp
+                                                                )
+                                                                Surface(shape = RoundedCornerShape(6.dp), color = Cyan100) {
+                                                                    Text(
+                                                                        "${viewModel.cartItemCount} Porsi",
+                                                                        fontSize = 11.sp,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        color = Cyan800,
+                                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            Spacer(Modifier.height(14.dp))
+
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Text("Tagihan Pesanan", fontSize = 13.sp, color = Gray600)
+                                                                Text(formatRupiah(dynamicQris.baseAmount), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Gray800)
+                                                            }
+
+                                                            Spacer(Modifier.height(6.dp))
+
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Text("Biaya Layanan (Fee QRIS)", fontSize = 13.sp, color = Gray600)
+                                                                Text("+${formatRupiah(dynamicQris.fee)}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Cyan700)
+                                                            }
+
+                                                            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = Cyan200)
+
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ) {
+                                                                Text("Total Bayar QRIS", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Cyan950)
+                                                                Text(
+                                                                    formatRupiah(dynamicQris.totalAmount),
+                                                                    fontSize = 20.sp,
+                                                                    fontWeight = FontWeight.ExtraBold,
+                                                                    color = Cyan700
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+
+                                                    // Panduan Transaksi Card
+                                                    Surface(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(12.dp),
+                                                        color = White,
+                                                        border = BorderStroke(1.dp, Gray300)
+                                                    ) {
+                                                        Column(modifier = Modifier.padding(14.dp)) {
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    Icons.Default.HourglassTop,
+                                                                    contentDescription = null,
+                                                                    tint = Cyan700,
+                                                                    modifier = Modifier.size(18.dp)
+                                                                )
+                                                                Text(
+                                                                    "Petunjuk Transaksi QRIS:",
+                                                                    fontSize = 12.5.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = Cyan950
+                                                                )
+                                                            }
+
+                                                            Spacer(Modifier.height(8.dp))
+
+                                                            val steps = listOf(
+                                                                "Tunjukkan kode QR di samping kepada pelanggan.",
+                                                                "Pelanggan memindai lewat aplikasi e-wallet / mobile banking apa pun.",
+                                                                "Nominal otomatis terkunci, pelanggan tinggal konfirmasi bayar.",
+                                                                "Setelah dana terverifikasi, klik tombol 'Sudah Bayar & Selesai'."
+                                                            )
+
+                                                            steps.forEachIndexed { index, step ->
+                                                                Row(
+                                                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                                                    verticalAlignment = Alignment.Top
+                                                                ) {
+                                                                    Text(
+                                                                        "${index + 1}. ",
+                                                                        fontSize = 11.5.sp,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        color = Cyan700
+                                                                    )
+                                                                    Text(
+                                                                        step,
+                                                                        fontSize = 11.5.sp,
+                                                                        color = Gray600,
+                                                                        lineHeight = 15.sp
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // ── Grid 2: QR Code ────────────────────────────────
+                                                Box(
+                                                    modifier = Modifier.weight(1f),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    QrisCodeDisplay(
+                                                        qrisData = dynamicQris,
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            // Fallback single column if width is very narrow
+                                            Column(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                QrisCodeDisplay(
+                                                    qrisData = dynamicQris,
+                                                    modifier = Modifier.widthIn(max = 380.dp)
+                                                )
+                                                // Rincian Biaya
+                                                Surface(
+                                                    modifier = Modifier.fillMaxWidth().widthIn(max = 380.dp),
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    color = Cyan50,
+                                                    border = BorderStroke(1.dp, Cyan200)
+                                                ) {
+                                                    Column(modifier = Modifier.padding(14.dp)) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Text("Total Bayar QRIS", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Cyan950)
+                                                            Text(
+                                                                formatRupiah(dynamicQris.totalAmount),
+                                                                fontSize = 18.sp,
+                                                                fontWeight = FontWeight.ExtraBold,
+                                                                color = Cyan700
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 } else {
                                     // Tampilan Tunai

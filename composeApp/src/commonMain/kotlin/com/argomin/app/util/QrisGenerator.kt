@@ -269,3 +269,112 @@ fun DynamicQrisCard(
         }
     }
 }
+
+/**
+ * Standalone QR Code Display Card (suitable for 2-column/grid layout).
+ */
+@Composable
+fun QrisCodeDisplay(
+    qrisData: DynamicQrisData,
+    modifier: Modifier = Modifier
+) {
+    val qrCode = remember(qrisData.payload) {
+        QrCode.encodeText(qrisData.payload, QrCode.Ecc.MEDIUM)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Gray300),
+        shadowElevation = 2.dp,
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp, horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Official QRIS Logo
+            Image(
+                painter = painterResource(Res.drawable.logo_qris),
+                contentDescription = "Logo QRIS",
+                modifier = Modifier
+                    .height(38.dp)
+                    .wrapContentWidth()
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            // Canvas Vector QR Code
+            Box(
+                modifier = Modifier
+                    .size(200.dp)
+                    .background(White)
+                    .padding(2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val matrixSize = qrCode.size
+                    val quietZone = 4
+                    val totalCells = matrixSize + (quietZone * 2)
+                    val cellSize = size.width / totalCells
+
+                    drawRect(Color.White)
+
+                    for (y in 0 until matrixSize) {
+                        for (x in 0 until matrixSize) {
+                            if (qrCode.getModule(x, y)) {
+                                drawRect(
+                                    color = Color.Black,
+                                    topLeft = Offset(
+                                        (x + quietZone) * cellSize,
+                                        (y + quietZone) * cellSize
+                                    ),
+                                    size = Size(cellSize + 0.3f, cellSize + 0.3f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                "NMID: ${qrisData.nmid}",
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = Gray800,
+                letterSpacing = 0.5.sp,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(2.dp))
+
+            Text(
+                "${qrisData.merchantName} • A02",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Normal,
+                color = Gray600,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            Surface(
+                shape = RoundedCornerShape(6.dp),
+                color = Cyan100
+            ) {
+                Text(
+                    text = "QRIS DINAMIS • NOMINAL TERKUNCI",
+                    fontSize = 9.5.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Cyan900,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                )
+            }
+        }
+    }
+}
+
