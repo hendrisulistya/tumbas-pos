@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -736,14 +737,19 @@ fun PosCashierScreen(
                                         OutlinedTextField(
                                             value = state.cashPaidInput,
                                             onValueChange = { viewModel.setCashPaidInput(it) },
-                                            label = { Text("Nominal Dibayarkan") },
-                                            placeholder = { Text("0") },
+                                            label = { Text("Nominal Dibayarkan", color = Black, fontWeight = FontWeight.Medium) },
+                                            placeholder = { Text("0", color = Gray400) },
+                                            textStyle = TextStyle(
+                                                color = Black,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold
+                                            ),
                                             leadingIcon = {
                                                 Text(
                                                     "Rp",
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Cyan700,
-                                                    fontSize = 14.sp,
+                                                    color = Black,
+                                                    fontSize = 15.sp,
                                                     modifier = Modifier.padding(start = 12.dp, end = 4.dp)
                                                 )
                                             },
@@ -764,6 +770,10 @@ fun PosCashierScreen(
                                             modifier = Modifier.fillMaxWidth(),
                                             shape = RoundedCornerShape(10.dp),
                                             colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = Black,
+                                                unfocusedTextColor = Black,
+                                                focusedLabelColor = Black,
+                                                unfocusedLabelColor = Neutral700,
                                                 focusedContainerColor = White,
                                                 unfocusedContainerColor = White,
                                                 focusedBorderColor = Cyan600,
