@@ -641,7 +641,7 @@ fun PosCashierScreen(
                                                 ) {
                                                     QrisCodeDisplay(
                                                         qrisData = dynamicQris,
-                                                        modifier = Modifier.fillMaxWidth()
+                                                        modifier = Modifier.widthIn(max = 340.dp).fillMaxWidth()
                                                     )
                                                 }
                                             }

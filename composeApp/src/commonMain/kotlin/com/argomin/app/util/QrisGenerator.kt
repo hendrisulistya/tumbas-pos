@@ -11,15 +11,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.argomin.app.generated.resources.Res
+import com.argomin.app.generated.resources.logo_gpn
 import com.argomin.app.generated.resources.logo_qris
+import com.argomin.app.generated.resources.logo_qris_header
 import com.argomin.app.presentation.theme.*
 import org.jetbrains.compose.resources.painterResource
 
@@ -276,83 +281,169 @@ fun DynamicQrisCard(qrisData: DynamicQrisData, modifier: Modifier = Modifier) {
     }
 }
 
-/** Standalone QR Code Display Card (suitable for 2-column/grid layout). */
+/**
+ * Tampilan QRIS MPM Ringkas sesuai Juklak / Buletin ASPI No: 3/III/BASPI/2021.
+ * Elemen standar:
+ * 1. Header: Logo QRIS (dengan teks "QR Code Standar Pembayaran Nasional") di kiri sejajar batas bawah dengan Logo GPN di kanan.
+ * 2. Merchant Info: Nama Merchant (bold uppercase) & NMID di tengah.
+ * 3. QR Code: Standar MPM dengan modul presisi dan 4-cell quiet zone.
+ * 4. Ornamen Geometris: Aksen merah (Pantone Red 032C / #E11931) di sisi kiri dan sudut kanan bawah.
+ * 5. Footer: "Dicetak oleh: [Kode NNS]" di kiri bawah.
+ */
 @Composable
 fun QrisCodeDisplay(qrisData: DynamicQrisData, modifier: Modifier = Modifier) {
     val qrCode =
             remember(qrisData.payload) { QrCode.encodeText(qrisData.payload, QrCode.Ecc.MEDIUM) }
 
+    // Ekstrak kode NNS dari payload jika ada (8 digit, misal 93600914)
+    val nnsCode = remember(qrisData.payload) {
+        val regex = Regex("9360[0-9]{4}")
+        regex.find(qrisData.payload)?.value ?: "93600914"
+    }
+
     Surface(
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(12.dp),
             color = White,
             border = androidx.compose.foundation.BorderStroke(1.dp, Gray300),
-            shadowElevation = 2.dp,
+            shadowElevation = 3.dp,
             modifier = modifier
     ) {
-        Column(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp, horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
         ) {
-            // Official QRIS Logo
-            Image(
-                    painter = painterResource(Res.drawable.logo_qris),
-                    contentDescription = "Logo QRIS",
-                    modifier = Modifier.height(38.dp).wrapContentWidth()
-            )
+            // Ornamen Geometris Merah Sesuai Juklak MPM Ringkas (Pantone Red 032C: #E11931)
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val w = size.width
+                val h = size.height
+                val qrisRed = Color(0xFFE11931)
 
-            Spacer(Modifier.height(10.dp))
+                // 1. Aksen bendera/pita merah sisi kiri
+                val leftPath = Path().apply {
+                    moveTo(0f, h * 0.22f)
+                    lineTo(w * 0.11f, h * 0.22f + w * 0.10f)
+                    lineTo(w * 0.055f, h * 0.22f + w * 0.10f)
+                    lineTo(w * 0.055f, h * 0.555f)
+                    lineTo(0f, h * 0.555f + w * 0.045f)
+                    close()
+                }
+                drawPath(leftPath, color = qrisRed)
 
-            // Canvas Vector QR Code
-            Box(
-                    modifier = Modifier.size(200.dp).background(White).padding(2.dp),
-                    contentAlignment = Alignment.Center
+                // 2. Aksen pita merah sudut kanan bawah
+                val brPath = Path().apply {
+                    moveTo(w, h * 0.803f)
+                    lineTo(w - w * 0.046f, h * 0.803f + w * 0.046f)
+                    lineTo(w - w * 0.046f, h * 0.901f)
+                    lineTo(w - w * 0.194f, h * 0.901f)
+                    lineTo(w - w * 0.315f, h)
+                    lineTo(w, h)
+                    close()
+                }
+                drawPath(brPath, color = qrisRed)
+            }
+
+            // Konten Tampilan QRIS MPM Ringkas
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val matrixSize = qrCode.size
-                    val quietZone = 4
-                    val totalCells = matrixSize + (quietZone * 2)
-                    val cellSize = size.width / totalCells
+                // 1. Header: Logo QRIS + Teks di kiri, Logo GPN di kanan
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.logo_qris_header),
+                        contentDescription = "QRIS - QR Code Standar Pembayaran Nasional",
+                        modifier = Modifier.height(26.dp).wrapContentWidth()
+                    )
+                    Image(
+                        painter = painterResource(Res.drawable.logo_gpn),
+                        contentDescription = "Logo GPN",
+                        modifier = Modifier.height(30.dp).wrapContentWidth()
+                    )
+                }
 
-                    drawRect(Color.White)
+                Spacer(Modifier.height(10.dp))
 
-                    for (y in 0 until matrixSize) {
-                        for (x in 0 until matrixSize) {
-                            if (qrCode.getModule(x, y)) {
-                                drawRect(
+                // 2. Data Merchant (Nama & NMID)
+                Text(
+                    text = qrisData.merchantName.uppercase(),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Black,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+
+                Spacer(Modifier.height(2.dp))
+
+                Text(
+                    text = "NMID: ${qrisData.nmid}",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Neutral800,
+                    letterSpacing = 0.5.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                // 3. QR Code Canvas (High contrast, quiet zone)
+                Box(
+                    modifier = Modifier
+                        .size(205.dp)
+                        .background(White)
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val matrixSize = qrCode.size
+                        val quietZone = 4
+                        val totalCells = matrixSize + (quietZone * 2)
+                        val cellSize = size.width / totalCells
+
+                        drawRect(Color.White)
+
+                        for (y in 0 until matrixSize) {
+                            for (x in 0 until matrixSize) {
+                                if (qrCode.getModule(x, y)) {
+                                    drawRect(
                                         color = Color.Black,
-                                        topLeft =
-                                                Offset(
-                                                        (x + quietZone) * cellSize,
-                                                        (y + quietZone) * cellSize
-                                                ),
+                                        topLeft = Offset(
+                                            (x + quietZone) * cellSize,
+                                            (y + quietZone) * cellSize
+                                        ),
                                         size = Size(cellSize + 0.3f, cellSize + 0.3f)
-                                )
+                                    )
+                                }
                             }
                         }
                     }
                 }
+
+                Spacer(Modifier.height(10.dp))
+
+                // 4. Footer: Dicetak oleh: [Kode NNS]
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Dicetak oleh: $nnsCode",
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Neutral700
+                    )
+                }
             }
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                    "NMID: ${qrisData.nmid}",
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Gray800,
-                    letterSpacing = 0.5.sp,
-                    textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(2.dp))
-
-            Text(
-                    "${qrisData.merchantName} • A02",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Gray600,
-                    textAlign = TextAlign.Center
-            )
         }
     }
 }
