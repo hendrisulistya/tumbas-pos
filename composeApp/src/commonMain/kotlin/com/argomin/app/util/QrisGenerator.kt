@@ -259,7 +259,7 @@ fun DynamicQrisCard(
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "💡 Pelanggan tinggal scan QR di atas. Nominal otomatis terkunci di aplikasi perbankan/e-wallet pelanggan.",
+                "Pelanggan tinggal scan QR di atas. Nominal otomatis terkunci di aplikasi perbankan/e-wallet pelanggan.",
                 fontSize = 11.sp,
                 color = Gray600,
                 textAlign = TextAlign.Center,

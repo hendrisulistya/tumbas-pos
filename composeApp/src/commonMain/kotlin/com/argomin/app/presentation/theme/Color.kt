@@ -36,9 +36,12 @@ val Black      = Neutral900
 
 // Clean Slate mappings for standard gray aliases
 val Gray800 = Neutral800
+val Gray700 = Neutral700
 val Gray600 = Neutral600
+val Gray500 = Neutral500
 val Gray400 = Neutral400
 val Gray300 = Neutral300
+val Gray200 = Neutral200
 val Gray100 = Neutral100
 
 // ── Semantic Tokens (Balanced for high legibility without eye fatigue) ───────────

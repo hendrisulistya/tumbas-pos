@@ -11,9 +11,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -313,481 +317,580 @@ fun PosCashierScreen(
     if (state.isPaymentDialogOpen) {
         val isTunai = state.paymentMethod is PaymentMethod.Tunai
 
-        AlertDialog(
+        Dialog(
             onDismissRequest = { viewModel.closePaymentDialog() },
-            title = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Pilih Metode Pembayaran",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Cyan900
-                    )
-                    IconButton(
-                        onClick = { viewModel.closePaymentDialog() },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Tutup",
-                            tint = Gray600,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            },
-            text = {
-                Column(
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(min = 360.dp, max = 460.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                        .fillMaxWidth(0.60f)
+                        .fillMaxHeight(0.90f),
+                    shape = RoundedCornerShape(16.dp),
+                    color = White,
+                    border = BorderStroke(1.dp, Gray200),
+                    shadowElevation = 16.dp
                 ) {
-                    // Segmented Selector: Tunai vs QRIS
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Opsi Tunai
-                        Surface(
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // 1. DIALOG HEADER (Fixed height: 60.dp)
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .clickable { viewModel.selectPaymentMethod(PaymentMethod.Tunai) },
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isTunai) Cyan50 else White,
-                            border = BorderStroke(
-                                width = if (isTunai) 2.dp else 1.dp,
-                                color = if (isTunai) Cyan600 else Gray300
-                            )
+                                .fillMaxWidth()
+                                .height(60.dp)
+                                .padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.Payments,
-                                    contentDescription = null,
-                                    tint = if (isTunai) Cyan700 else Gray600,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    "Tunai",
-                                    fontWeight = if (isTunai) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isTunai) Cyan900 else Gray800,
-                                    fontSize = 14.sp
-                                )
-                            }
-                        }
-
-                        // Opsi QRIS
-                        Surface(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { viewModel.selectPaymentMethod(PaymentMethod.Qris) },
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (!isTunai) Cyan50 else White,
-                            border = BorderStroke(
-                                width = if (!isTunai) 2.dp else 1.dp,
-                                color = if (!isTunai) Cyan600 else Gray300
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.QrCodeScanner,
-                                    contentDescription = null,
-                                    tint = if (!isTunai) Cyan700 else Gray600,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    "QRIS",
-                                    fontWeight = if (!isTunai) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (!isTunai) Cyan900 else Gray800,
-                                    fontSize = 14.sp
-                                )
-                            }
-                        }
-                    }
-
-                    if (!isTunai) {
-                        // Tampilan QRIS Dinamis (Nominal Pesanan + Fee Rp 1.000)
-                        val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
-                        DynamicQrisCard(qrisData = dynamicQris)
-                    } else {
-                        // Tampilan Tunai
-                        // 1. Total Pesanan Banner
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            color = Cyan50,
-                            border = BorderStroke(1.dp, Cyan200)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        "TOTAL PESANAN",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Gray600,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(
-                                        formatRupiah(state.totalTagihan),
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Cyan900
-                                    )
-                                }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = Cyan100
-                                ) {
-                                    Text(
-                                        "${viewModel.cartItemCount} Porsi",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Cyan800,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        // 2. Input Dibayarkan
-                        OutlinedTextField(
-                            value = state.cashPaidInput,
-                            onValueChange = { viewModel.setCashPaidInput(it) },
-                            label = { Text("Nominal Dibayarkan") },
-                            placeholder = { Text("0") },
-                            leadingIcon = {
-                                Text(
-                                    "Rp",
-                                    fontWeight = FontWeight.Bold,
-                                    color = Cyan700,
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.padding(start = 12.dp, end = 4.dp)
-                                )
-                            },
-                            trailingIcon = {
-                                if (state.cashPaidInput.isNotEmpty()) {
-                                    IconButton(onClick = { viewModel.clearCashInput() }) {
-                                        Icon(
-                                            Icons.Default.Clear,
-                                            contentDescription = "Hapus",
-                                            tint = Gray600,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = White,
-                                unfocusedContainerColor = White,
-                                focusedBorderColor = Cyan600,
-                                unfocusedBorderColor = Gray400
-                            )
-                        )
-
-                        // 3. Tombol Shortcut Pecahan Uang (1.000, 2.000, 5.000, 10.000, 20.000, 50.000, 100.000, Uang Pas)
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "Shortcut Pecahan Uang:",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Gray600
-                                )
-                                if (state.cashPaidInput.isNotEmpty() && state.cashPaidInput != "0") {
-                                    Text(
-                                        "Reset (C)",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = ErrorBase,
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .clickable { viewModel.clearCashInput() }
-                                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.height(6.dp))
-
-                            val denominationsRow1 = listOf(1_000L, 2_000L, 5_000L, 10_000L)
-                            val denominationsRow2 = listOf(20_000L, 50_000L, 100_000L)
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                denominationsRow1.forEach { denom ->
-                                    Surface(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clickable { viewModel.addDenomination(denom) },
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = Gray100,
-                                        border = BorderStroke(1.dp, Gray300)
-                                    ) {
-                                        Text(
-                                            text = formatNumber(denom),
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Cyan900,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.padding(vertical = 7.dp)
-                                        )
-                                    }
-                                }
-                            }
-
-                            Spacer(Modifier.height(6.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                denominationsRow2.forEach { denom ->
-                                    Surface(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clickable { viewModel.addDenomination(denom) },
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = Gray100,
-                                        border = BorderStroke(1.dp, Gray300)
-                                    ) {
-                                        Text(
-                                            text = formatNumber(denom),
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Cyan900,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.padding(vertical = 7.dp)
-                                        )
-                                    }
-                                }
-                                // Uang Pas Button
-                                Surface(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clickable { viewModel.setUangPas() },
                                     shape = RoundedCornerShape(8.dp),
                                     color = Cyan100,
-                                    border = BorderStroke(1.dp, Cyan300)
+                                    modifier = Modifier.size(36.dp)
                                 ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Default.Payments,
+                                            contentDescription = null,
+                                            tint = Cyan800,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column {
                                     Text(
-                                        text = "Uang Pas",
-                                        fontSize = 11.sp,
+                                        "Pilih Metode Pembayaran",
+                                        fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Cyan800,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = 7.dp)
+                                        color = Cyan950
                                     )
-                                }
-                            }
-                        }
-
-                        // 4. Nominal Kembalian Card
-                        if (state.dibayarkan > 0L) {
-                            if (!viewModel.isCashSufficient) {
-                                val deficit = state.totalTagihan - state.dibayarkan
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = ErrorContainer,
-                                    border = BorderStroke(1.dp, ErrorBorder)
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 9.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                Icons.Default.Info,
-                                                contentDescription = null,
-                                                tint = Error,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(Modifier.width(6.dp))
-                                            Text(
-                                                "Uang Kurang:",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = OnErrorContainer
-                                            )
-                                        }
-                                        Text(
-                                            formatRupiah(deficit),
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = ErrorBase
-                                        )
-                                    }
-                                }
-                            } else {
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = SuccessContainer,
-                                    border = BorderStroke(1.dp, SuccessBorder)
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 9.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                Icons.Default.CheckCircle,
-                                                contentDescription = null,
-                                                tint = Success,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Spacer(Modifier.width(6.dp))
-                                            Text(
-                                                "Kembalian:",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = OnSuccessContainer
-                                            )
-                                        }
-                                        Text(
-                                            formatRupiah(state.kembalian),
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = SuccessBase
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp),
-                                color = Gray100,
-                                border = BorderStroke(1.dp, Gray300)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 9.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
                                     Text(
-                                        "Nominal Kembalian:",
+                                        "Total Tagihan: ${formatRupiah(state.totalTagihan)} • ${viewModel.cartItemCount} item",
                                         fontSize = 12.sp,
                                         color = Gray600
                                     )
-                                    Text(
-                                        "Rp 0",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Gray600
+                                }
+                            }
+
+                            IconButton(
+                                onClick = { viewModel.closePaymentDialog() },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Tutup",
+                                    tint = Gray600,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = Gray200, thickness = 1.dp)
+
+                        // 2. SEGMENTED SELECTOR: Tunai vs QRIS (Fixed)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Opsi Tunai
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(46.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { viewModel.selectPaymentMethod(PaymentMethod.Tunai) },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isTunai) Cyan700 else White,
+                                border = BorderStroke(
+                                    width = if (isTunai) 0.dp else 1.dp,
+                                    color = if (isTunai) Color.Transparent else Gray300
+                                ),
+                                shadowElevation = if (isTunai) 2.dp else 0.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Payments,
+                                        contentDescription = null,
+                                        tint = if (isTunai) White else Gray600,
+                                        modifier = Modifier.size(20.dp)
                                     )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        "Tunai",
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isTunai) White else Gray800,
+                                        fontSize = 14.5.sp
+                                    )
+                                }
+                            }
+
+                            // Opsi QRIS
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(46.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { viewModel.selectPaymentMethod(PaymentMethod.Qris) },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (!isTunai) Cyan700 else White,
+                                border = BorderStroke(
+                                    width = if (!isTunai) 0.dp else 1.dp,
+                                    color = if (!isTunai) Color.Transparent else Gray300
+                                ),
+                                shadowElevation = if (!isTunai) 2.dp else 0.dp
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.QrCodeScanner,
+                                        contentDescription = null,
+                                        tint = if (!isTunai) White else Gray600,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        "QRIS",
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (!isTunai) White else Gray800,
+                                        fontSize = 14.5.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(color = Gray200, thickness = 1.dp)
+
+                        // 3. SCROLLABLE MIDDLE CONTENT (weight(1f) - NEVER alters dialog outer dimensions!)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 12.dp)
+                        ) {
+                            val scrollState = rememberScrollState()
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                if (!isTunai) {
+                                    // Tampilan QRIS Dinamis (Nominal Pesanan + Fee Rp 1.000)
+                                    val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        DynamicQrisCard(
+                                            qrisData = dynamicQris,
+                                            modifier = Modifier.widthIn(max = 480.dp)
+                                        )
+                                    }
+                                } else {
+                                    // Tampilan Tunai
+                                    Column(
+                                        modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                                    ) {
+                                        // 1. Total Pesanan Banner
+                                        Surface(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = Cyan50,
+                                            border = BorderStroke(1.dp, Cyan200)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column {
+                                                    Text(
+                                                        "TOTAL PESANAN",
+                                                        fontSize = 11.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Gray600,
+                                                        letterSpacing = 0.5.sp
+                                                    )
+                                                    Spacer(Modifier.height(2.dp))
+                                                    Text(
+                                                        formatRupiah(state.totalTagihan),
+                                                        fontSize = 22.sp,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        color = Cyan900
+                                                    )
+                                                }
+                                                Surface(
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    color = Cyan100
+                                                ) {
+                                                    Text(
+                                                        "${viewModel.cartItemCount} Porsi",
+                                                        fontSize = 11.5.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = Cyan800,
+                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        // 2. Input Dibayarkan
+                                        OutlinedTextField(
+                                            value = state.cashPaidInput,
+                                            onValueChange = { viewModel.setCashPaidInput(it) },
+                                            label = { Text("Nominal Dibayarkan") },
+                                            placeholder = { Text("0") },
+                                            leadingIcon = {
+                                                Text(
+                                                    "Rp",
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Cyan700,
+                                                    fontSize = 14.sp,
+                                                    modifier = Modifier.padding(start = 12.dp, end = 4.dp)
+                                                )
+                                            },
+                                            trailingIcon = {
+                                                if (state.cashPaidInput.isNotEmpty()) {
+                                                    IconButton(onClick = { viewModel.clearCashInput() }) {
+                                                        Icon(
+                                                            Icons.Default.Clear,
+                                                            contentDescription = "Hapus",
+                                                            tint = Gray600,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            singleLine = true,
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(10.dp),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedContainerColor = White,
+                                                unfocusedContainerColor = White,
+                                                focusedBorderColor = Cyan600,
+                                                unfocusedBorderColor = Gray400
+                                            )
+                                        )
+
+                                        // 3. Tombol Shortcut Pecahan Uang
+                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    "Shortcut Pecahan Uang:",
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = Gray600
+                                                )
+                                                if (state.cashPaidInput.isNotEmpty() && state.cashPaidInput != "0") {
+                                                    Text(
+                                                        "Reset (C)",
+                                                        fontSize = 11.5.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = ErrorBase,
+                                                        modifier = Modifier
+                                                            .clip(RoundedCornerShape(4.dp))
+                                                            .clickable { viewModel.clearCashInput() }
+                                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                            Spacer(Modifier.height(8.dp))
+
+                                            val denominationsRow1 = listOf(1_000L, 2_000L, 5_000L, 10_000L)
+                                            val denominationsRow2 = listOf(20_000L, 50_000L, 100_000L)
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                denominationsRow1.forEach { denom ->
+                                                    Surface(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .clickable { viewModel.addDenomination(denom) },
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        color = Gray100,
+                                                        border = BorderStroke(1.dp, Gray300)
+                                                    ) {
+                                                        Text(
+                                                            text = formatNumber(denom),
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            color = Cyan900,
+                                                            textAlign = TextAlign.Center,
+                                                            modifier = Modifier.padding(vertical = 8.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(Modifier.height(8.dp))
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                denominationsRow2.forEach { denom ->
+                                                    Surface(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .clickable { viewModel.addDenomination(denom) },
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        color = Gray100,
+                                                        border = BorderStroke(1.dp, Gray300)
+                                                    ) {
+                                                        Text(
+                                                            text = formatNumber(denom),
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            color = Cyan900,
+                                                            textAlign = TextAlign.Center,
+                                                            modifier = Modifier.padding(vertical = 8.dp)
+                                                        )
+                                                    }
+                                                }
+                                                // Uang Pas Button
+                                                Surface(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .clickable { viewModel.setUangPas() },
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    color = Cyan100,
+                                                    border = BorderStroke(1.dp, Cyan300)
+                                                ) {
+                                                    Text(
+                                                        text = "Uang Pas",
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Cyan800,
+                                                        textAlign = TextAlign.Center,
+                                                        modifier = Modifier.padding(vertical = 8.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        // 4. Nominal Kembalian Card
+                                        if (state.dibayarkan > 0L) {
+                                            if (!viewModel.isCashSufficient) {
+                                                val deficit = state.totalTagihan - state.dibayarkan
+                                                Surface(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    color = ErrorContainer,
+                                                    border = BorderStroke(1.dp, ErrorBorder)
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(
+                                                                Icons.Default.Info,
+                                                                contentDescription = null,
+                                                                tint = Error,
+                                                                modifier = Modifier.size(18.dp)
+                                                            )
+                                                            Spacer(Modifier.width(8.dp))
+                                                            Text(
+                                                                "Uang Kurang:",
+                                                                fontSize = 12.5.sp,
+                                                                fontWeight = FontWeight.Medium,
+                                                                color = OnErrorContainer
+                                                            )
+                                                        }
+                                                        Text(
+                                                            formatRupiah(deficit),
+                                                            fontSize = 15.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = ErrorBase
+                                                        )
+                                                    }
+                                                }
+                                            } else {
+                                                Surface(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    color = SuccessContainer,
+                                                    border = BorderStroke(1.dp, SuccessBorder)
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(
+                                                                Icons.Default.CheckCircle,
+                                                                contentDescription = null,
+                                                                tint = Success,
+                                                                modifier = Modifier.size(20.dp)
+                                                            )
+                                                            Spacer(Modifier.width(8.dp))
+                                                            Text(
+                                                                "Kembalian:",
+                                                                fontSize = 12.5.sp,
+                                                                fontWeight = FontWeight.SemiBold,
+                                                                color = OnSuccessContainer
+                                                            )
+                                                        }
+                                                        Text(
+                                                            formatRupiah(state.kembalian),
+                                                            fontSize = 16.sp,
+                                                            fontWeight = FontWeight.ExtraBold,
+                                                            color = SuccessBase
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            Surface(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(10.dp),
+                                                color = Gray100,
+                                                border = BorderStroke(1.dp, Gray300)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(
+                                                        "Nominal Kembalian:",
+                                                        fontSize = 12.5.sp,
+                                                        color = Gray600
+                                                    )
+                                                    Text(
+                                                        "Rp 0",
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = Gray600
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(color = Gray200, thickness = 1.dp)
+
+                        // 4. FOOTER ACTIONS BAR (Fixed height: 64.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(64.dp)
+                                .padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.closePaymentDialog() },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.height(42.dp)
+                            ) {
+                                Text("Batal", fontWeight = FontWeight.SemiBold, color = Gray700)
+                            }
+
+                            if (isTunai) {
+                                Button(
+                                    onClick = {
+                                        if (viewModel.isCashSufficient) {
+                                            val summary = state.cart.joinToString(", ") { "${it.quantity}x ${it.item.name}" }
+                                            val orderId = "#ORD-${(1000..9999).random()}"
+                                            onOrderPaid(
+                                                OrderRecord(
+                                                    id = orderId,
+                                                    time = "14:50",
+                                                    cashier = "Rahmat Hidayat",
+                                                    totalAmount = state.totalTagihan,
+                                                    paymentMethod = "Tunai",
+                                                    status = "Selesai",
+                                                    itemsSummary = summary
+                                                )
+                                            )
+                                            viewModel.completePayment(orderId)
+                                        }
+                                    },
+                                    enabled = viewModel.isCashSufficient,
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Cyan700,
+                                        contentColor = White,
+                                        disabledContainerColor = Gray300,
+                                        disabledContentColor = Gray500
+                                    ),
+                                    modifier = Modifier.height(42.dp)
+                                ) {
+                                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp), tint = White)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Konfirmasi & Bayar", fontWeight = FontWeight.Bold, color = White)
+                                }
+                            } else {
+                                val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
+                                Button(
+                                    onClick = {
+                                        val summary = state.cart.joinToString(", ") { "${it.quantity}x ${it.item.name}" }
+                                        val orderId = "#ORD-${(1000..9999).random()}"
+                                        onOrderPaid(
+                                            OrderRecord(
+                                                id = orderId,
+                                                time = "14:50",
+                                                cashier = "Rahmat Hidayat",
+                                                totalAmount = dynamicQris.totalAmount,
+                                                paymentMethod = "QRIS Dinamis",
+                                                status = "Selesai",
+                                                itemsSummary = summary
+                                            )
+                                        )
+                                        viewModel.completePayment(orderId)
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Cyan700,
+                                        contentColor = White
+                                    ),
+                                    modifier = Modifier.height(42.dp)
+                                ) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp), tint = White)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Sudah Bayar & Selesai", fontWeight = FontWeight.Bold, color = White)
                                 }
                             }
                         }
                     }
                 }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = { viewModel.closePaymentDialog() },
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("Batal")
-                }
-            },
-            confirmButton = {
-                if (isTunai) {
-                    Button(
-                        onClick = {
-                            if (viewModel.isCashSufficient) {
-                                val summary = state.cart.joinToString(", ") { "${it.quantity}x ${it.item.name}" }
-                                val orderId = "#ORD-${(1000..9999).random()}"
-                                onOrderPaid(
-                                    OrderRecord(
-                                        id = orderId,
-                                        time = "14:50",
-                                        cashier = "Rahmat Hidayat",
-                                        totalAmount = state.totalTagihan,
-                                        paymentMethod = "Tunai",
-                                        status = "Selesai",
-                                        itemsSummary = summary
-                                    )
-                                )
-                                viewModel.completePayment(orderId)
-                            }
-                        },
-                        enabled = viewModel.isCashSufficient,
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Cyan700,
-                            contentColor = White
-                        )
-                    ) {
-                        Text("Konfirmasi & Bayar", fontWeight = FontWeight.Bold, color = White)
-                    }
-                } else {
-                    val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
-                    Button(
-                        onClick = {
-                            val summary = state.cart.joinToString(", ") { "${it.quantity}x ${it.item.name}" }
-                            val orderId = "#ORD-${(1000..9999).random()}"
-                            onOrderPaid(
-                                OrderRecord(
-                                    id = orderId,
-                                    time = "14:50",
-                                    cashier = "Rahmat Hidayat",
-                                    totalAmount = dynamicQris.totalAmount,
-                                    paymentMethod = "QRIS Dinamis",
-                                    status = "Selesai",
-                                    itemsSummary = summary
-                                )
-                            )
-                            viewModel.completePayment(orderId)
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Cyan700,
-                            contentColor = White
-                        )
-                    ) {
-                        Text("Sudah Bayar & Selesai", fontWeight = FontWeight.Bold, color = White)
-                    }
-                }
             }
-        )
+        }
     }
 
     // ── Dialog: Sukses Pembayaran ──────────────────────────────────────────────
