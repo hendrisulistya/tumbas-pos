@@ -1,10 +1,12 @@
 package com.argminres.app
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -13,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -224,123 +227,155 @@ fun CommonApp() {
             // FULL SCREEN ROOT CONTAINER (NO FIXED SIDEBAR - OPTIMIZED FOR TABLET)
             Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // TOP BAR WITH HAMBURGER BUTTON
+                    // TOP BAR WITH HAMBURGER BUTTON (MATERIAL 3 PROPORTIONAL 64DP)
                     Surface(
-                        color = White,
-                        shadowElevation = 2.dp,
-                        modifier = Modifier.fillMaxWidth()
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowElevation = 1.dp,
+                        modifier = Modifier.fillMaxWidth().height(64.dp)
                     ) {
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // Left: Hamburger Menu Button + Branding & Current Screen
+                            // Left: Hamburger Menu Button + Logo & Branding + Active Screen Badge
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(
                                     onClick = { showMetroMenu = !showMetroMenu },
                                     modifier = Modifier
                                         .size(42.dp)
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(if (showMetroMenu) Blue700 else Blue50)
+                                        .background(if (showMetroMenu) Cyan700 else Cyan50)
                                 ) {
                                     Icon(
                                         imageVector = if (showMetroMenu) Icons.Default.Close else Icons.Default.Menu,
                                         contentDescription = "Buka Menu Metro",
-                                        tint = if (showMetroMenu) White else Blue700,
+                                        tint = if (showMetroMenu) White else Cyan700,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
 
                                 Spacer(Modifier.width(14.dp))
 
-                                Column {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Image(
-                                            painter = painterResource(Res.drawable.logo),
-                                            contentDescription = "tambooPOS Logo",
-                                            modifier = Modifier.size(26.dp)
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Text(
-                                            text = "tambooPOS",
-                                            fontSize = 17.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Cyan900
-                                        )
-                                        Spacer(Modifier.width(8.dp))
-                                        Surface(
-                                            shape = RoundedCornerShape(4.dp),
-                                            color = if (PlatformConfig.requiresActivation) Color(0xFFFFF3E0) else Color(0xFFE8F5E9)
-                                        ) {
-                                            Text(
-                                                text = if (PlatformConfig.requiresActivation) "Mobile (Aktivasi)" else "Web (Bypass)",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (PlatformConfig.requiresActivation) Color(0xFFE65100) else Color(0xFF2E7D32),
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                    }
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = "RM Padang",
-                                            fontSize = 12.sp,
-                                            color = Gray600
-                                        )
-                                        Text(
-                                            text = "  ❯  ",
-                                            fontSize = 11.sp,
-                                            color = Gray400
-                                        )
-                                        Text(
-                                            text = currentScreenTitle,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Blue700
-                                        )
-                                    }
-                                }
-                            }
+                                Image(
+                                    painter = painterResource(Res.drawable.logo),
+                                    contentDescription = "tambooPOS Logo",
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "tambooPOS",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                                    color = Cyan900
+                                )
 
-                            // Right: Session Status, Logged-in Employee Info & Logout Button
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Spacer(Modifier.width(16.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .height(24.dp)
+                                        .width(1.dp)
+                                        .background(MaterialTheme.colorScheme.outlineVariant)
+                                )
+                                Spacer(Modifier.width(16.dp))
+
+                                // Breadcrumb / Active Screen Chip
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
-                                    color = Color(0xFFE8F5E9),
-                                    modifier = Modifier.padding(end = 12.dp)
+                                    color = Cyan50,
+                                    border = BorderStroke(1.dp, Cyan100)
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Success))
+                                        Icon(
+                                            imageVector = currentScreen.icon ?: Icons.Default.PointOfSale,
+                                            contentDescription = null,
+                                            tint = Cyan700,
+                                            modifier = Modifier.size(16.dp)
+                                        )
                                         Spacer(Modifier.width(6.dp))
-                                        Text("Sesi: Aktif", fontSize = 12.sp, color = Success, fontWeight = FontWeight.SemiBold)
-                                    }
-                                }
-                                Surface(
-                                    shape = CircleShape,
-                                    color = Blue100,
-                                    modifier = Modifier.size(34.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
                                         Text(
-                                            text = activeEmployee.name.take(1).uppercase(),
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = Blue700
+                                            text = currentScreenTitle,
+                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                            color = Cyan800
                                         )
                                     }
                                 }
-                                Spacer(Modifier.width(8.dp))
-                                Column {
-                                    Text(activeEmployee.name, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    Text(activeEmployee.role, fontSize = 10.sp, color = Gray600)
+                            }
+
+                            // Right: Store Name, Active Employee Info & Logout
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = Color(0xFFF1F5F9),
+                                    border = BorderStroke(1.dp, Gray300),
+                                    modifier = Modifier.padding(end = 12.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .clip(CircleShape)
+                                                .background(Success)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            text = "RM Padang tambooPOS",
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                            color = Gray800
+                                        )
+                                    }
                                 }
+
+                                // Employee Profile Capsule
+                                Surface(
+                                    shape = RoundedCornerShape(24.dp),
+                                    color = Cyan50,
+                                    border = BorderStroke(1.dp, Cyan100)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = CircleShape,
+                                            color = Cyan700,
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(
+                                                    text = activeEmployee.name.take(1).uppercase(),
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 12.sp,
+                                                    color = White
+                                                )
+                                            }
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Column {
+                                            Text(
+                                                text = activeEmployee.name,
+                                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                                color = Cyan900
+                                            )
+                                            Text(
+                                                text = activeEmployee.role,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Cyan700
+                                            )
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                    }
+                                }
+
                                 Spacer(Modifier.width(10.dp))
+
                                 // Logout / Ganti Karyawan Button
                                 IconButton(
                                     onClick = {
@@ -349,14 +384,14 @@ fun CommonApp() {
                                         showMetroMenu = false
                                     },
                                     modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFFFEBEE))
+                                        .size(38.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFFEE2E2))
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Logout,
+                                        imageVector = Icons.AutoMirrored.Filled.Logout,
                                         contentDescription = "Keluar / Ganti Akun",
-                                        tint = Color(0xFFC62828),
+                                        tint = Color(0xFFDC2626),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -706,33 +741,83 @@ fun PosCashierScreen(
     Row(modifier = Modifier.fillMaxSize()) {
         // Left Column: Catalog
         Column(modifier = Modifier.weight(1f).fillMaxHeight().padding(end = 16.dp)) {
-            // Search & Category Filters
-            Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari hidangan...") },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Search, null, tint = Gray600) }
-                )
-                Spacer(Modifier.width(12.dp))
-                categories.forEach { cat ->
-                    val isSel = selectedCategory == cat
+            // Header Bar: Search input + Category Filter Chips in a neat 2-tier arrangement
+            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp)) {
+                // Tier 1: Search Input with clear icon & count badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Cari hidangan masakan Padang...", style = MaterialTheme.typography.bodyMedium, color = Gray600) },
+                        modifier = Modifier.weight(1f).height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = White,
+                            unfocusedContainerColor = White,
+                            focusedBorderColor = Cyan600,
+                            unfocusedBorderColor = Gray300
+                        ),
+                        leadingIcon = { Icon(Icons.Default.Search, null, tint = Cyan700, modifier = Modifier.size(20.dp)) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Close, "Hapus pencarian", tint = Gray600, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    )
+
+                    Spacer(Modifier.width(14.dp))
+
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = if (isSel) Blue600 else White,
-                        border = if (isSel) null else androidx.compose.foundation.BorderStroke(1.dp, Gray300),
-                        modifier = Modifier.padding(start = 6.dp).clickable { selectedCategory = cat }
+                        color = Cyan50,
+                        border = BorderStroke(1.dp, Cyan100)
                     ) {
                         Text(
-                            text = cat,
-                            fontSize = 13.sp,
-                            fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSel) White else Black,
+                            text = "${filteredList.size} Menu",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Cyan800,
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
                         )
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Tier 2: Category Filter Chips with horizontal scroll support
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(categories) { cat ->
+                        val isSel = selectedCategory == cat
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isSel) Cyan600 else White,
+                            border = BorderStroke(1.dp, if (isSel) Cyan600 else Gray300),
+                            shadowElevation = if (isSel) 2.dp else 0.dp,
+                            modifier = Modifier.clickable { selectedCategory = cat }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = cat,
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium
+                                    ),
+                                    color = if (isSel) White else Gray800
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -786,7 +871,42 @@ fun PosCashierScreen(
             colors = CardDefaults.cardColors(containerColor = White)
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(18.dp)) {
-                Text("Keranjang Pesanan", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Cyan50,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.ShoppingCart, null, tint = Cyan700, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text("Pesanan Baru", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
+                            Text(
+                                "${cart.sumOf { it.quantity }} item dipilih",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Gray600
+                            )
+                        }
+                    }
+
+                    if (cart.isNotEmpty()) {
+                        TextButton(
+                            onClick = { cart.clear() },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text("Kosongkan", style = MaterialTheme.typography.labelSmall, color = Error)
+                        }
+                    }
+                }
+
                 Spacer(Modifier.height(10.dp))
                 HorizontalDivider(color = Gray300)
 
