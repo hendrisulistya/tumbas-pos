@@ -1,26 +1,235 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tambooPOS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>tambooPOS - Resto Edition</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         html, body {
             width: 100%;
             height: 100%;
-            margin: 0;
-            padding: 0;
             overflow: hidden;
-            background-color: #141218;
+            background-color: #090d16;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #f1f5f9;
         }
         #webApp {
             width: 100%;
             height: 100%;
+            display: block;
+        }
+        /* Overlay Peringatan Ukuran Layar Tidak Sesuai */
+        #screenWarningOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 70%, #020617 100%);
+            z-index: 999999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+        .warning-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(14, 165, 233, 0.25);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(6, 182, 212, 0.15);
+            border-radius: 20px;
+            max-width: 540px;
+            width: 100%;
+            padding: 36px 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .icon-container {
+            width: 76px;
+            height: 76px;
+            background: rgba(8, 145, 178, 0.15);
+            border: 2px solid #06b6d4;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+            animation: pulseGlow 2.5s infinite alternate;
+        }
+        @keyframes pulseGlow {
+            from { box-shadow: 0 0 15px rgba(6, 182, 212, 0.2); }
+            to { box-shadow: 0 0 30px rgba(6, 182, 212, 0.5); }
+        }
+        .icon-container svg {
+            width: 44px;
+            height: 44px;
+            fill: #22d3ee;
+        }
+        h1.warning-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+        p.warning-desc {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .badge-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+        .badge-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .badge-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            margin-bottom: 4px;
+        }
+        .badge-current .badge-label {
+            color: #f87171;
+        }
+        .badge-current .badge-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fca5a5;
+        }
+        .badge-target .badge-label {
+            color: #38bdf8;
+        }
+        .badge-target .badge-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #7dd3fc;
+        }
+        .instruction-box {
+            background: rgba(14, 165, 233, 0.08);
+            border-left: 3px solid #0ea5e9;
+            border-radius: 6px;
+            padding: 12px 14px;
+            text-align: left;
+            width: 100%;
+        }
+        .instruction-box p {
+            font-size: 12.5px;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+        .instruction-box strong {
+            color: #38bdf8;
         }
     </style>
-    <script type="application/javascript" src="composeApp.js"></script>
 </head>
 <body>
     <div id="webApp"></div>
+
+    <div id="screenWarningOverlay">
+        <div class="warning-card">
+            <div class="icon-container">
+                <!-- Tablet Landscape Icon -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 4H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-1 13H6c-.55 0-1-.45-1-1V8c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v8c0 .55-.45 1-1 1zm-7-2h2v-2h-2v2z"/>
+                </svg>
+            </div>
+            <h1 class="warning-title">Gunakan Perangkat Tablet Landscape</h1>
+            <p class="warning-desc">
+                Aplikasi <strong>tambooPOS (Resto Edition)</strong> dirancang khusus untuk kenyamanan operasional kasir pada layar <strong>Tablet</strong> dengan orientasi <strong>Landscape</strong>.
+            </p>
+
+            <div class="badge-grid">
+                <div class="badge-box badge-current">
+                    <span class="badge-label">Ukuran Layar Saat Ini</span>
+                    <span class="badge-value" id="currentScreenSize">-</span>
+                </div>
+                <div class="badge-box badge-target">
+                    <span class="badge-label">Kriteria Minimum</span>
+                    <span class="badge-value">Min. 1024 × 600 px</span>
+                </div>
+            </div>
+
+            <div class="instruction-box">
+                <p>
+                    💡 <strong>Petunjuk:</strong><br>
+                    • Jika menggunakan <strong>Tablet / Smartphone</strong>: Putar perangkat ke posisi <strong>Mendatar (Landscape)</strong>.<br>
+                    • Jika menggunakan <strong>Komputer / Browser</strong>: Perbesar atau maksimalkan (<em>Maximize</em>) jendela browser Anda.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script type="application/javascript">
+        (function() {
+            var MIN_WIDTH = 1024;
+            var MIN_HEIGHT = 600;
+            var scriptLoaded = false;
+
+            function checkScreen() {
+                var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+                var height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+                var isLandscape = width >= height;
+                var isValid = (width >= MIN_WIDTH && height >= MIN_HEIGHT && isLandscape);
+
+                var overlay = document.getElementById("screenWarningOverlay");
+                var webApp = document.getElementById("webApp");
+                var currentSizeEl = document.getElementById("currentScreenSize");
+
+                if (currentSizeEl) {
+                    currentSizeEl.textContent = width + " × " + height + " px" + (isLandscape ? "" : " (Portrait)");
+                }
+
+                if (!isValid) {
+                    if (overlay) overlay.style.display = "flex";
+                    if (webApp) webApp.style.display = "none";
+                } else {
+                    if (overlay) overlay.style.display = "none";
+                    if (webApp) webApp.style.display = "block";
+
+                    // Hanya memuat dan menjalankan composeApp.js jika layar telah memenuhi kriteria
+                    if (!scriptLoaded) {
+                        scriptLoaded = true;
+                        var script = document.createElement("script");
+                        script.type = "application/javascript";
+                        script.src = "composeApp.js";
+                        document.body.appendChild(script);
+                    }
+                }
+            }
+
+            window.addEventListener("resize", checkScreen);
+            window.addEventListener("orientationchange", checkScreen);
+            document.addEventListener("DOMContentLoaded", checkScreen);
+            checkScreen();
+        })();
+    </script>
 </body>
 </html>
