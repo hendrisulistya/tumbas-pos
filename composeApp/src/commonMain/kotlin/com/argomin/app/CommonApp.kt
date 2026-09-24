@@ -825,6 +825,8 @@ fun CommonApp() {
                                                         Screen.Settings -> SettingsOverviewScreen(
                                                                 kasirViewModel = kasirViewModel,
                                                                 storeProfile = storeProfile,
+                                                                canEdit = activeEmployee.role.equals("MANAGER", ignoreCase = true),
+                                                                userRole = activeEmployee.role,
                                                                 onUpdateStoreProfile = { storeProfile = it }
                                                         )
                                                         else ->
@@ -851,6 +853,7 @@ fun CommonApp() {
                                 if (showMetroMenu) {
                                         MetroTileMenuOverlay(
                                                 currentScreen = currentScreen,
+                                                userRole = activeEmployee.role,
                                                 onSelectScreen = { screen ->
                                                         currentScreen = screen
                                                         showMetroMenu = false

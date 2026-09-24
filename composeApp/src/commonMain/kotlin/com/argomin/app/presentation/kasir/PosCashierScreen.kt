@@ -515,12 +515,13 @@ fun PosCashierScreen(
                             ) {
                                 if (!isTunai) {
                                     // Tampilan QRIS 2 Grid: Grid 1 (Detail Pembayaran) & Grid 2 (QR Code)
-                                    val dynamicQris = remember(state.totalTagihan, storeProfile.qrisMerchantName, storeProfile.qrisNmid) {
+                                    val dynamicQris = remember(state.totalTagihan, storeProfile.qrisMerchantName, storeProfile.qrisNmid, storeProfile.qrisPayload) {
                                         generateDynamicQris(
                                             orderAmount = state.totalTagihan,
                                             fee = KasirViewModel.QRIS_FEE,
                                             merchantName = storeProfile.qrisMerchantName,
-                                            nmid = storeProfile.qrisNmid
+                                            nmid = storeProfile.qrisNmid,
+                                            templatePayload = storeProfile.qrisPayload
                                         )
                                     }
 
@@ -1079,12 +1080,13 @@ fun PosCashierScreen(
                                     Text("Konfirmasi & Bayar", fontWeight = FontWeight.Bold, color = White)
                                 }
                             } else {
-                                val dynamicQris = remember(state.totalTagihan, storeProfile.qrisMerchantName, storeProfile.qrisNmid) {
+                                val dynamicQris = remember(state.totalTagihan, storeProfile.qrisMerchantName, storeProfile.qrisNmid, storeProfile.qrisPayload) {
                                     generateDynamicQris(
                                         orderAmount = state.totalTagihan,
                                         fee = KasirViewModel.QRIS_FEE,
                                         merchantName = storeProfile.qrisMerchantName,
-                                        nmid = storeProfile.qrisNmid
+                                        nmid = storeProfile.qrisNmid,
+                                        templatePayload = storeProfile.qrisPayload
                                     )
                                 }
                                 Button(

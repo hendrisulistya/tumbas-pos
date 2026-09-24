@@ -83,17 +83,19 @@ fun generateDynamicQris(
     fee: Long = QrisConfig.DEFAULT_FEE,
     merchantName: String = QrisConfig.MERCHANT_NAME,
     nmid: String = QrisConfig.NMID,
-    terminalId: String = QrisConfig.TERMINAL_ID
+    terminalId: String = QrisConfig.TERMINAL_ID,
+    templatePayload: String = QrisConfig.STATIC_PAYLOAD
 ): DynamicQrisData {
     val total = orderAmount + fee
 
     // 1. Strip CRC (last 8 characters: 6304 + 4 hex characters)
-    val crcTagIdx = QrisConfig.STATIC_PAYLOAD.lastIndexOf("6304")
+    val rawTemplate = templatePayload.ifBlank { QrisConfig.STATIC_PAYLOAD }
+    val crcTagIdx = rawTemplate.lastIndexOf("6304")
     var base =
             if (crcTagIdx != -1) {
-                QrisConfig.STATIC_PAYLOAD.substring(0, crcTagIdx)
+                rawTemplate.substring(0, crcTagIdx)
             } else {
-                QrisConfig.STATIC_PAYLOAD
+                rawTemplate
             }
 
     // 2. Change Point of Initiation Method from 11 (Static) to 12 (Dynamic)

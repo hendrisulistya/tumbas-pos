@@ -38,10 +38,50 @@ data class MetroCategory(val name: String, val icon: ImageVector, val tiles: Lis
 @Composable
 fun MetroTileMenuOverlay(
         currentScreen: Screen,
+        userRole: String = "MANAGER",
         onSelectScreen: (Screen) -> Unit,
         onDismiss: () -> Unit
 ) {
-    val metroCategories = remember {
+    val isManager = userRole.equals("MANAGER", ignoreCase = true)
+    val metroCategories = remember(isManager) {
+        val managementTiles = mutableListOf(
+            MetroTile(
+                Screen.EmployerManagement,
+                "Karyawan",
+                "Kelola staf, kasir & hak akses",
+                Icons.Default.People
+            ),
+            MetroTile(
+                Screen.Reporting,
+                "Laporan Penjualan",
+                "Analisis omset, grafik & laba kotor",
+                Icons.Default.Assessment
+            ),
+            MetroTile(
+                Screen.WorkInProcess,
+                "Pekerjaan Berjalan",
+                "Status antrian masak & pesanan",
+                Icons.Default.Pending
+            ),
+            MetroTile(
+                Screen.AuditLog,
+                "Log Audit",
+                "Rekam jejak aktivitas operasional",
+                Icons.Default.History
+            )
+        )
+        if (isManager) {
+            managementTiles.add(
+                MetroTile(
+                    Screen.Settings,
+                    "Pengaturan Toko",
+                    "Profil resto, pajak & QRIS",
+                    Icons.Default.Settings,
+                    badge = "Manager"
+                )
+            )
+        }
+
         listOf(
                 MetroCategory(
                         name = "Operasional",
@@ -116,39 +156,7 @@ fun MetroTileMenuOverlay(
                 MetroCategory(
                         name = "Manajemen",
                         icon = Icons.Default.Assessment,
-                        tiles =
-                                listOf(
-                                        MetroTile(
-                                                Screen.EmployerManagement,
-                                                "Karyawan",
-                                                "Kelola staf, kasir & hak akses",
-                                                Icons.Default.People
-                                        ),
-                                        MetroTile(
-                                                Screen.Reporting,
-                                                "Laporan Penjualan",
-                                                "Analisis omset, grafik & laba kotor",
-                                                Icons.Default.Assessment
-                                        ),
-                                        MetroTile(
-                                                Screen.WorkInProcess,
-                                                "Pekerjaan Berjalan",
-                                                "Status antrian masak & pesanan",
-                                                Icons.Default.Pending
-                                        ),
-                                        MetroTile(
-                                                Screen.AuditLog,
-                                                "Log Audit",
-                                                "Rekam jejak aktivitas operasional",
-                                                Icons.Default.History
-                                        ),
-                                        MetroTile(
-                                                Screen.Settings,
-                                                "Pengaturan Toko",
-                                                "Profil resto & printer thermal",
-                                                Icons.Default.Settings
-                                        )
-                                )
+                        tiles = managementTiles
                 )
         )
     }
