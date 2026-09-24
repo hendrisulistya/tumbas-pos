@@ -3,7 +3,7 @@
 # proguardFiles setting in build.gradle.
 
 # Keep all classes in your app package
--keep class com.argminres.app.** { *; }
+-keep class com.argomin.app.** { *; }
 
 # Keep Kotlin metadata
 -keep class kotlin.Metadata { *; }
@@ -55,11 +55,11 @@
 -keepclasseswithmembers class kotlinx.serialization.json.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
--keep,includedescriptorclasses class com.argminres.app.**$$serializer { *; }
--keepclassmembers class com.argminres.app.** {
+-keep,includedescriptorclasses class com.argomin.app.**$$serializer { *; }
+-keepclassmembers class com.argomin.app.** {
     *** Companion;
 }
--keepclasseswithmembers class com.argminres.app.** {
+-keepclasseswithmembers class com.argomin.app.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 

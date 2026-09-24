@@ -1,0 +1,25 @@
+package com.argomin.app.domain.repository
+
+import com.argomin.app.data.local.entity.DailySessionEntity
+import com.argomin.app.data.local.entity.WasteRecordEntity
+import kotlinx.coroutines.flow.Flow
+
+interface DailySessionRepository {
+    fun getAllSessions(): Flow<List<DailySessionEntity>>
+    suspend fun getActiveSession(): DailySessionEntity?
+    fun getActiveSessionFlow(): Flow<DailySessionEntity?>
+    suspend fun getSessionById(id: Long): DailySessionEntity?
+    fun getSessionsByDateRange(startDate: Long, endDate: Long): Flow<List<DailySessionEntity>>
+    suspend fun createSession(session: DailySessionEntity): Long
+    suspend fun updateSession(session: DailySessionEntity)
+    suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalDishWasteValue: Double, totalIngredientCost: Double, totalIngredientWasteValue: Double, totalProfit: Double)
+}
+
+interface WasteRecordRepository {
+    fun getWasteRecordsBySession(sessionId: Long): Flow<List<WasteRecordEntity>>
+    fun getRecentWasteRecords(): Flow<List<WasteRecordEntity>>
+    suspend fun getTotalWasteForSession(sessionId: Long): Double
+    suspend fun createWasteRecord(wasteRecord: WasteRecordEntity): Long
+    suspend fun createWasteRecords(wasteRecords: List<WasteRecordEntity>)
+    suspend fun deleteWasteRecordsForSession(sessionId: Long)
+}

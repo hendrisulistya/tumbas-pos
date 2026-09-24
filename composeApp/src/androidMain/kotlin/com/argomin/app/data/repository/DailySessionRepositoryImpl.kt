@@ -1,0 +1,28 @@
+package com.argomin.app.data.repository
+
+import com.argomin.app.data.local.dao.DailySessionDao
+import com.argomin.app.data.local.entity.DailySessionEntity
+import com.argomin.app.domain.repository.DailySessionRepository
+import kotlinx.coroutines.flow.Flow
+
+class DailySessionRepositoryImpl(
+    private val dailySessionDao: DailySessionDao
+) : DailySessionRepository {
+    override fun getAllSessions(): Flow<List<DailySessionEntity>> = dailySessionDao.getAllSessions()
+    
+    override suspend fun getActiveSession(): DailySessionEntity? = dailySessionDao.getActiveSession()
+    
+    override fun getActiveSessionFlow(): Flow<DailySessionEntity?> = dailySessionDao.getActiveSessionFlow()
+    
+    override suspend fun getSessionById(id: Long): DailySessionEntity? = dailySessionDao.getSessionById(id)
+    
+    override fun getSessionsByDateRange(startDate: Long, endDate: Long): Flow<List<DailySessionEntity>> =
+        dailySessionDao.getSessionsByDateRange(startDate, endDate)
+    
+    override suspend fun createSession(session: DailySessionEntity): Long = dailySessionDao.insertSession(session)
+    
+    override suspend fun updateSession(session: DailySessionEntity) = dailySessionDao.updateSession(session)
+    
+    override suspend fun closeSession(sessionId: Long, closedAt: Long, totalSales: Double, totalDishWasteValue: Double, totalIngredientCost: Double, totalIngredientWasteValue: Double, totalProfit: Double) =
+        dailySessionDao.closeSession(sessionId, closedAt, totalSales, totalDishWasteValue, totalIngredientCost, totalIngredientWasteValue, totalProfit)
+}

@@ -129,7 +129,7 @@ kotlin {
 }
 
 compose.resources {
-    packageOfResClass = "com.argminres.app.generated.resources"
+    packageOfResClass = "com.argomin.app.generated.resources"
     publicResClass = true
 }
 
@@ -148,7 +148,7 @@ dependencies {
 }
 
 android {
-    namespace = "com.argminres.app"
+    namespace = "com.argomin.app"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets {
@@ -158,7 +158,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.argminres.app"
+        applicationId = "com.argomin.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

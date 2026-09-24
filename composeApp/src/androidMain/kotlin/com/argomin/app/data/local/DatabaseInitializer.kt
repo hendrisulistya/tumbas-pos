@@ -1,0 +1,309 @@
+package com.argomin.app.data.local
+
+import com.argomin.app.data.local.dao.CustomerDao
+import com.argomin.app.data.local.dao.DishDao
+import com.argomin.app.data.local.entity.CustomerEntity
+import com.argomin.app.data.local.entity.DishEntity
+import com.argomin.app.data.repository.SettingsRepository
+import com.argomin.app.util.CsvParser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
+import androidx.room.withTransaction
+
+class DatabaseInitializer(
+    private val db: com.argomin.app.data.local.AppDatabase,
+    private val context: android.content.Context,
+    private val productDao: DishDao,
+    private val customerDao: CustomerDao,
+    private val categoryDao: com.argomin.app.data.local.dao.CategoryDao,
+    private val ingredientDao: com.argomin.app.data.local.dao.IngredientDao,
+    private val dishComponentDao: com.argomin.app.data.local.dao.DishComponentDao,
+    private val packageDao: com.argomin.app.data.local.dao.PackageDao,
+    private val settingsRepository: SettingsRepository,
+    private val storeSettingsDao: com.argomin.app.data.local.dao.StoreSettingsDao,
+    private val employerRepository: com.argomin.app.domain.repository.EmployerRepository
+) {
+    suspend fun initializeIfNeeded() = withContext(Dispatchers.IO) {
+        if (settingsRepository.isDatabaseInitialized()) {
+            android.util.Log.d("DatabaseInitializer", "Database already initialized, skipping.")
+            return@withContext
+        }
+
+        android.util.Log.d("DatabaseInitializer", "Starting database initialization...")
+
+        try {
+            db.withTransaction {
+                // Insert categories from CSV
+                insertCategoriesFromCsv()
+
+                // Insert dishes from CSV as MASTER DATA (stock = 0)
+                insertProductsFromCsv()
+                
+                // Insert dish packages (package recipes) from JSON
+                insertDishPackagesFromJson()
+                
+                // Insert ingredients from CSV
+                insertIngredientsFromCsv()
+                
+                // Insert customers from CSV
+                insertCustomersFromCsv()
+                
+                // Initialize employers from CSV
+                employerRepository.initializeFromCsv()
+                
+                // Initialize default store settings
+                insertDefaultStoreSettings()
+            }
+            
+            // Mark as initialized ONLY if everything above succeeded
+            settingsRepository.setDatabaseInitialized(true)
+            android.util.Log.d("DatabaseInitializer", "Database initialization completed successfully.")
+        } catch (e: Exception) {
+            android.util.Log.e("DatabaseInitializer", "Database initialization failed!", e)
+            // Do NOT mark as initialized, so it retries on next start
+            throw e 
+        }
+    }
+    
+    private suspend fun insertDefaultStoreSettings() {
+        // Read store settings from CSV
+        var storeName = "Tumbas POS"
+        var storeAddress = "Jl. Example No. 123"
+        var storePhone = "+62 812-3456-7890"
+        var storeTaxId = "01.234.567.8-901.000"
+        
+        try {
+            context.assets.open("store.csv").bufferedReader().use { reader ->
+                reader.readLine() // Skip header
+                reader.readLine()?.let { line ->
+                    val tokens = CsvParser.parseCsvLine(line)
+                    if (tokens.size >= 4) {
+                        storeName = tokens[0]
+                        storeAddress = tokens[1]
+                        storePhone = tokens[2]
+                        storeTaxId = tokens[3]
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("DatabaseInitializer", "Could not read store.csv, using defaults")
+        }
+        
+        // Load and convert logo to BW bitmap for thermal printer
+        val logoBase64 = try {
+            context.assets.open("logo.png").use { inputStream ->
+                val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+                val bwBitmap = convertToBWBitmap(bitmap)
+                val outputStream = java.io.ByteArrayOutputStream()
+                bwBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, outputStream)
+                android.util.Base64.encodeToString(outputStream.toByteArray(), android.util.Base64.DEFAULT)
+            }
+        } catch (e: Exception) {
+            null // If logo.png doesn't exist, use null
+        }
+        
+        val defaultSettings = com.argomin.app.data.local.entity.StoreSettingsEntity(
+            id = 1L,
+            storeName = storeName,
+            storeAddress = storeAddress,
+            storePhone = storePhone,
+            storeTaxId = storeTaxId,
+            logoImage = logoBase64
+        )
+        storeSettingsDao.insertOrUpdate(defaultSettings)
+    }
+    
+    /**
+     * Convert bitmap to Black & White for thermal printer compatibility
+     */
+    private fun convertToBWBitmap(original: android.graphics.Bitmap): android.graphics.Bitmap {
+        val width = original.width
+        val height = original.height
+        val bwBitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        
+        val canvas = android.graphics.Canvas(bwBitmap)
+        val paint = android.graphics.Paint()
+        val colorMatrix = android.graphics.ColorMatrix()
+        
+        // Convert to grayscale
+        colorMatrix.setSaturation(0f)
+        
+        val filter = android.graphics.ColorMatrixColorFilter(colorMatrix)
+        paint.colorFilter = filter
+        canvas.drawBitmap(original, 0f, 0f, paint)
+        
+        // Apply threshold to make it pure black and white
+        val pixels = IntArray(width * height)
+        bwBitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        
+        for (i in pixels.indices) {
+            val pixel = pixels[i]
+            val gray = (android.graphics.Color.red(pixel) + 
+                       android.graphics.Color.green(pixel) + 
+                       android.graphics.Color.blue(pixel)) / 3
+            
+            // Threshold at 128 - lighter becomes white, darker becomes black
+            pixels[i] = if (gray > 128) {
+                android.graphics.Color.WHITE
+            } else {
+                android.graphics.Color.BLACK
+            }
+        }
+        
+        bwBitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+        return bwBitmap
+    }
+    
+    private suspend fun insertCategoriesFromCsv() {
+        android.util.Log.d("DatabaseInitializer", "Inserting categories...")
+        // Categories are now static (matches HomeScreen hardcoded categories)
+        val categories = listOf(
+            com.argomin.app.data.local.entity.CategoryEntity(id = 1L, name = "Paket", description = "Paket makanan"),
+            com.argomin.app.data.local.entity.CategoryEntity(id = 2L, name = "Makanan", description = "Makanan"),
+            com.argomin.app.data.local.entity.CategoryEntity(id = 3L, name = "Minuman", description = "Minuman"),
+            com.argomin.app.data.local.entity.CategoryEntity(id = 4L, name = "Lain-lain", description = "Lain-lain")
+        )
+        categoryDao.insertAll(categories)
+        android.util.Log.d("DatabaseInitializer", "Inserted ${categories.size} categories.")
+    }
+    
+    private suspend fun insertCustomersFromCsv() {
+        // Always insert Guest customer first
+        insertDefaultCustomer()
+        
+        // Then insert customers from CSV
+        val customers = mutableListOf<CustomerEntity>()
+        context.assets.open("customers.csv").bufferedReader().use { reader ->
+            reader.readLine() // Skip header
+            reader.forEachLine { line ->
+                val tokens = CsvParser.parseCsvLine(line)
+                if (tokens.size >= 4) {
+                    customers.add(
+                        CustomerEntity(
+                            name = tokens[0],
+                            phone = tokens[1],
+                            email = tokens[2],
+                            address = tokens[3]
+                        )
+                    )
+                }
+            }
+        }
+        if (customers.isNotEmpty()) {
+            customers.forEach { customerDao.insertCustomer(it) }
+        }
+    }
+
+    private suspend fun insertDefaultCustomer() {
+        val guest = CustomerEntity(
+            name = "Guest",
+            phone = "-",
+            email = "-",
+            address = "-"
+        )
+        customerDao.insertCustomer(guest)
+    }
+
+    private suspend fun insertProductsFromCsv() {
+        val products = mutableListOf<DishEntity>()
+        context.assets.open("dishes.csv").bufferedReader().use { reader ->
+            reader.readLine() // Skip header
+            reader.forEachLine { line ->
+                val tokens = CsvParser.parseCsvLine(line)
+                // New simplified format: id, name, description, price, category, image
+                // Stock is always 0 for master data
+                if (tokens.size >= 5) {
+                    products.add(
+                        DishEntity(
+                            id = tokens[0].toLongOrNull() ?: 0L,
+                            name = tokens[1],
+                            description = tokens[2],
+                            price = tokens[3].toDoubleOrNull() ?: 0.0,
+                            stock = 0,
+                            category = tokens[4],
+                            image = if (tokens.size > 5 && tokens[5].isNotBlank()) tokens[5] else null
+                        )
+                    )
+                }
+            }
+        }
+        if (products.isNotEmpty()) {
+            productDao.insertAll(products)
+            android.util.Log.d("DatabaseInitializer", "Inserted ${products.size} products from dishes.csv.")
+        } else {
+            android.util.Log.w("DatabaseInitializer", "No products found in dishes.csv!")
+        }
+    }
+
+    
+    private suspend fun insertIngredientsFromCsv() {
+        val ingredients = mutableListOf<com.argomin.app.data.local.entity.IngredientEntity>()
+        context.assets.open("ingredients.csv").bufferedReader().use { reader ->
+            reader.readLine() // Skip header
+            reader.forEachLine { line ->
+                val parts = CsvParser.parseCsvLine(line)
+                // New format: id,name,unit,costPerUnit
+                // Stock and minimumStock are always 0 for master data
+                if (parts.size >= 4) {
+                    ingredients.add(
+                        com.argomin.app.data.local.entity.IngredientEntity(
+                            id = parts[0].toLongOrNull() ?: 0,
+                            name = parts[1],
+                            unit = parts[2],
+                            stock = 0.0, // Always 0 for master data
+                            minimumStock = 0.0, // Not used for master data
+                            costPerUnit = parts[3].toDoubleOrNull() ?: 0.0,
+                            createdAt = System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                }
+            }
+        }
+        if (ingredients.isNotEmpty()) {
+            ingredientDao.insertAll(ingredients)
+            android.util.Log.d("DatabaseInitializer", "Inserted ${ingredients.size} ingredients from CSV")
+        }
+    }
+    private suspend fun insertDishPackagesFromJson() {
+        val jsonString = context.assets.open("dish_package.json").bufferedReader().use { it.readText() }
+        val jsonArray = org.json.JSONArray(jsonString)
+        
+        val components = mutableListOf<com.argomin.app.data.local.entity.DishComponentEntity>()
+        val packages = mutableListOf<com.argomin.app.data.local.entity.PackageEntity>()
+        
+        for (i in 0 until jsonArray.length()) {
+            val packageObj = jsonArray.getJSONObject(i)
+            val packageId = packageObj.getLong("package_id")
+            val packageName = packageObj.getString("package_name")
+            val description = packageObj.getString("description")
+            val price = packageObj.getDouble("price")
+            val componentsArray = packageObj.getJSONArray("components")
+            val image = if (packageObj.has("image")) packageObj.getString("image") else null
+            
+            packages.add(
+                com.argomin.app.data.local.entity.PackageEntity(
+                    id = packageId,
+                    name = packageName,
+                    description = description,
+                    price = price,
+                    image = image
+                )
+            )
+
+            for (j in 0 until componentsArray.length()) {
+                components.add(
+                    com.argomin.app.data.local.entity.DishComponentEntity(
+                        packageId = packageId,
+                        componentDishId = componentsArray.getLong(j),
+                        quantity = 1
+                    )
+                )
+            }
+        }
+        
+        packages.forEach { packageDao.insertPackage(it) }
+        components.forEach { dishComponentDao.insertComponent(it) }
+    }
+}

@@ -1,0 +1,48 @@
+package com.argomin.app.data.repository
+
+import com.argomin.app.data.local.dao.DishDao
+import com.argomin.app.data.local.dao.DishWithCategory
+import com.argomin.app.data.local.entity.DishEntity
+import com.argomin.app.domain.repository.DishRepository
+import kotlinx.coroutines.flow.Flow
+
+class DishRepositoryImpl(
+    private val productDao: DishDao,
+    private val categoryDao: com.argomin.app.data.local.dao.CategoryDao
+) : DishRepository {
+    override fun getAllDishes(): Flow<List<DishWithCategory>> {
+        return productDao.getAllDishes()
+    }
+    
+    override fun getDishesWithStock(): Flow<List<DishWithCategory>> {
+        return productDao.getDishesWithStock()
+    }
+
+    override fun getAllCategories(): Flow<List<com.argomin.app.data.local.entity.CategoryEntity>> {
+        return categoryDao.getAllCategories()
+    }
+
+    override suspend fun getDishById(id: Long): DishWithCategory? {
+        return productDao.getDishById(id)
+    }
+
+    override fun searchDishes(query: String): Flow<List<DishWithCategory>> {
+        return productDao.searchDishes(query)
+    }
+
+    override suspend fun insertDish(product: DishEntity): Long {
+        return productDao.insertDish(product)
+    }
+
+    override suspend fun updateDish(product: DishEntity) {
+        productDao.updateDish(product)
+    }
+
+    override suspend fun deleteDish(product: DishEntity) {
+        productDao.deleteDish(product)
+    }
+
+    override suspend fun updateStock(productId: Long, quantity: Int) {
+        productDao.updateStock(productId, quantity)
+    }
+}
