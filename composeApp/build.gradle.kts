@@ -54,14 +54,11 @@ kotlin {
             implementation(libs.junit)
         }
 
-        wasmJsMain {
-            resources.srcDirs("src/commonMain/assets")
-            dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation(compose.ui)
-            }
+        wasmJsMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
         }
 
         androidMain.dependencies {
