@@ -257,6 +257,8 @@ data class StoreSettingsEntity(
     val storeAddress: String = "",
     val storePhone: String = "",
     val storeTaxId: String = "",
+    val pb1TaxRate: Double = 10.0, // Persentase Pajak PB1 (default 10%, 0.0 jika non-aktif)
+    val isPb1Active: Boolean = true,
     val logoImage: String? = null, // Base64 encoded image
     val printerPaperSize: Int = 58,
     val printerCharCount: Int = 32,

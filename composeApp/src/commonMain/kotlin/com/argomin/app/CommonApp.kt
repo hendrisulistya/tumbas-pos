@@ -820,7 +820,7 @@ fun CommonApp() {
                                                                 )
                                                         Screen.AuditLog ->
                                                                 AuditLogOverviewScreen(auditList)
-                                                        Screen.Settings -> SettingsOverviewScreen()
+                                                        Screen.Settings -> SettingsOverviewScreen(kasirViewModel)
                                                         else ->
                                                                 PosCashierScreen(
                                                                         menuList,

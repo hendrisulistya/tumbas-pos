@@ -285,10 +285,17 @@ fun PosCashierScreen(
                     Text("Subtotal", fontSize = 12.sp, color = Gray600)
                     Text(formatRupiah(state.subtotal), fontSize = 12.sp)
                 }
-                Spacer(Modifier.height(4.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Pajak PB1 (10%)", fontSize = 12.sp, color = Gray600)
-                    Text(formatRupiah(state.pajak), fontSize = 12.sp)
+                if (state.taxRate > 0.0) {
+                    val percentStr = if ((state.taxRate * 100) % 1.0 == 0.0) {
+                        "${(state.taxRate * 100).toInt()}%"
+                    } else {
+                        "${state.taxRate * 100}%"
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Pajak PB1 ($percentStr)", fontSize = 12.sp, color = Gray600)
+                        Text(formatRupiah(state.pajak), fontSize = 12.sp)
+                    }
                 }
                 Spacer(Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

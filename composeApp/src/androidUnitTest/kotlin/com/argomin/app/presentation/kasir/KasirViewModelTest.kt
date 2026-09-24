@@ -102,6 +102,32 @@ class KasirViewModelTest {
     }
 
     @Test
+    fun `kalkulasi pajak PB1 0 persen (bebas pajak)`() {
+        vm.setTaxRatePercent(0.0)
+        vm.addToCart(rendang)  // 35.000
+        assertEquals(35000L, vm.state.subtotal)
+        assertEquals(0L, vm.state.pajak)
+        assertEquals(35000L, vm.state.totalTagihan)
+    }
+
+    @Test
+    fun `setTaxRate mengubah persentase pajak secara dinamis pada keranjang aktif`() {
+        vm.addToCart(rendang)  // 35.000
+        assertEquals(3500L, vm.state.pajak)
+        assertEquals(38500L, vm.state.totalTagihan)
+
+        // Ubah ke 0% (bebas pajak)
+        vm.setTaxRatePercent(0.0)
+        assertEquals(0L, vm.state.pajak)
+        assertEquals(35000L, vm.state.totalTagihan)
+
+        // Ubah ke 11% (PPN)
+        vm.setTaxRatePercent(11.0)
+        assertEquals(3850L, vm.state.pajak)
+        assertEquals(38850L, vm.state.totalTagihan)
+    }
+
+    @Test
     fun `kalkulasi total tagihan subtotal + pajak`() {
         vm.addToCart(rendang)  // 35.000 + 3.500 pajak = 38.500
         assertEquals(38500L, vm.state.totalTagihan)
