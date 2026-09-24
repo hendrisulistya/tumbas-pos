@@ -48,6 +48,11 @@ kotlin {
             implementation(libs.coil.compose)
         }
 
+        androidUnitTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.junit)
+        }
+
         wasmJsMain {
             resources.srcDirs("src/commonMain/assets")
             dependencies {

@@ -1,0 +1,94 @@
+{
+  "raw_payload": "00020101021126610014COM.GO-JEK.WWW01189360091433961813320210G3961813320303UMI51440014ID.CO.QRIS.WWW0215ID10264699901090303UMI5204581253033605802ID5925RM ARGO MINANG 3 KEPEK, P6011KULON PROGO61055565262070703A0263041DE8",
+  "standard": "EMVCo Merchant-Presented Mode (MPM) / ASPI QRIS",
+  "fields": {
+    "00_payload_format_indicator": {
+      "tag": "00",
+      "length": 2,
+      "value": "01",
+      "description": "EMVCo QR version"
+    },
+    "01_point_of_initiation_method": {
+      "tag": "01",
+      "length": 2,
+      "value": "11",
+      "description": "11 = Static QR (12 = Dynamic QR)"
+    },
+    "26_merchant_account_information_acquirer": {
+      "tag": "26",
+      "length": 61,
+      "value": "0014COM.GO-JEK.WWW01189360091433961813320210G3961813320303UMI",
+      "sub_fields": {
+        "00_reverse_domain": "COM.GO-JEK.WWW",
+        "01_merchant_pan": "936009143396181332",
+        "02_terminal_id": "G396181332",
+        "03_merchant_criteria": "UMI"
+      }
+    },
+    "51_merchant_account_information_domestic": {
+      "tag": "51",
+      "length": 44,
+      "value": "0014ID.CO.QRIS.WWW0215ID10264699901090303UMI",
+      "sub_fields": {
+        "00_reverse_domain": "ID.CO.QRIS.WWW",
+        "02_national_merchant_id": "ID1026469990109",
+        "03_merchant_criteria": "UMI"
+      }
+    },
+    "52_merchant_category_code": {
+      "tag": "52",
+      "length": 4,
+      "value": "5812",
+      "description": "Eating Places and Restaurants"
+    },
+    "53_transaction_currency": {
+      "tag": "53",
+      "length": 3,
+      "value": "360",
+      "currency_code": "IDR",
+      "description": "Indonesian Rupiah"
+    },
+    "58_country_code": {
+      "tag": "58",
+      "length": 2,
+      "value": "ID",
+      "country": "Indonesia"
+    },
+    "59_merchant_name": {
+      "tag": "59",
+      "length": 25,
+      "value": "RM ARGO MINANG 3 KEPEK, P"
+    },
+    "60_merchant_city": {
+      "tag": "60",
+      "length": 11,
+      "value": "KULON PROGO"
+    },
+    "61_postal_code": {
+      "tag": "61",
+      "length": 5,
+      "value": "55652"
+    },
+    "62_additional_data_field": {
+      "tag": "62",
+      "length": 7,
+      "value": "0703A02",
+      "sub_fields": {
+        "07_terminal_label": "A02"
+      }
+    },
+    "63_crc16_checksum": {
+      "tag": "63",
+      "length": 4,
+      "value": "1DE8",
+      "algorithm": "CRC-16/CCITT-FALSE",
+      "verified": true
+    }
+  },
+  "dynamic_conversion_guide": {
+    "tag_01_change": "Change from 010211 to 010212",
+    "tag_54_insertion": "Insert Tag 54 (54 + len(amount) + amount) right before Tag 58 (5802ID)",
+    "fee_rule": "grandTotal + 1000",
+    "tag_63_recalculation": "Calculate CRC-16/CCITT-FALSE on the modified string ending with 6304 and append 4-digit hex CRC"
+  }
+}
