@@ -48,6 +48,7 @@ fun CommonApp() {
                 var loggedInEmployee by remember { mutableStateOf<Employee?>(null) }
                 var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
                 var showMetroMenu by remember { mutableStateOf(false) }
+                var storeProfile by remember { mutableStateOf(StoreProfile()) }
 
                 // Master menu data dari dishes.csv & dish_package.json
                 val menuList = remember {
@@ -614,7 +615,7 @@ fun CommonApp() {
                                                                                 )
                                                                                 Text(
                                                                                         text =
-                                                                                                "Resto Edition",
+                                                                                                storeProfile.name.ifBlank { "Resto Edition" },
                                                                                         style =
                                                                                                 MaterialTheme
                                                                                                         .typography
@@ -780,6 +781,7 @@ fun CommonApp() {
                                                                 PosCashierScreen(
                                                                         menuList,
                                                                         kasirViewModel,
+                                                                        storeProfile,
                                                                         onOrderPaid = { ord ->
                                                                                 orderList.add(
                                                                                         0,
@@ -820,11 +822,16 @@ fun CommonApp() {
                                                                 )
                                                         Screen.AuditLog ->
                                                                 AuditLogOverviewScreen(auditList)
-                                                        Screen.Settings -> SettingsOverviewScreen(kasirViewModel)
+                                                        Screen.Settings -> SettingsOverviewScreen(
+                                                                kasirViewModel = kasirViewModel,
+                                                                storeProfile = storeProfile,
+                                                                onUpdateStoreProfile = { storeProfile = it }
+                                                        )
                                                         else ->
                                                                 PosCashierScreen(
                                                                         menuList,
                                                                         kasirViewModel,
+                                                                        storeProfile,
                                                                         onOrderPaid = { ord ->
                                                                                 orderList.add(
                                                                                         0,

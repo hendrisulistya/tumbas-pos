@@ -78,7 +78,13 @@ fun crc16Ccitt(data: String): String {
  * - Injects Tag 54 (Transaction Amount)
  * - Recalculates CRC-16/CCITT-FALSE on Tag 63
  */
-fun generateDynamicQris(orderAmount: Long, fee: Long = QrisConfig.DEFAULT_FEE): DynamicQrisData {
+fun generateDynamicQris(
+    orderAmount: Long,
+    fee: Long = QrisConfig.DEFAULT_FEE,
+    merchantName: String = QrisConfig.MERCHANT_NAME,
+    nmid: String = QrisConfig.NMID,
+    terminalId: String = QrisConfig.TERMINAL_ID
+): DynamicQrisData {
     val total = orderAmount + fee
 
     // 1. Strip CRC (last 8 characters: 6304 + 4 hex characters)
@@ -116,7 +122,10 @@ fun generateDynamicQris(orderAmount: Long, fee: Long = QrisConfig.DEFAULT_FEE): 
             payload = finalPayload,
             baseAmount = orderAmount,
             fee = fee,
-            totalAmount = total
+            totalAmount = total,
+            merchantName = merchantName,
+            nmid = nmid,
+            terminalId = terminalId
     )
 }
 

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.argomin.app.domain.model.MenuItem
 import com.argomin.app.domain.model.OrderRecord
 import com.argomin.app.domain.model.PosCartItem
+import com.argomin.app.domain.model.StoreProfile
 import com.argomin.app.presentation.components.DishImage
 import com.argomin.app.presentation.theme.*
 import com.argomin.app.util.DynamicQrisCard
@@ -48,6 +49,7 @@ import com.argomin.app.util.generateDynamicQris
 fun PosCashierScreen(
     menuList: List<MenuItem>,
     viewModel: KasirViewModel = remember { KasirViewModel() },
+    storeProfile: StoreProfile = StoreProfile(),
     onOrderPaid: (OrderRecord) -> Unit
 ) {
     val state = viewModel.state
@@ -513,7 +515,14 @@ fun PosCashierScreen(
                             ) {
                                 if (!isTunai) {
                                     // Tampilan QRIS 2 Grid: Grid 1 (Detail Pembayaran) & Grid 2 (QR Code)
-                                    val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
+                                    val dynamicQris = remember(state.totalTagihan, storeProfile.qrisMerchantName, storeProfile.qrisNmid) {
+                                        generateDynamicQris(
+                                            orderAmount = state.totalTagihan,
+                                            fee = KasirViewModel.QRIS_FEE,
+                                            merchantName = storeProfile.qrisMerchantName,
+                                            nmid = storeProfile.qrisNmid
+                                        )
+                                    }
 
                                     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                                         val isTwoGrid = maxWidth >= 540.dp
@@ -1070,7 +1079,14 @@ fun PosCashierScreen(
                                     Text("Konfirmasi & Bayar", fontWeight = FontWeight.Bold, color = White)
                                 }
                             } else {
-                                val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
+                                val dynamicQris = remember(state.totalTagihan, storeProfile.qrisMerchantName, storeProfile.qrisNmid) {
+                                    generateDynamicQris(
+                                        orderAmount = state.totalTagihan,
+                                        fee = KasirViewModel.QRIS_FEE,
+                                        merchantName = storeProfile.qrisMerchantName,
+                                        nmid = storeProfile.qrisNmid
+                                    )
+                                }
                                 Button(
                                     onClick = {
                                         val summary = state.cart.joinToString(", ") { "${it.quantity}x ${it.item.name}" }
@@ -1193,6 +1209,35 @@ fun PosCashierScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
+                                if (storeProfile.name.isNotBlank()) {
+                                    Text(
+                                        text = storeProfile.name.uppercase(),
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Cyan950,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    if (storeProfile.address.isNotBlank()) {
+                                        Text(
+                                            text = storeProfile.address,
+                                            fontSize = 11.sp,
+                                            color = Gray600,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                    if (storeProfile.phone.isNotBlank()) {
+                                        Text(
+                                            text = "Telp: ${storeProfile.phone}",
+                                            fontSize = 10.5.sp,
+                                            color = Gray500,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Cyan200)
+                                }
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
