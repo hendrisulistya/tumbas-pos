@@ -111,18 +111,37 @@ class KasirViewModelTest {
     }
 
     @Test
-    fun `setTaxRate mengubah persentase pajak secara dinamis pada keranjang aktif`() {
-        vm.addToCart(rendang)  // 35.000
-        assertEquals(3500L, vm.state.pajak)
-        assertEquals(38500L, vm.state.totalTagihan)
+    fun `kalkulasi dual pajak PB1 dan PPN sekaligus`() {
+        vm.setPb1Config(isActive = true, ratePercent = 10.0) // 10%
+        vm.setPpnConfig(isActive = true, ratePercent = 11.0) // 11%
+        vm.addToCart(rendang) // 35.000
+        assertEquals(35000L, vm.state.subtotal)
+        assertEquals(3500L, vm.state.pajakPb1)
+        assertEquals(3850L, vm.state.pajakPpn)
+        assertEquals(7350L, vm.state.pajak)
+        assertEquals(42350L, vm.state.totalTagihan)
+    }
 
-        // Ubah ke 0% (bebas pajak)
-        vm.setTaxRatePercent(0.0)
+    @Test
+    fun `kalkulasi kedua pajak dinonaktifkan (bebas pajak 0 persen)`() {
+        vm.setPb1Config(isActive = false, ratePercent = 10.0)
+        vm.setPpnConfig(isActive = false, ratePercent = 11.0)
+        vm.addToCart(rendang) // 35.000
+        assertEquals(35000L, vm.state.subtotal)
+        assertEquals(0L, vm.state.pajakPb1)
+        assertEquals(0L, vm.state.pajakPpn)
         assertEquals(0L, vm.state.pajak)
         assertEquals(35000L, vm.state.totalTagihan)
+    }
 
-        // Ubah ke 11% (PPN)
-        vm.setTaxRatePercent(11.0)
+    @Test
+    fun `kalkulasi hanya PPN aktif`() {
+        vm.setPb1Config(isActive = false, ratePercent = 10.0)
+        vm.setPpnConfig(isActive = true, ratePercent = 11.0)
+        vm.addToCart(rendang) // 35.000
+        assertEquals(35000L, vm.state.subtotal)
+        assertEquals(0L, vm.state.pajakPb1)
+        assertEquals(3850L, vm.state.pajakPpn)
         assertEquals(3850L, vm.state.pajak)
         assertEquals(38850L, vm.state.totalTagihan)
     }

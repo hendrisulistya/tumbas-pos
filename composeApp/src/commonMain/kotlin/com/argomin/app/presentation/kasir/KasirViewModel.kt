@@ -19,9 +19,15 @@ sealed class PaymentMethod {
 data class KasirUiState(
     val cart: List<PosCartItem> = emptyList(),
     val subtotal: Long = 0L,
-    val pajak: Long = 0L,
+    val isPb1Active: Boolean = true,
+    val pb1Rate: Double = 0.10,          // 10% (0.10)
+    val pajakPb1: Long = 0L,
+    val isPpnActive: Boolean = false,
+    val ppnRate: Double = 0.11,          // 11% (0.11)
+    val pajakPpn: Long = 0L,
+    val pajak: Long = 0L,                // Total gabungan pajak (PB1 + PPN)
     val totalTagihan: Long = 0L,
-    val taxRate: Double = 0.10,       // Rasio PB1 (0.10 = 10%, 0.0 = Bebas Pajak / 0%)
+    val taxRate: Double = 0.10,          // Total effective tax rate
     val paymentMethod: PaymentMethod = PaymentMethod.Tunai,
     val cashPaidInput: String = "",
     val dibayarkan: Long = 0L,
@@ -52,15 +58,30 @@ class KasirViewModel {
         const val QRIS_FEE = 1000L          // Biaya layanan QRIS
     }
 
-    // ── Tax Configuration ────────────────────────────────────────────────────
+    // ── Tax Configuration (PB1 & PPN Dual Config) ─────────────────────────────
 
-    fun setTaxRate(rate: Double) {
-        state = state.copy(taxRate = rate.coerceAtLeast(0.0))
+    fun setPb1Config(isActive: Boolean, ratePercent: Double) {
+        state = state.copy(
+            isPb1Active = isActive,
+            pb1Rate = (ratePercent / 100.0).coerceAtLeast(0.0)
+        )
         updateCartState(state.cart)
     }
 
+    fun setPpnConfig(isActive: Boolean, ratePercent: Double) {
+        state = state.copy(
+            isPpnActive = isActive,
+            ppnRate = (ratePercent / 100.0).coerceAtLeast(0.0)
+        )
+        updateCartState(state.cart)
+    }
+
+    fun setTaxRate(rate: Double) {
+        setPb1Config(rate > 0.0, rate * 100.0)
+    }
+
     fun setTaxRatePercent(percent: Double) {
-        setTaxRate(percent / 100.0)
+        setPb1Config(percent > 0.0, percent)
     }
 
     // ── Cart ─────────────────────────────────────────────────────────────────
@@ -105,12 +126,19 @@ class KasirViewModel {
 
     private fun updateCartState(newCart: List<PosCartItem>) {
         val subtotal = newCart.sumOf { it.item.price * it.quantity }
-        val pajak    = if (state.taxRate > 0.0) (subtotal * state.taxRate).toLong() else 0L
-        val total    = subtotal + pajak
+        val pb1Amount = if (state.isPb1Active && state.pb1Rate > 0.0) (subtotal * state.pb1Rate).toLong() else 0L
+        val ppnAmount = if (state.isPpnActive && state.ppnRate > 0.0) (subtotal * state.ppnRate).toLong() else 0L
+        val totalTax = pb1Amount + ppnAmount
+        val total = subtotal + totalTax
+        val effectiveRate = (if (state.isPb1Active) state.pb1Rate else 0.0) + (if (state.isPpnActive) state.ppnRate else 0.0)
+
         state = state.copy(
             cart            = newCart,
             subtotal        = subtotal,
-            pajak           = pajak,
+            pajakPb1        = pb1Amount,
+            pajakPpn        = ppnAmount,
+            pajak           = totalTax,
+            taxRate         = effectiveRate,
             totalTagihan    = total,
             qrisTotalAmount = total + QRIS_FEE,
             kembalian       = (state.dibayarkan - total).coerceAtLeast(0L)
@@ -209,6 +237,10 @@ class KasirViewModel {
 
     fun resetAfterTransaction() {
         state = KasirUiState(
+            isPb1Active = state.isPb1Active,
+            pb1Rate = state.pb1Rate,
+            isPpnActive = state.isPpnActive,
+            ppnRate = state.ppnRate,
             taxRate = state.taxRate,
             selectedCategory = state.selectedCategory,
             searchQuery = state.searchQuery

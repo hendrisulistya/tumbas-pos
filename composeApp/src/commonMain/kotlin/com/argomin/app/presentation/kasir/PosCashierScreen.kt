@@ -285,16 +285,31 @@ fun PosCashierScreen(
                     Text("Subtotal", fontSize = 12.sp, color = Gray600)
                     Text(formatRupiah(state.subtotal), fontSize = 12.sp)
                 }
-                if (state.taxRate > 0.0) {
-                    val percentStr = if ((state.taxRate * 100) % 1.0 == 0.0) {
-                        "${(state.taxRate * 100).toInt()}%"
+                // Pajak Restoran (PB1) - hanya muncul jika aktif & rate > 0
+                if (state.isPb1Active && state.pb1Rate > 0.0) {
+                    val pb1PercentStr = if ((state.pb1Rate * 100) % 1.0 == 0.0) {
+                        "${(state.pb1Rate * 100).toInt()}%"
                     } else {
-                        "${state.taxRate * 100}%"
+                        "${state.pb1Rate * 100}%"
                     }
                     Spacer(Modifier.height(4.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Pajak PB1 ($percentStr)", fontSize = 12.sp, color = Gray600)
-                        Text(formatRupiah(state.pajak), fontSize = 12.sp)
+                        Text("Pajak PB1 ($pb1PercentStr)", fontSize = 12.sp, color = Gray600)
+                        Text(formatRupiah(state.pajakPb1), fontSize = 12.sp)
+                    }
+                }
+
+                // Pajak Pertambahan Nilai (PPN) - hanya muncul jika aktif & rate > 0
+                if (state.isPpnActive && state.ppnRate > 0.0) {
+                    val ppnPercentStr = if ((state.ppnRate * 100) % 1.0 == 0.0) {
+                        "${(state.ppnRate * 100).toInt()}%"
+                    } else {
+                        "${state.ppnRate * 100}%"
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("PPN ($ppnPercentStr)", fontSize = 12.sp, color = Gray600)
+                        Text(formatRupiah(state.pajakPpn), fontSize = 12.sp)
                     }
                 }
                 Spacer(Modifier.height(6.dp))
