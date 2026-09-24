@@ -28,15 +28,19 @@ fun IngredientStockScreen(ingredients: List<IngredientItem>) {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(ingredients) { ing ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().background(Color(0xFFF9FAFB), RoundedCornerShape(8.dp)).padding(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Neutral50, RoundedCornerShape(8.dp))
+                            .border(1.dp, Neutral200, RoundedCornerShape(8.dp))
+                            .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
                             Text(ing.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("Batas Minimum: ${ing.minStock} ${ing.unit} • Harga: ${formatRupiah(ing.costPerUnit)}/${ing.unit}", fontSize = 11.sp, color = Gray600)
+                            Text("Batas Minimum: ${ing.minStock} ${ing.unit} • Harga: ${formatRupiah(ing.costPerUnit)}/${ing.unit}", fontSize = 11.sp, color = Neutral600)
                         }
-                        Text("${ing.stock} ${ing.unit}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = if (ing.stock <= ing.minStock) Error else Blue700)
+                        Text("${ing.stock} ${ing.unit}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = if (ing.stock <= ing.minStock) ErrorBase else Cyan700)
                     }
                 }
             }
@@ -49,10 +53,17 @@ fun IngredientMasterManagementScreen(ingredients: MutableList<IngredientItem>) {
     Column(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Kelola Master Katalog Bahan Baku", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Button(onClick = {}, shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue600)) {
-                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+            Button(
+                onClick = {},
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Cyan700,
+                    contentColor = White
+                )
+            ) {
+                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = White)
                 Spacer(Modifier.width(6.dp))
-                Text("Tambah Bahan")
+                Text("Tambah Bahan", color = White)
             }
         }
         Card(modifier = Modifier.fillMaxSize(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White)) {

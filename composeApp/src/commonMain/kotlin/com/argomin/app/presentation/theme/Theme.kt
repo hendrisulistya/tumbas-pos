@@ -13,10 +13,10 @@ fun TambooPosTheme(
 ) {
     val colorScheme = if (darkTheme) TambooDarkColorScheme else TambooLightColorScheme
 
-    // Sync status bar with Material 3 primary / surface
+    // Sync status bar with Material 3 surface (dark icons in light mode, light icons in dark mode)
     PlatformStatusBar(
-        color = if (darkTheme) colorScheme.surface else colorScheme.primary,
-        darkIcons = darkTheme
+        color = colorScheme.surface,
+        darkIcons = !darkTheme
     )
 
     MaterialTheme(

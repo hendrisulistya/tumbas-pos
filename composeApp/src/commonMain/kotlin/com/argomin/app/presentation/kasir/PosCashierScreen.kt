@@ -2,6 +2,7 @@ package com.argomin.app.presentation.kasir
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -157,13 +158,14 @@ fun PosCashierScreen(
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(item.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(formatRupiah(item.price), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Blue600, modifier = Modifier.padding(top = 4.dp))
+                            Text(formatRupiah(item.price), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Cyan700, modifier = Modifier.padding(top = 4.dp))
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
-                                color = if (item.stock > 10) Blue50 else Color(0xFFFFEBEE),
+                                color = if (item.stock > 10) Cyan50 else ErrorContainer,
+                                border = BorderStroke(1.dp, if (item.stock > 10) Cyan200 else ErrorBorder),
                                 modifier = Modifier.padding(top = 6.dp)
                             ) {
-                                Text("Stok: ${item.stock}", fontSize = 11.sp, color = if (item.stock > 10) Blue700 else Error, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                Text("Stok: ${item.stock}", fontSize = 11.sp, color = if (item.stock > 10) Cyan800 else ErrorBase, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                             }
                         }
                     }
@@ -220,7 +222,12 @@ fun PosCashierScreen(
                 if (state.cart.isEmpty()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("🛒", fontSize = 36.sp)
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                modifier = Modifier.size(36.dp),
+                                tint = Neutral400
+                            )
                             Spacer(Modifier.height(8.dp))
                             Text("Keranjang Kosong", color = Gray600, fontSize = 13.sp)
                             Text("Pilih hidangan di samping", color = Gray600, fontSize = 11.sp)
@@ -230,7 +237,11 @@ fun PosCashierScreen(
                     LazyColumn(modifier = Modifier.weight(1f).padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(state.cart) { ci ->
                             Row(
-                                modifier = Modifier.fillMaxWidth().background(Blue50, RoundedCornerShape(8.dp)).padding(8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Cyan50, RoundedCornerShape(8.dp))
+                                    .border(1.dp, Cyan200, RoundedCornerShape(8.dp))
+                                    .padding(8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -245,7 +256,7 @@ fun PosCashierScreen(
                                     Spacer(Modifier.width(8.dp))
                                     Column {
                                         Text(ci.item.name, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                                        Text(formatRupiah(ci.item.price * ci.quantity), fontSize = 11.sp, color = Blue700)
+                                        Text(formatRupiah(ci.item.price * ci.quantity), fontSize = 11.sp, color = Cyan700)
                                     }
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -276,7 +287,7 @@ fun PosCashierScreen(
                 Spacer(Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Total Tagihan", fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text(formatRupiah(state.totalTagihan), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Blue600)
+                    Text(formatRupiah(state.totalTagihan), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Cyan700)
                 }
 
                 Spacer(Modifier.height(14.dp))
@@ -287,9 +298,12 @@ fun PosCashierScreen(
                     enabled = viewModel.canPay,
                     modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Cyan700)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Cyan700,
+                        contentColor = White
+                    )
                 ) {
-                    Text("Bayar Sekarang", fontWeight = FontWeight.Bold)
+                    Text("Bayar Sekarang", fontWeight = FontWeight.Bold, color = White)
                 }
             }
         }
@@ -513,7 +527,7 @@ fun PosCashierScreen(
                                         "Reset (C)",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFDC2626),
+                                        color = ErrorBase,
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(4.dp))
                                             .clickable { viewModel.clearCashInput() }
@@ -604,8 +618,8 @@ fun PosCashierScreen(
                                 Surface(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(10.dp),
-                                    color = Color(0xFFFEE2E2),
-                                    border = BorderStroke(1.dp, Color(0xFFFCA5A5))
+                                    color = ErrorContainer,
+                                    border = BorderStroke(1.dp, ErrorBorder)
                                 ) {
                                     Row(
                                         modifier = Modifier
@@ -618,7 +632,7 @@ fun PosCashierScreen(
                                             Icon(
                                                 Icons.Default.Info,
                                                 contentDescription = null,
-                                                tint = Color(0xFFDC2626),
+                                                tint = Error,
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(Modifier.width(6.dp))
@@ -626,14 +640,14 @@ fun PosCashierScreen(
                                                 "Uang Kurang:",
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Medium,
-                                                color = Color(0xFF991B1B)
+                                                color = OnErrorContainer
                                             )
                                         }
                                         Text(
                                             formatRupiah(deficit),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFFDC2626)
+                                            color = ErrorBase
                                         )
                                     }
                                 }
@@ -641,8 +655,8 @@ fun PosCashierScreen(
                                 Surface(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(10.dp),
-                                    color = Color(0xFFDCFCE7),
-                                    border = BorderStroke(1.dp, Color(0xFF86EFAC))
+                                    color = SuccessContainer,
+                                    border = BorderStroke(1.dp, SuccessBorder)
                                 ) {
                                     Row(
                                         modifier = Modifier
@@ -655,7 +669,7 @@ fun PosCashierScreen(
                                             Icon(
                                                 Icons.Default.CheckCircle,
                                                 contentDescription = null,
-                                                tint = Color(0xFF16A34A),
+                                                tint = Success,
                                                 modifier = Modifier.size(20.dp)
                                             )
                                             Spacer(Modifier.width(6.dp))
@@ -663,14 +677,14 @@ fun PosCashierScreen(
                                                 "Kembalian:",
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = Color(0xFF166534)
+                                                color = OnSuccessContainer
                                             )
                                         }
                                         Text(
                                             formatRupiah(state.kembalian),
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.ExtraBold,
-                                            color = Color(0xFF15803D)
+                                            color = SuccessBase
                                         )
                                     }
                                 }
@@ -737,9 +751,12 @@ fun PosCashierScreen(
                         },
                         enabled = viewModel.isCashSufficient,
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Cyan700)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Cyan700,
+                            contentColor = White
+                        )
                     ) {
-                        Text("Konfirmasi & Bayar", fontWeight = FontWeight.Bold)
+                        Text("Konfirmasi & Bayar", fontWeight = FontWeight.Bold, color = White)
                     }
                 } else {
                     val dynamicQris = remember(state.totalTagihan) { generateDynamicQris(state.totalTagihan, fee = KasirViewModel.QRIS_FEE) }
@@ -761,9 +778,12 @@ fun PosCashierScreen(
                             viewModel.completePayment(orderId)
                         },
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Cyan700)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Cyan700,
+                            contentColor = White
+                        )
                     ) {
-                        Text("Sudah Bayar & Selesai", fontWeight = FontWeight.Bold)
+                        Text("Sudah Bayar & Selesai", fontWeight = FontWeight.Bold, color = White)
                     }
                 }
             }
@@ -781,13 +801,13 @@ fun PosCashierScreen(
                 Box(
                     modifier = Modifier
                         .size(52.dp)
-                        .background(Color(0xFFDCFCE7), CircleShape),
+                        .background(SuccessContainer, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = Color(0xFF16A34A),
+                        tint = Success,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -809,14 +829,14 @@ fun PosCashierScreen(
                     Text(
                         "Pembayaran telah selesai dan pesanan telah dicatat.",
                         fontSize = 12.sp,
-                        color = Gray600,
+                        color = Neutral600,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = Color(0xFFF9FAFB),
-                        border = BorderStroke(1.dp, Gray300),
+                        color = Neutral50,
+                        border = BorderStroke(1.dp, Neutral200),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -824,7 +844,7 @@ fun PosCashierScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Total Tagihan", fontSize = 12.sp, color = Gray600)
+                                Text("Total Tagihan", fontSize = 12.sp, color = Neutral600)
                                 Text(formatRupiah(state.lastOrderTotal), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                             }
                             Spacer(Modifier.height(6.dp))
@@ -832,7 +852,7 @@ fun PosCashierScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Metode Bayar", fontSize = 12.sp, color = Gray600)
+                                Text("Metode Bayar", fontSize = 12.sp, color = Neutral600)
                                 Text(state.lastPaymentMethod, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                             }
                             if (state.lastPaymentMethod == "Tunai") {
@@ -841,10 +861,10 @@ fun PosCashierScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Uang Diterima", fontSize = 12.sp, color = Gray600)
+                                    Text("Uang Diterima", fontSize = 12.sp, color = Neutral600)
                                     Text(formatRupiah(state.lastPaidAmount), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                 }
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Gray300)
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Neutral200)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -855,7 +875,7 @@ fun PosCashierScreen(
                                         formatRupiah(state.lastChangeAmount),
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Color(0xFF15803D)
+                                        color = SuccessBase
                                     )
                                 }
                             } else {
@@ -864,10 +884,10 @@ fun PosCashierScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Fee Transaksi QRIS", fontSize = 12.sp, color = Gray600)
+                                    Text("Fee Transaksi QRIS", fontSize = 12.sp, color = Neutral600)
                                     Text("Rp 1.000", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Cyan700)
                                 }
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Gray300)
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Neutral200)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -878,7 +898,7 @@ fun PosCashierScreen(
                                         "LUNAS (Terverifikasi)",
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Color(0xFF15803D)
+                                        color = SuccessBase
                                     )
                                 }
                             }
@@ -893,10 +913,13 @@ fun PosCashierScreen(
                         viewModel.resetAfterTransaction()
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Cyan700),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Cyan700,
+                        contentColor = White
+                    ),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Cetak Struk & Selesai", fontWeight = FontWeight.Bold)
+                    Text("Cetak Struk & Selesai", fontWeight = FontWeight.Bold, color = White)
                 }
             }
         )

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.argomin.app.generated.resources.Res
+import com.argomin.app.presentation.theme.*
 import org.jetbrains.compose.resources.decodeToImageBitmap
 
 // In-memory cache for fast instant rendering on subsequent visits / category filters
@@ -60,13 +61,13 @@ fun DishImage(
     } else if (loadFailed) {
         // Subtle neutral placeholder if image failed to load
         Box(
-            modifier = modifier.background(Color(0xFFF1F5F9)),
+            modifier = modifier.background(Neutral100),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.RestaurantMenu,
                 contentDescription = null,
-                tint = Color(0xFFCBD5E1),
+                tint = Neutral300,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -85,9 +86,9 @@ fun DishImage(
 
         val shimmerBrush = Brush.linearGradient(
             colors = listOf(
-                Color(0xFFE2E8F0),
-                Color(0xFFF8FAFC),
-                Color(0xFFE2E8F0)
+                Neutral200,
+                Neutral50,
+                Neutral200
             ),
             start = Offset(shimmerTranslate - 300f, shimmerTranslate - 300f),
             end = Offset(shimmerTranslate, shimmerTranslate)

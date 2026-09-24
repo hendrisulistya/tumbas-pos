@@ -35,7 +35,7 @@ fun ShowcaseStockScreen(menuList: List<MenuItem>) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(menuList) { item ->
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = Blue50)) {
+                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = Cyan50)) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 DishImage(
@@ -48,13 +48,13 @@ fun ShowcaseStockScreen(menuList: List<MenuItem>) {
                                 Spacer(Modifier.width(10.dp))
                                 Column {
                                     Text(item.name, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                    Text(formatRupiah(item.price), fontSize = 12.sp, color = Blue600)
+                                    Text(formatRupiah(item.price), fontSize = 12.sp, color = Cyan700)
                                 }
                             }
                             Spacer(Modifier.height(10.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text("Tersedia di Etalase:", fontSize = 11.sp, color = Gray600)
-                                Text("${item.stock} Porsi", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Blue700)
+                                Text("Tersedia di Etalase:", fontSize = 11.sp, color = Neutral600)
+                                Text("${item.stock} Porsi", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Cyan800)
                             }
                         }
                     }
@@ -69,17 +69,24 @@ fun DishMasterManagementScreen(menuList: MutableList<MenuItem>) {
     Column(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Kelola Master Menu Hidangan", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Button(onClick = { /* Tambah menu */ }, shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue600)) {
-                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+            Button(
+                onClick = { /* Tambah menu */ },
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Cyan700,
+                    contentColor = White
+                )
+            ) {
+                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = White)
                 Spacer(Modifier.width(6.dp))
-                Text("Tambah Menu Baru")
+                Text("Tambah Menu Baru", color = White)
             }
         }
         Card(modifier = Modifier.fillMaxSize(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White)) {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(menuList) { item ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().border(1.dp, Gray300, RoundedCornerShape(8.dp)).padding(12.dp),
+                        modifier = Modifier.fillMaxWidth().border(1.dp, Neutral200, RoundedCornerShape(8.dp)).padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -94,11 +101,11 @@ fun DishMasterManagementScreen(menuList: MutableList<MenuItem>) {
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(item.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Text("Kategori: ${item.category} • Modal: ${formatRupiah(item.cost)}", fontSize = 12.sp, color = Gray600)
+                                Text("Kategori: ${item.category} • Modal: ${formatRupiah(item.cost)}", fontSize = 12.sp, color = Neutral600)
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(formatRupiah(item.price), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Blue700, modifier = Modifier.padding(end = 16.dp))
+                            Text(formatRupiah(item.price), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Cyan700, modifier = Modifier.padding(end = 16.dp))
                             OutlinedButton(onClick = {}, shape = RoundedCornerShape(6.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
                                 Text("Edit", fontSize = 12.sp)
                             }

@@ -1,5 +1,6 @@
 package com.argomin.app.presentation.navigation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,14 +31,12 @@ data class MetroTile(
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
-    val color: Color,
     val badge: String? = null
 )
 
 data class MetroCategory(
     val name: String,
     val icon: ImageVector,
-    val color: Color,
     val tiles: List<MetroTile>
 )
 
@@ -51,147 +51,233 @@ fun MetroTileMenuOverlay(
             MetroCategory(
                 name = "Operasional",
                 icon = Icons.Default.PointOfSale,
-                color = Color(0xFFD97706),
                 tiles = listOf(
-                    MetroTile(Screen.Home, "Kasir (POS)", "Transaksi cepat & cetak struk", Icons.Default.PointOfSale, Color(0xFFD97706), badge = "Utama"),
-                    MetroTile(Screen.SalesOrder, "Pesanan Penjualan", "Riwayat order & status bayar", Icons.Default.Receipt, Color(0xFFEAB308)),
-                    MetroTile(Screen.SessionCheck, "Sesi Kasir", "Buka/tutup shift kas & modal awal", Icons.Default.Timer, Color(0xFFB45309))
+                    MetroTile(
+                        Screen.Home,
+                        "Kasir (POS)",
+                        "Transaksi cepat & cetak struk",
+                        Icons.Default.PointOfSale,
+                        badge = "Utama"
+                    ),
+                    MetroTile(
+                        Screen.SalesOrder,
+                        "Pesanan Penjualan",
+                        "Riwayat order & status bayar",
+                        Icons.Default.Receipt
+                    ),
+                    MetroTile(
+                        Screen.SessionCheck,
+                        "Sesi Kasir",
+                        "Buka/tutup shift kas & modal awal",
+                        Icons.Default.Timer
+                    )
                 )
             ),
             MetroCategory(
                 name = "Harian",
                 icon = Icons.Default.Storefront,
-                color = Color(0xFF43A047),
                 tiles = listOf(
-                    MetroTile(Screen.Showcase, "Etalase Saji", "Pantau stok hidangan meja saji", Icons.Default.Storefront, Color(0xFF2E7D32)),
-                    MetroTile(Screen.Ingredient, "Bahan Baku", "Stok bahan dapur & inventaris", Icons.Default.Kitchen, Color(0xFF00796B)),
-                    MetroTile(Screen.EndOfDay, "Tutup Hari", "Rekapitulasi harian & setoran kasir", Icons.Default.EventNote, Color(0xFF388E3C))
+                    MetroTile(
+                        Screen.Showcase,
+                        "Etalase Saji",
+                        "Pantau stok hidangan meja saji",
+                        Icons.Default.Storefront
+                    ),
+                    MetroTile(
+                        Screen.Ingredient,
+                        "Bahan Baku",
+                        "Stok bahan dapur & inventaris",
+                        Icons.Default.Kitchen
+                    ),
+                    MetroTile(
+                        Screen.EndOfDay,
+                        "Tutup Hari",
+                        "Rekapitulasi harian & setoran kasir",
+                        Icons.AutoMirrored.Filled.EventNote
+                    )
                 )
             ),
             MetroCategory(
                 name = "Data Master",
                 icon = Icons.Default.Inventory2,
-                color = Color(0xFF8E24AA),
                 tiles = listOf(
-                    MetroTile(Screen.DishMaster, "Kelola Menu", "Katalog hidangan, harga jual & HPP", Icons.Default.RestaurantMenu, Color(0xFF6A1B9A)),
-                    MetroTile(Screen.IngredientMaster, "Kelola Bahan", "Master bahan baku, satuan & biaya", Icons.Default.Inventory2, Color(0xFF512DA8))
+                    MetroTile(
+                        Screen.DishMaster,
+                        "Kelola Menu",
+                        "Katalog hidangan, harga & HPP",
+                        Icons.Default.RestaurantMenu
+                    ),
+                    MetroTile(
+                        Screen.IngredientMaster,
+                        "Kelola Bahan",
+                        "Master bahan baku, satuan & biaya",
+                        Icons.Default.Inventory2
+                    )
                 )
             ),
             MetroCategory(
                 name = "Manajemen",
                 icon = Icons.Default.Assessment,
-                color = Color(0xFFFB8C00),
                 tiles = listOf(
-                    MetroTile(Screen.EmployerManagement, "Karyawan", "Kelola staf, kasir & hak akses", Icons.Default.People, Color(0xFFAD1457)),
-                    MetroTile(Screen.Reporting, "Laporan Penjualan", "Analisis omset, grafik & laba kotor", Icons.Default.Assessment, Color(0xFFE65100)),
-                    MetroTile(Screen.WorkInProcess, "Pekerjaan Berjalan", "Status antrian masak & pesanan dapur", Icons.Default.Pending, Color(0xFFD84315)),
-                    MetroTile(Screen.AuditLog, "Log Audit", "Rekam jejak aktivitas operasional", Icons.Default.History, Color(0xFF455A64)),
-                    MetroTile(Screen.Settings, "Pengaturan Toko", "Profil resto, konfigurasi printer & pajak", Icons.Default.Settings, Color(0xFF263238))
+                    MetroTile(
+                        Screen.EmployerManagement,
+                        "Karyawan",
+                        "Kelola staf, kasir & hak akses",
+                        Icons.Default.People
+                    ),
+                    MetroTile(
+                        Screen.Reporting,
+                        "Laporan Penjualan",
+                        "Analisis omset, grafik & laba kotor",
+                        Icons.Default.Assessment
+                    ),
+                    MetroTile(
+                        Screen.WorkInProcess,
+                        "Pekerjaan Berjalan",
+                        "Status antrian masak & pesanan",
+                        Icons.Default.Pending
+                    ),
+                    MetroTile(
+                        Screen.AuditLog,
+                        "Log Audit",
+                        "Rekam jejak aktivitas operasional",
+                        Icons.Default.History
+                    ),
+                    MetroTile(
+                        Screen.Settings,
+                        "Pengaturan Toko",
+                        "Profil resto & printer thermal",
+                        Icons.Default.Settings
+                    )
                 )
             )
         )
     }
 
+    // Full-Screen Solid Dimmed Backdrop
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xF50F172A))
+            .background(Neutral950.copy(alpha = 0.96f))
             .clickable(onClick = onDismiss)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable(enabled = false) {}
+                .clickable(enabled = false) {} // Prevent click-through dismissal
         ) {
+            // Solid Top Header Bar
             Surface(
-                color = Color(0xFF1E293B),
+                color = Neutral900,
+                border = BorderStroke(1.dp, Neutral800),
                 shadowElevation = 6.dp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(64.dp)
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = RoundedCornerShape(10.dp),
-                            color = Cyan600,
-                            modifier = Modifier.size(44.dp)
+                            color = Cyan700,
+                            modifier = Modifier.size(38.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Dashboard, contentDescription = null, tint = White, modifier = Modifier.size(24.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Dashboard,
+                                    contentDescription = null,
+                                    tint = White,
+                                    modifier = Modifier.size(22.dp)
+                                )
                             }
                         }
-                        Spacer(Modifier.width(16.dp))
+                        Spacer(Modifier.width(14.dp))
                         Column {
                             Text(
                                 text = "TAMBOOPOS (METRO TILES)",
-                                fontSize = 18.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = White,
                                 letterSpacing = 0.5.sp
                             )
                             Text(
                                 text = "Pilih modul tujuan di bawah untuk berpindah layar seketika",
-                                fontSize = 12.sp,
-                                color = Gray400
+                                fontSize = 11.5.sp,
+                                color = Neutral400
                             )
                         }
                     }
 
-                    Button(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.15f),
-                            contentColor = White
-                        ),
+                    // Solid Close Button
+                    Surface(
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 10.dp)
+                        color = Neutral800,
+                        border = BorderStroke(1.dp, Neutral700),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onDismiss)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Tutup", modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Tutup (✕)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Tutup",
+                                tint = White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "Tutup",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.5.sp,
+                                color = White
+                            )
+                        }
                     }
                 }
             }
 
+            // Solid Grid Content Area
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 230.dp),
-                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                columns = GridCells.Adaptive(minSize = 220.dp),
+                contentPadding = PaddingValues(start = 28.dp, end = 28.dp, top = 16.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
                 metroCategories.forEach { category ->
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
+                            modifier = Modifier.padding(top = 14.dp, bottom = 4.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .width(5.dp)
-                                    .height(22.dp)
+                                    .width(4.dp)
+                                    .height(14.dp)
                                     .clip(RoundedCornerShape(2.dp))
-                                    .background(category.color)
+                                    .background(Cyan400)
                             )
-                            Spacer(Modifier.width(10.dp))
+                            Spacer(Modifier.width(8.dp))
                             Icon(
                                 imageVector = category.icon,
                                 contentDescription = null,
-                                tint = category.color,
-                                modifier = Modifier.size(20.dp)
+                                tint = Cyan300,
+                                modifier = Modifier.size(16.dp)
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 text = category.name.uppercase(),
-                                fontSize = 15.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                letterSpacing = 1.2.sp
+                                color = Neutral200,
+                                letterSpacing = 1.sp
                             )
                         }
                     }
@@ -215,99 +301,107 @@ fun MetroTileCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    // Single solid unified brand color for every tile
+    val tileColor = Cyan700
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(115.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .height(68.dp)
+            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick),
-        color = tile.color,
-        border = if (isSelected) androidx.compose.foundation.BorderStroke(2.5.dp, Color.White) else null,
-        shadowElevation = 6.dp
+        color = tileColor,
+        border = if (isSelected) {
+            BorderStroke(2.dp, White)
+        } else {
+            BorderStroke(1.dp, Cyan600)
+        },
+        shadowElevation = 3.dp
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(14.dp)) {
-            Icon(
-                imageVector = tile.icon,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.14f),
-                modifier = Modifier
-                    .size(68.dp)
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 10.dp, y = 10.dp)
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icon Container
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Cyan800,
+                modifier = Modifier.size(38.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = tile.icon,
+                        contentDescription = tile.title,
+                        tint = White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
+            Spacer(Modifier.width(12.dp))
+
+            // Module Title, Badge & Subtitle
             Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.22f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = tile.icon,
-                            contentDescription = tile.title,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Text(
+                        text = tile.title,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
 
                     if (isSelected) {
+                        Spacer(Modifier.width(6.dp))
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color.White,
-                            shadowElevation = 2.dp
+                            shape = RoundedCornerShape(4.dp),
+                            color = White
                         ) {
                             Text(
-                                text = "✓ AKTIF",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = tile.color,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                text = "AKTIF",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Cyan900,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                             )
                         }
                     } else if (tile.badge != null) {
+                        Spacer(Modifier.width(6.dp))
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color.White.copy(alpha = 0.25f)
+                            shape = RoundedCornerShape(4.dp),
+                            color = Cyan900
                         ) {
                             Text(
                                 text = tile.badge,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = White,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                             )
                         }
                     }
                 }
 
-                Column {
-                    Text(
-                        text = tile.title,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = tile.subtitle,
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.85f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                Spacer(Modifier.height(2.dp))
+
+                Text(
+                    text = tile.subtitle,
+                    fontSize = 11.sp,
+                    color = Cyan100,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }

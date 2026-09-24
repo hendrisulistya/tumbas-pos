@@ -20,8 +20,8 @@ fun ReportingOverviewScreen(orderList: List<OrderRecord>) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Card(modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White)) {
                 Column(modifier = Modifier.padding(18.dp)) {
-                    Text("Total Penjualan", fontSize = 12.sp, color = Gray600)
-                    Text(formatRupiah(totalOmset), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Blue600, modifier = Modifier.padding(top = 4.dp))
+                    Text("Total Penjualan", fontSize = 12.sp, color = Neutral600)
+                    Text(formatRupiah(totalOmset), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Cyan700, modifier = Modifier.padding(top = 4.dp))
                 }
             }
             Card(modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White)) {

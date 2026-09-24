@@ -1,6 +1,7 @@
 package com.argomin.app.presentation.audit
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,13 +25,17 @@ fun AuditLogOverviewScreen(audits: List<AuditEntry>) {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(audits) { a ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().background(Color(0xFFF9FAFB), RoundedCornerShape(8.dp)).padding(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Neutral50, RoundedCornerShape(8.dp))
+                            .border(1.dp, Neutral200, RoundedCornerShape(8.dp))
+                            .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(a.time, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Blue600, modifier = Modifier.width(60.dp))
+                        Text(a.time, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Cyan700, modifier = Modifier.width(60.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(a.action, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Text("${a.user} • ${a.details}", fontSize = 11.sp, color = Gray600)
+                            Text("${a.user} • ${a.details}", fontSize = 11.sp, color = Neutral600)
                         }
                     }
                 }

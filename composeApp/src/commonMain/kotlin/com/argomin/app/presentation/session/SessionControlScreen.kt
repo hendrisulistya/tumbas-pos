@@ -26,7 +26,7 @@ fun SessionControlScreen() {
             HorizontalDivider(color = Gray300)
             Spacer(Modifier.height(16.dp))
 
-            Surface(shape = RoundedCornerShape(10.dp), color = Blue50, modifier = Modifier.fillMaxWidth()) {
+            Surface(shape = RoundedCornerShape(10.dp), color = Cyan50, modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CheckCircle, null, tint = Success, modifier = Modifier.size(32.dp))
                     Spacer(Modifier.width(14.dp))
@@ -59,16 +59,16 @@ fun EndOfDayScreen(menuList: List<MenuItem>, orderList: List<OrderRecord>) {
 
             val omset = orderList.sumOf { it.totalAmount }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp), color = Blue50) {
+                Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp), color = Cyan50) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Total Omset Hari Ini", fontSize = 12.sp, color = Gray600)
-                        Text(formatRupiah(omset), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Blue600)
+                        Text("Total Omset Hari Ini", fontSize = 12.sp, color = Neutral600)
+                        Text(formatRupiah(omset), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Cyan700)
                     }
                 }
-                Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp), color = Color(0xFFE8F5E9)) {
+                Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp), color = SuccessContainer) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Total Transaksi", fontSize = 12.sp, color = Gray600)
-                        Text("${orderList.size} Pesanan Selesai", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Success)
+                        Text("Total Transaksi", fontSize = 12.sp, color = Neutral600)
+                        Text("${orderList.size} Pesanan Selesai", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = SuccessBase)
                     }
                 }
             }
@@ -76,10 +76,13 @@ fun EndOfDayScreen(menuList: List<MenuItem>, orderList: List<OrderRecord>) {
             Spacer(Modifier.height(20.dp))
             Button(
                 onClick = {},
-                colors = ButtonDefaults.buttonColors(containerColor = Error),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ErrorBase,
+                    contentColor = White
+                ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Tutup Hari & Finalisasi Sesi", fontWeight = FontWeight.Bold)
+                Text("Tutup Hari & Finalisasi Sesi", fontWeight = FontWeight.Bold, color = White)
             }
         }
     }

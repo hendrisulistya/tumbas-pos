@@ -1,6 +1,8 @@
 package com.argomin.app.presentation.sales
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,7 +28,11 @@ fun SalesOrderHistoryScreen(orders: List<OrderRecord>) {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(orders) { ord ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().background(Color(0xFFF9FAFB), RoundedCornerShape(10.dp)).padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Neutral50, RoundedCornerShape(10.dp))
+                            .border(1.dp, Neutral200, RoundedCornerShape(10.dp))
+                            .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -34,14 +40,14 @@ fun SalesOrderHistoryScreen(orders: List<OrderRecord>) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(ord.id, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                                 Spacer(Modifier.width(10.dp))
-                                Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFE8F5E9)) {
-                                    Text(ord.status, fontSize = 11.sp, color = Success, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
+                                Surface(shape = RoundedCornerShape(4.dp), color = SuccessContainer, border = BorderStroke(1.dp, SuccessBorder)) {
+                                    Text(ord.status, fontSize = 11.sp, color = SuccessBase, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
                                 }
                             }
-                            Text(ord.itemsSummary, fontSize = 12.sp, color = Gray600, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
-                            Text("Kasir: ${ord.cashier} • Jam: ${ord.time} • Metode: ${ord.paymentMethod}", fontSize = 11.sp, color = Gray600, modifier = Modifier.padding(top = 2.dp))
+                            Text(ord.itemsSummary, fontSize = 12.sp, color = Neutral600, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+                            Text("Kasir: ${ord.cashier} • Jam: ${ord.time} • Metode: ${ord.paymentMethod}", fontSize = 11.sp, color = Neutral600, modifier = Modifier.padding(top = 2.dp))
                         }
-                        Text(formatRupiah(ord.totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Blue600)
+                        Text(formatRupiah(ord.totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Cyan700)
                     }
                 }
             }

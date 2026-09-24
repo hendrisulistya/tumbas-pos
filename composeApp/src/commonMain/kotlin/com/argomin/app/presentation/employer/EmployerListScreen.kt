@@ -1,5 +1,6 @@
 package com.argomin.app.presentation.employer
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,23 +25,30 @@ fun EmployerListScreen(employees: List<Employee>) {
     Column(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Kelola Data Karyawan", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Button(onClick = {}, shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue600)) {
-                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+            Button(
+                onClick = {},
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Cyan700,
+                    contentColor = White
+                )
+            ) {
+                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = White)
                 Spacer(Modifier.width(6.dp))
-                Text("Tambah Karyawan")
+                Text("Tambah Karyawan", color = White)
             }
         }
         Card(modifier = Modifier.fillMaxSize(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White)) {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(employees) { emp ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().border(1.dp, Gray300, RoundedCornerShape(8.dp)).padding(14.dp),
+                        modifier = Modifier.fillMaxWidth().border(1.dp, Neutral200, RoundedCornerShape(8.dp)).padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(shape = CircleShape, color = Blue100, modifier = Modifier.size(36.dp)) {
-                                Box(contentAlignment = Alignment.Center) { Text(emp.name.take(1), fontWeight = FontWeight.Bold, color = Blue700) }
+                            Surface(shape = CircleShape, color = Cyan100, modifier = Modifier.size(36.dp)) {
+                                Box(contentAlignment = Alignment.Center) { Text(emp.name.take(1), fontWeight = FontWeight.Bold, color = Cyan800) }
                             }
                             Spacer(Modifier.width(12.dp))
                             Column {
@@ -48,8 +56,8 @@ fun EmployerListScreen(employees: List<Employee>) {
                                 Text("Role: ${emp.role} • No HP: ${emp.phone}", fontSize = 12.sp, color = Gray600)
                             }
                         }
-                        Surface(shape = RoundedCornerShape(4.dp), color = Color(0xFFE8F5E9)) {
-                            Text(emp.status, fontSize = 11.sp, color = Success, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp), fontWeight = FontWeight.Bold)
+                        Surface(shape = RoundedCornerShape(4.dp), color = SuccessContainer, border = BorderStroke(1.dp, SuccessBorder)) {
+                            Text(emp.status, fontSize = 11.sp, color = SuccessBase, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp), fontWeight = FontWeight.Bold)
                         }
                     }
                 }

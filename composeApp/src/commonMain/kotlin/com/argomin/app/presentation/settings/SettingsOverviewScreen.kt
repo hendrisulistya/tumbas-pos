@@ -20,22 +20,22 @@ fun SettingsOverviewScreen() {
             HorizontalDivider(color = Gray300)
             Spacer(Modifier.height(16.dp))
 
-            Surface(shape = RoundedCornerShape(10.dp), color = Blue50, modifier = Modifier.fillMaxWidth()) {
+            Surface(shape = RoundedCornerShape(10.dp), color = Cyan50, border = androidx.compose.foundation.BorderStroke(1.dp, Cyan200), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Informasi Lisensi & Platform", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Spacer(Modifier.height(4.dp))
-                    Text("• Target Platform Aktif: ${PlatformConfig.platformName}", fontSize = 13.sp, color = Gray800)
-                    Text("• Status Aktivasi: ${if (PlatformConfig.requiresActivation) "Wajib Diaktivasi (Mobile)" else "DI-BYPASS (Web Edition)"}", fontSize = 13.sp, color = Gray800)
-                    Text("• Versi Aplikasi: 1.0.0 (KMP Multiplatform)", fontSize = 13.sp, color = Gray800)
+                    Text("• Target Platform Aktif: ${PlatformConfig.platformName}", fontSize = 13.sp, color = Neutral700)
+                    Text("• Status Aktivasi: ${if (PlatformConfig.requiresActivation) "Wajib Diaktivasi (Mobile)" else "DI-BYPASS (Web Edition)"}", fontSize = 13.sp, color = Neutral700)
+                    Text("• Versi Aplikasi: 1.0.0 (KMP Multiplatform)", fontSize = 13.sp, color = Neutral700)
                 }
             }
 
             Spacer(Modifier.height(20.dp))
             Text("Pengaturan Toko:", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            Text("Nama Toko: Rumah Makan Padang tambooPOS", fontSize = 13.sp, color = Gray800)
-            Text("Pajak PB1: 10% (Aktif)", fontSize = 13.sp, color = Gray800)
-            Text("Mata Uang: Rupiah (IDR)", fontSize = 13.sp, color = Gray800)
+            Text("Nama Toko: Rumah Makan Padang tambooPOS", fontSize = 13.sp, color = Neutral700)
+            Text("Pajak PB1: 10% (Aktif)", fontSize = 13.sp, color = Neutral700)
+            Text("Mata Uang: Rupiah (IDR)", fontSize = 13.sp, color = Neutral700)
         }
     }
 }
