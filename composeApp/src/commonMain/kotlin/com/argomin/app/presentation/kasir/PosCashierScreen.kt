@@ -1077,136 +1077,237 @@ fun PosCashierScreen(
 
     // ── Dialog: Sukses Pembayaran ──────────────────────────────────────────────
     if (state.isSuccessDialogOpen) {
-        AlertDialog(
+        Dialog(
             onDismissRequest = {
                 viewModel.closeSuccessDialog()
                 viewModel.resetAfterTransaction()
             },
-            icon = {
-                Box(
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
                     modifier = Modifier
-                        .size(52.dp)
-                        .background(SuccessContainer, CircleShape),
-                    contentAlignment = Alignment.Center
+                        .widthIn(min = 420.dp, max = 500.dp)
+                        .fillMaxWidth(0.38f)
+                        .clip(RoundedCornerShape(20.dp)),
+                    shape = RoundedCornerShape(20.dp),
+                    color = White,
+                    border = BorderStroke(1.dp, Gray200),
+                    shadowElevation = 24.dp
                 ) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = Success,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    "Transaksi Berhasil!",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        "Pembayaran telah selesai dan pesanan telah dicatat.",
-                        fontSize = 12.sp,
-                        color = Neutral600,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Neutral50,
-                        border = BorderStroke(1.dp, Neutral200),
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier.padding(26.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Total Tagihan", fontSize = 12.sp, color = Neutral600)
-                                Text(formatRupiah(state.lastOrderTotal), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Spacer(Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Metode Bayar", fontSize = 12.sp, color = Neutral600)
-                                Text(state.lastPaymentMethod, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            if (state.lastPaymentMethod == "Tunai") {
-                                Spacer(Modifier.height(6.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                        // Top Success Icon Badge
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(SuccessContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Sukses",
+                                tint = SuccessBase,
+                                modifier = Modifier.size(38.dp)
+                            )
+                        }
+
+                        // Title & Subtitle
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Transaksi Berhasil!",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Neutral900
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Pembayaran telah tuntas dan pesanan telah tercatat di sistem.",
+                                fontSize = 12.sp,
+                                color = Gray600,
+                                textAlign = TextAlign.Center
+                            )
+                            if (state.lastOrderId.isNotEmpty()) {
+                                Spacer(Modifier.height(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = Neutral100,
+                                    border = BorderStroke(1.dp, Gray300)
                                 ) {
-                                    Text("Uang Diterima", fontSize = 12.sp, color = Neutral600)
-                                    Text(formatRupiah(state.lastPaidAmount), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                }
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Neutral200)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("Kembalian", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Cyan900)
                                     Text(
-                                        formatRupiah(state.lastChangeAmount),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = SuccessBase
-                                    )
-                                }
-                            } else {
-                                Spacer(Modifier.height(6.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Fee Transaksi QRIS", fontSize = 12.sp, color = Neutral600)
-                                    Text("Rp 1.000", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Cyan700)
-                                }
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Neutral200)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("Status Pembayaran", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Cyan900)
-                                    Text(
-                                        "LUNAS (Terverifikasi)",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = SuccessBase
+                                        text = "NO. ORDER: ${state.lastOrderId}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Cyan900,
+                                        letterSpacing = 0.5.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                     )
                                 }
                             }
                         }
+
+                        // Receipt Breakdown Card
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Cyan50,
+                            border = BorderStroke(1.dp, Cyan200),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Total Tagihan", fontSize = 13.sp, color = Gray600)
+                                    Text(
+                                        text = formatRupiah(state.lastOrderTotal),
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Cyan900
+                                    )
+                                }
+
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = Cyan200)
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Metode Pembayaran", fontSize = 12.5.sp, color = Gray600)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = if (state.lastPaymentMethod == "Tunai") Icons.Default.Payments else Icons.Default.QrCodeScanner,
+                                            contentDescription = null,
+                                            tint = Cyan700,
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                        Spacer(Modifier.width(5.dp))
+                                        Text(
+                                            text = state.lastPaymentMethod,
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Neutral900
+                                        )
+                                    }
+                                }
+
+                                if (state.lastPaymentMethod == "Tunai") {
+                                    Spacer(Modifier.height(6.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Uang Diterima", fontSize = 12.5.sp, color = Gray600)
+                                        Text(
+                                            text = formatRupiah(state.lastPaidAmount),
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Neutral800
+                                        )
+                                    }
+                                    Spacer(Modifier.height(6.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Kembalian", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Cyan900)
+                                        Text(
+                                            text = formatRupiah(state.lastChangeAmount),
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = SuccessBase
+                                        )
+                                    }
+                                } else {
+                                    Spacer(Modifier.height(6.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Fee Layanan QRIS", fontSize = 12.5.sp, color = Gray600)
+                                        Text(
+                                            text = "Rp 1.000",
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Cyan700
+                                        )
+                                    }
+                                    Spacer(Modifier.height(6.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Status Pembayaran", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = Gray600)
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = SuccessContainer
+                                        ) {
+                                            Text(
+                                                text = "LUNAS (Terverifikasi)",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = SuccessBase,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Action Buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.closeSuccessDialog()
+                                    viewModel.resetAfterTransaction()
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, Gray300),
+                                modifier = Modifier.weight(1f).height(44.dp)
+                            ) {
+                                Text("Selesai", fontWeight = FontWeight.SemiBold, color = Gray700, fontSize = 13.sp)
+                            }
+
+                            Button(
+                                onClick = {
+                                    viewModel.closeSuccessDialog()
+                                    viewModel.resetAfterTransaction()
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Cyan700,
+                                    contentColor = White
+                                ),
+                                modifier = Modifier.weight(1.3f).height(44.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Print,
+                                    contentDescription = null,
+                                    tint = White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Cetak Struk", fontWeight = FontWeight.Bold, color = White, fontSize = 13.sp)
+                            }
+                        }
                     }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.closeSuccessDialog()
-                        viewModel.resetAfterTransaction()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Cyan700,
-                        contentColor = White
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Cetak Struk & Selesai", fontWeight = FontWeight.Bold, color = White)
-                }
             }
-        )
+        }
     }
 }

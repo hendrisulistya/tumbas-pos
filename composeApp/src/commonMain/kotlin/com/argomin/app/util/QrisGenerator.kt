@@ -24,11 +24,12 @@ import com.argomin.app.presentation.theme.*
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * QRIS Generator & Parser for tambooPOS.
- * Standards: EMVCo Merchant-Presented Mode (MPM) & ASPI (Bank Indonesia) QRIS.
+ * QRIS Generator & Parser for tambooPOS. Standards: EMVCo Merchant-Presented Mode (MPM) & ASPI
+ * (Bank Indonesia) QRIS.
  */
 object QrisConfig {
-    const val STATIC_PAYLOAD = "00020101021126610014COM.GO-JEK.WWW01189360091433961813320210G3961813320303UMI51440014ID.CO.QRIS.WWW0215ID10264699901090303UMI5204581253033605802ID5925RM ARGO MINANG 3 KEPEK, P6011KULON PROGO61055565262070703A0263041DE8"
+    const val STATIC_PAYLOAD =
+            "00020101021126610014COM.GO-JEK.WWW01189360091433961813320210G3961813320303UMI51440014ID.CO.QRIS.WWW0215ID10264699901090303UMI5204581253033605802ID5925RM ARGO MINANG 3 KEPEK, P6011KULON PROGO61055565262070703A0263041DE8"
     const val MERCHANT_NAME = "RM ARGO MINANG 3 KEPEK, P"
     const val NMID = "ID1026469990109"
     const val TERMINAL_ID = "A02"
@@ -36,18 +37,18 @@ object QrisConfig {
 }
 
 data class DynamicQrisData(
-    val payload: String,
-    val baseAmount: Long,
-    val fee: Long,
-    val totalAmount: Long,
-    val merchantName: String = QrisConfig.MERCHANT_NAME,
-    val nmid: String = QrisConfig.NMID,
-    val terminalId: String = QrisConfig.TERMINAL_ID
+        val payload: String,
+        val baseAmount: Long,
+        val fee: Long,
+        val totalAmount: Long,
+        val merchantName: String = QrisConfig.MERCHANT_NAME,
+        val nmid: String = QrisConfig.NMID,
+        val terminalId: String = QrisConfig.TERMINAL_ID
 )
 
 /**
- * Calculates standard CRC-16/CCITT-FALSE checksum for EMVCo QRIS payload.
- * Polynomial: 0x1021, Initial value: 0xFFFF.
+ * Calculates standard CRC-16/CCITT-FALSE checksum for EMVCo QRIS payload. Polynomial: 0x1021,
+ * Initial value: 0xFFFF.
  */
 fun crc16Ccitt(data: String): String {
     var crc = 0xFFFF
@@ -55,11 +56,12 @@ fun crc16Ccitt(data: String): String {
     for (b in bytes) {
         crc = crc xor ((b.toInt() and 0xFF) shl 8)
         for (i in 0 until 8) {
-            crc = if ((crc and 0x8000) != 0) {
-                ((crc shl 1) xor 0x1021) and 0xFFFF
-            } else {
-                (crc shl 1) and 0xFFFF
-            }
+            crc =
+                    if ((crc and 0x8000) != 0) {
+                        ((crc shl 1) xor 0x1021) and 0xFFFF
+                    } else {
+                        (crc shl 1) and 0xFFFF
+                    }
         }
     }
     return crc.toString(16).uppercase().padStart(4, '0')
@@ -76,11 +78,12 @@ fun generateDynamicQris(orderAmount: Long, fee: Long = QrisConfig.DEFAULT_FEE): 
 
     // 1. Strip CRC (last 8 characters: 6304 + 4 hex characters)
     val crcTagIdx = QrisConfig.STATIC_PAYLOAD.lastIndexOf("6304")
-    var base = if (crcTagIdx != -1) {
-        QrisConfig.STATIC_PAYLOAD.substring(0, crcTagIdx)
-    } else {
-        QrisConfig.STATIC_PAYLOAD
-    }
+    var base =
+            if (crcTagIdx != -1) {
+                QrisConfig.STATIC_PAYLOAD.substring(0, crcTagIdx)
+            } else {
+                QrisConfig.STATIC_PAYLOAD
+            }
 
     // 2. Change Point of Initiation Method from 11 (Static) to 12 (Dynamic)
     base = base.replaceFirst("010211", "010212")
@@ -91,12 +94,13 @@ fun generateDynamicQris(orderAmount: Long, fee: Long = QrisConfig.DEFAULT_FEE): 
     val tag54 = "54$lenStr$strAmount"
 
     val tag58Idx = base.indexOf("5802ID")
-    base = if (tag58Idx != -1) {
-        base.substring(0, tag58Idx) + tag54 + base.substring(tag58Idx)
-    } else {
-        val tag53Idx = base.indexOf("5303360") + "5303360".length
-        base.substring(0, tag53Idx) + tag54 + base.substring(tag53Idx)
-    }
+    base =
+            if (tag58Idx != -1) {
+                base.substring(0, tag58Idx) + tag54 + base.substring(tag58Idx)
+            } else {
+                val tag53Idx = base.indexOf("5303360") + "5303360".length
+                base.substring(0, tag53Idx) + tag54 + base.substring(tag53Idx)
+            }
 
     // 4. Calculate new CRC16
     val dataForCrc = base + "6304"
@@ -104,67 +108,54 @@ fun generateDynamicQris(orderAmount: Long, fee: Long = QrisConfig.DEFAULT_FEE): 
     val finalPayload = dataForCrc + crc
 
     return DynamicQrisData(
-        payload = finalPayload,
-        baseAmount = orderAmount,
-        fee = fee,
-        totalAmount = total
+            payload = finalPayload,
+            baseAmount = orderAmount,
+            fee = fee,
+            totalAmount = total
     )
 }
 
-/**
- * Beautiful, vector-sharp QR Code view rendered directly on Compose Canvas.
- */
+/** Beautiful, vector-sharp QR Code view rendered directly on Compose Canvas. */
 @Composable
-fun DynamicQrisCard(
-    qrisData: DynamicQrisData,
-    modifier: Modifier = Modifier
-) {
-    val qrCode = remember(qrisData.payload) {
-        QrCode.encodeText(qrisData.payload, QrCode.Ecc.MEDIUM)
-    }
+fun DynamicQrisCard(qrisData: DynamicQrisData, modifier: Modifier = Modifier) {
+    val qrCode =
+            remember(qrisData.payload) { QrCode.encodeText(qrisData.payload, QrCode.Ecc.MEDIUM) }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Gray300)
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Gray300)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // MPM QRIS Dasar Layout Container
             Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = White,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Gray300),
-                shadowElevation = 2.dp,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    color = White,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Gray300),
+                    shadowElevation = 2.dp,
+                    modifier = Modifier.padding(horizontal = 8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Official QRIS Logo (with scanner corner brackets)
                     Image(
-                        painter = painterResource(Res.drawable.logo_qris),
-                        contentDescription = "Logo QRIS",
-                        modifier = Modifier
-                            .height(42.dp)
-                            .wrapContentWidth()
+                            painter = painterResource(Res.drawable.logo_qris),
+                            contentDescription = "Logo QRIS",
+                            modifier = Modifier.height(42.dp).wrapContentWidth()
                     )
 
                     Spacer(Modifier.height(12.dp))
 
                     // Canvas Vector QR Code
                     Box(
-                        modifier = Modifier
-                            .size(210.dp)
-                            .background(White)
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
+                            modifier = Modifier.size(210.dp).background(White).padding(4.dp),
+                            contentAlignment = Alignment.Center
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             val matrixSize = qrCode.size
@@ -178,12 +169,13 @@ fun DynamicQrisCard(
                                 for (x in 0 until matrixSize) {
                                     if (qrCode.getModule(x, y)) {
                                         drawRect(
-                                            color = Color.Black,
-                                            topLeft = Offset(
-                                                (x + quietZone) * cellSize,
-                                                (y + quietZone) * cellSize
-                                            ),
-                                            size = Size(cellSize + 0.3f, cellSize + 0.3f)
+                                                color = Color.Black,
+                                                topLeft =
+                                                        Offset(
+                                                                (x + quietZone) * cellSize,
+                                                                (y + quietZone) * cellSize
+                                                        ),
+                                                size = Size(cellSize + 0.3f, cellSize + 0.3f)
                                         )
                                     }
                                 }
@@ -195,22 +187,22 @@ fun DynamicQrisCard(
 
                     // NMID according to MPM QRIS Dasar specification
                     Text(
-                        "NMID: ${qrisData.nmid}",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Gray800,
-                        letterSpacing = 0.5.sp,
-                        textAlign = TextAlign.Center
+                            "NMID: ${qrisData.nmid}",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Gray800,
+                            letterSpacing = 0.5.sp,
+                            textAlign = TextAlign.Center
                     )
 
                     Spacer(Modifier.height(2.dp))
 
                     Text(
-                        "${qrisData.merchantName} • A02",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Gray600,
-                        textAlign = TextAlign.Center
+                            "${qrisData.merchantName} • A02",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Gray600,
+                            textAlign = TextAlign.Center
                     )
                 }
             }
@@ -219,39 +211,53 @@ fun DynamicQrisCard(
 
             // Price Breakdown Box
             Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = Cyan50,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Cyan200),
-                modifier = Modifier.fillMaxWidth()
+                    shape = RoundedCornerShape(10.dp),
+                    color = Cyan50,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Cyan200),
+                    modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Tagihan Pesanan", fontSize = 12.sp, color = Gray600)
-                        Text(formatRupiah(qrisData.baseAmount), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                                formatRupiah(qrisData.baseAmount),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                        )
                     }
                     Spacer(Modifier.height(4.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Biaya Layanan (Fee)", fontSize = 12.sp, color = Gray600)
-                        Text("+${formatRupiah(qrisData.fee)}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Cyan700)
+                        Text(
+                                "+${formatRupiah(qrisData.fee)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Cyan700
+                        )
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp), color = Cyan200)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Total Bayar QRIS", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Cyan900)
                         Text(
-                            formatRupiah(qrisData.totalAmount),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Cyan700
+                                "Total Bayar QRIS",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Cyan900
+                        )
+                        Text(
+                                formatRupiah(qrisData.totalAmount),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Cyan700
                         )
                     }
                 }
@@ -259,60 +265,47 @@ fun DynamicQrisCard(
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "Pelanggan tinggal scan QR di atas. Nominal otomatis terkunci di aplikasi perbankan/e-wallet pelanggan.",
-                fontSize = 11.sp,
-                color = Gray600,
-                textAlign = TextAlign.Center,
-                lineHeight = 15.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
+                    "Pelanggan tinggal scan QR di atas. Nominal otomatis terkunci di aplikasi perbankan/e-wallet pelanggan.",
+                    fontSize = 11.sp,
+                    color = Gray600,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 15.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
     }
 }
 
-/**
- * Standalone QR Code Display Card (suitable for 2-column/grid layout).
- */
+/** Standalone QR Code Display Card (suitable for 2-column/grid layout). */
 @Composable
-fun QrisCodeDisplay(
-    qrisData: DynamicQrisData,
-    modifier: Modifier = Modifier
-) {
-    val qrCode = remember(qrisData.payload) {
-        QrCode.encodeText(qrisData.payload, QrCode.Ecc.MEDIUM)
-    }
+fun QrisCodeDisplay(qrisData: DynamicQrisData, modifier: Modifier = Modifier) {
+    val qrCode =
+            remember(qrisData.payload) { QrCode.encodeText(qrisData.payload, QrCode.Ecc.MEDIUM) }
 
     Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Gray300),
-        shadowElevation = 2.dp,
-        modifier = modifier
+            shape = RoundedCornerShape(14.dp),
+            color = White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Gray300),
+            shadowElevation = 2.dp,
+            modifier = modifier
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp, horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp, horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Official QRIS Logo
             Image(
-                painter = painterResource(Res.drawable.logo_qris),
-                contentDescription = "Logo QRIS",
-                modifier = Modifier
-                    .height(38.dp)
-                    .wrapContentWidth()
+                    painter = painterResource(Res.drawable.logo_qris),
+                    contentDescription = "Logo QRIS",
+                    modifier = Modifier.height(38.dp).wrapContentWidth()
             )
 
             Spacer(Modifier.height(10.dp))
 
             // Canvas Vector QR Code
             Box(
-                modifier = Modifier
-                    .size(200.dp)
-                    .background(White)
-                    .padding(2.dp),
-                contentAlignment = Alignment.Center
+                    modifier = Modifier.size(200.dp).background(White).padding(2.dp),
+                    contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val matrixSize = qrCode.size
@@ -326,12 +319,13 @@ fun QrisCodeDisplay(
                         for (x in 0 until matrixSize) {
                             if (qrCode.getModule(x, y)) {
                                 drawRect(
-                                    color = Color.Black,
-                                    topLeft = Offset(
-                                        (x + quietZone) * cellSize,
-                                        (y + quietZone) * cellSize
-                                    ),
-                                    size = Size(cellSize + 0.3f, cellSize + 0.3f)
+                                        color = Color.Black,
+                                        topLeft =
+                                                Offset(
+                                                        (x + quietZone) * cellSize,
+                                                        (y + quietZone) * cellSize
+                                                ),
+                                        size = Size(cellSize + 0.3f, cellSize + 0.3f)
                                 )
                             }
                         }
@@ -342,39 +336,23 @@ fun QrisCodeDisplay(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                "NMID: ${qrisData.nmid}",
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = Gray800,
-                letterSpacing = 0.5.sp,
-                textAlign = TextAlign.Center
+                    "NMID: ${qrisData.nmid}",
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Gray800,
+                    letterSpacing = 0.5.sp,
+                    textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(2.dp))
 
             Text(
-                "${qrisData.merchantName} • A02",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Normal,
-                color = Gray600,
-                textAlign = TextAlign.Center
+                    "${qrisData.merchantName} • A02",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Gray600,
+                    textAlign = TextAlign.Center
             )
-
-            Spacer(Modifier.height(6.dp))
-
-            Surface(
-                shape = RoundedCornerShape(6.dp),
-                color = Cyan100
-            ) {
-                Text(
-                    text = "QRIS DINAMIS • NOMINAL TERKUNCI",
-                    fontSize = 9.5.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Cyan900,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                )
-            }
         }
     }
 }
-
