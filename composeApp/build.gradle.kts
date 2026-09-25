@@ -232,3 +232,24 @@ android.defaultConfig {
     val activationSecret = localProperties.getProperty("APP_SECRET", "").trim().trim('"')
     buildConfigField("String", "ACTIVATION_SECRET", "\"$activationSecret\"")
 }
+
+tasks.named<org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack>("wasmJsBrowserProductionWebpack") {
+    mainOutputFileName.set("composeApp.[contenthash].js")
+}
+
+tasks.named<Sync>("wasmJsBrowserDistribution") {
+    doLast {
+        val distDir = destinationDir
+        val jsFile = distDir.listFiles()?.firstOrNull { it.name.startsWith("composeApp.") && it.name.endsWith(".js") }
+        if (jsFile != null) {
+            val htmlFile = File(distDir, "index.html")
+            if (htmlFile.exists()) {
+                val updatedHtml = htmlFile.readText().replace(
+                    Regex("""["']composeApp(\.[a-zA-Z0-9]+)?\.js["']"""),
+                    "\"${jsFile.name}\""
+                )
+                htmlFile.writeText(updatedHtml)
+            }
+        }
+    }
+}
