@@ -144,10 +144,10 @@
                 </svg>
             </div>
 
-            <h1 class="warning-title">Tampilan Khusus Tablet Landscape</h1>
+            <h1 class="warning-title">Orientasi Mendatar Diperlukan</h1>
             
             <p class="warning-desc">
-                Aplikasi kasir ini membutuhkan ruang layar tablet dalam orientasi mendatar untuk menampilkan transaksi dan etalase dengan optimal.
+                Aplikasi kasir ini dirancang untuk tampilan mendatar (landscape). Silakan putar perangkat Anda ke posisi landscape.
             </p>
 
             <div class="specs-strip">
@@ -158,34 +158,32 @@
                 <div class="specs-divider"></div>
                 <div class="specs-item" style="text-align: right;">
                     <span class="specs-label">Kebutuhan</span>
-                    <span class="specs-value-target">Min. 1024 × 600 px</span>
+                    <span class="specs-value-target">Landscape (Lebar > Tinggi)</span>
                 </div>
             </div>
 
             <p class="hint-text">
-                Putar perangkat Anda ke posisi mendatar atau perbesar ukuran jendela peramban.
+                Putar perangkat Anda ke posisi mendatar untuk mengakses aplikasi kasir.
             </p>
         </div>
     </div>
 
     <script type="application/javascript">
         (function() {
-            var MIN_WIDTH = 1024;
-            var MIN_HEIGHT = 600;
             var scriptLoaded = false;
 
             function checkScreen() {
                 var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
                 var height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-                var isLandscape = width >= height;
-                var isValid = (width >= MIN_WIDTH && height >= MIN_HEIGHT && isLandscape);
+                var isLandscape = width > height;
+                var isValid = isLandscape;
 
                 var overlay = document.getElementById("screenWarningOverlay");
                 var webApp = document.getElementById("webApp");
                 var currentSizeEl = document.getElementById("currentScreenSize");
 
                 if (currentSizeEl) {
-                    currentSizeEl.textContent = width + " × " + height + " px" + (isLandscape ? "" : " (Potret)");
+                    currentSizeEl.textContent = width + " × " + height + " px" + (isLandscape ? " (Landscape)" : " (Potret)");
                 }
 
                 if (!isValid) {
